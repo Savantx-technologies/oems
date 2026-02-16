@@ -96,4 +96,53 @@ class AdminSecurityLogController extends Controller
         ]);
     }
 
+    public function studentIndex()
+    {
+        $admin = auth('admin')->user();
+
+        // Join with users table to filter by school and get student names
+        $logs = SecurityLog::whereIn('guard', ['web', 'student'])
+            ->join('users', 'security_logs.user_id', '=', 'users.id')
+            ->where('users.school_id', $admin->school_id)
+            ->select('security_logs.*', 'users.name as student_name', 'users.email as student_email')
+            ->latest('security_logs.created_at')
+            ->paginate(50);
+
+        return view('admin.security.student_logs', compact('logs'));
+    }
+
+    public function studentExport()
+    {
+        $fileName = 'student_activity_logs_' . now()->format('Ymd_His') . '.csv';
+        $admin = auth('admin')->user();
+
+        return new StreamedResponse(function () use ($admin) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, ['Time', 'Student Name', 'Email', 'Event', 'IP', 'Description']);
+
+            SecurityLog::whereIn('guard', ['web', 'student'])
+                ->join('users', 'security_logs.user_id', '=', 'users.id')
+                ->where('users.school_id', $admin->school_id)
+                ->select('security_logs.*', 'users.name as student_name', 'users.email as student_email')
+                ->latest('security_logs.created_at')
+                ->chunk(500, function ($logs) use ($handle) {
+                    foreach ($logs as $log) {
+                        fputcsv($handle, [
+                            $log->created_at,
+                            $log->student_name,
+                            $log->student_email,
+                            $log->event,
+                            $log->ip_address,
+                            $log->description,
+                        ]);
+                    }
+                });
+
+            fclose($handle);
+        }, 200, [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$fileName\"",
+        ]);
+    }
 }

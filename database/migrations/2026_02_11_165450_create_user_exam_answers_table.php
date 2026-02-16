@@ -30,9 +30,7 @@ return new class extends Migration
                   ->constrained()
                   ->onDelete('cascade');
 
-            $table->foreignId('selected_option_id')
-                  ->constrained('question_options')
-                  ->onDelete('cascade');
+            $table->string('selected_option')->nullable();
 
             $table->boolean('is_correct')->nullable();
 

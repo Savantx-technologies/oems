@@ -151,7 +151,6 @@
                 </li>
 
                 <!-- Question Bank -->
-                <!-- Question Bank -->
                 <li x-data="{ open: {{ $questionOpen ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3
         {{ $questionOpen ? 'text-white bg-white/10 border-l-4 border-indigo-500' : 'text-gray-400 border-l-4 border-transparent' }}
@@ -170,8 +169,8 @@
                             <li>
                                 <a href="{{ route('admin.questions.index') }}" class="block px-5 py-2 pl-11 text-sm
                     {{ request()->routeIs('admin.questions.index')
-                        ? 'text-white bg-white/10'
-                        : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
+    ? 'text-white bg-white/10'
+    : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
                                     All Questions (MCQ)
                                 </a>
                             </li>
@@ -179,8 +178,8 @@
                             <li>
                                 <a href="{{ route('admin.questions.create') }}" class="block px-5 py-2 pl-11 text-sm
                     {{ request()->routeIs('admin.questions.create')
-                        ? 'text-white bg-white/10'
-                        : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
+    ? 'text-white bg-white/10'
+    : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
                                     Add New Question
                                 </a>
                             </li>
@@ -191,20 +190,16 @@
                                     class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10">
                                     Bulk Upload
                                 </a>
-
                             </li>
-
                         </ul>
                     </div>
                 </li>
 
-
-
                 <!-- Exams -->
                 <li x-data="{ open: {{ $examOpen ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3
-        {{ $examOpen ? 'text-white bg-white/10 border-l-4 border-indigo-500' : 'text-gray-400 border-l-4 border-transparent' }}
-        hover:bg-white/5 hover:text-white transition-colors" href="#" @click.prevent="open = !open">
+                            {{ $examOpen ? 'text-white bg-white/10 border-l-4 border-indigo-500' : 'text-gray-400 border-l-4 border-transparent' }}
+                            hover:bg-white/5 hover:text-white transition-colors" href="#" @click.prevent="open = !open">
                         <div>
                             <i class="bi bi-file-earmark-text mr-2"></i>
                             Exams
@@ -218,18 +213,18 @@
 
                             <li>
                                 <a href="{{ route('admin.exams.create') }}" class="block px-5 py-2 pl-11 text-sm
-                    {{ request()->routeIs('admin.exams.create')
-                        ? 'text-white bg-white/10'
-                        : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
+                                    {{ request()->routeIs('admin.exams.create')
+                                        ? 'text-white bg-white/10'
+                                        : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
                                     Create Exam
                                 </a>
                             </li>
 
                             <li>
                                 <a href="{{ route('admin.exams.index') }}" class="block px-5 py-2 pl-11 text-sm
-                    {{ request()->routeIs('admin.exams.index')
-                        ? 'text-white bg-white/10'
-                        : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
+                                {{ request()->routeIs('admin.exams.index')
+                                    ? 'text-white bg-white/10'
+                                    : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
                                     Manage Exams
                                 </a>
                             </li>
@@ -249,8 +244,14 @@
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Live Exam Monitor</a></li>
+                            <li>
+                                <a href="{{ route('admin.exams.index') }}" class="block px-5 py-2 pl-11 text-sm 
+                                        {{ request()->routeIs('admin.exams.monitor')
+                                    ? 'text-white bg-white/10'
+                                    : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
+                                    Live Exam Monitor
+                                </a>
+                            </li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="#">Student Camera Grid</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"

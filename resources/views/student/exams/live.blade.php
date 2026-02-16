@@ -39,26 +39,6 @@
         </div>  
     </div>
 
-    <!-- Full Screen Enforcer Overlay -->
-    <div x-show="isSetupComplete && !isFullScreen" 
-         class="fixed inset-0 z-50 bg-gray-900/95 backdrop-blur-sm flex items-center justify-center p-4"
-         x-transition.opacity
-         x-cloak>
-        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-                <i class="bi bi-arrows-fullscreen"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-900 mb-2">Full Screen Required</h2>
-            <p class="text-gray-600 mb-6">
-                Please enable full-screen mode to continue with your exam.
-            </p>
-            <button @click="triggerFullScreen" 
-                    class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2">
-                Enter Full Screen
-            </button>
-        </div>
-    </div>
-
     <!-- Violation Warning Overlay -->
     <div x-show="showViolationWarning" 
          class="fixed inset-0 z-[70] bg-gray-900/95 backdrop-blur-sm flex items-center justify-center p-4"
@@ -72,7 +52,7 @@
             <p class="text-gray-600 mb-6" x-text="violationMessage"></p>
             <button x-show="violationCount <= maxViolations" @click="dismissViolationWarning" 
                     class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors">
-                I Understand, Return to Exam
+                <span x-text="!isFullScreen ? 'Enter Full Screen' : 'I Understand, Return to Exam'"></span>
             </button>
         </div>
     </div>
@@ -166,6 +146,7 @@
                     @csrf
                     <input type="hidden" name="set_code" value="A">
                     <input type="hidden" name="answers" :value="JSON.stringify(answers)">
+                    <input type="hidden" name="session_token" :value="sessionToken">
                     <button type="submit" onclick="return confirm('Are you sure you want to submit the exam?')"
                             class="px-6 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 flex items-center gap-2">
                         Submit Exam <i class="bi bi-check-lg"></i>
@@ -209,15 +190,18 @@
                 currentIndex: 0,
                 answers: {},
                 reviewList: [],
-                remainingSeconds: {{ $exam->duration_minutes * 60 }}, // Default to duration, ideally sync with server start time
+                remainingSeconds: {{ $remainingSeconds }},
+                sessionToken: '{{ $sessionToken }}',
                 isFullScreen: false,
                 violationCount: 0,
                 maxViolations: 3,
+                screenStopCount: 0,
                 isHandlingViolation: false,
                 isSetupComplete: false,
                 permissionError: null,
                 mediaStream: null,
                 screenStream: null,
+                peerConnection: null,
                 showViolationWarning: false,
                 violationMessage: '',
 
@@ -257,12 +241,13 @@
                 startExam() {
                     this.initTimer();
                     this.initSecurity();
+                    this.initHeartbeat();
+                    this.initWebRTC();
                     
                     // Monitor screen stream stop
                     if(this.screenStream) {
                         this.screenStream.getVideoTracks()[0].addEventListener('ended', () => {
-                            alert('Screen sharing stopped. The exam will be submitted.');
-                            this.submitExam();
+                            this.handleScreenStop();
                         });
                     }
                 },
@@ -279,6 +264,29 @@
                         }
                     }, 1000);
                 },
+                
+                initHeartbeat() {
+                    setInterval(() => {
+                        fetch('{{ route("student.exams.heartbeat", $exam->id) }}', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                            body: JSON.stringify({ session_token: this.sessionToken })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.status === 'terminated' || data.status === 'expired' || data.status === 'submitted') {
+                                window.location.href = '{{ route("student.exams.index") }}';
+                            }
+                            // Sync timer if needed, or handle extra time
+                            if (data.remaining_seconds !== undefined) {
+                                // Optional: sync local timer if drift is large
+                                if (Math.abs(this.remainingSeconds - data.remaining_seconds) > 5) {
+                                    this.remainingSeconds = data.remaining_seconds;
+                                }
+                            }
+                        });
+                    }, 15000); // 15 seconds
+                },
 
                 initSecurity() {
                     // 1. Full Screen Enforcement
@@ -292,71 +300,143 @@
                         e.preventDefault();
                     });
 
-                    // 3. Prevent Shortcuts
-                    document.addEventListener('keydown', (e) => {
-                        // Block F-keys that can interfere
-                        if ([116, 122, 123].includes(e.keyCode)) { // F5, F11, F12
-                            e.preventDefault();
-                        }
+                    // 3. Disable Keyboard (Only Mouse Allowed)
+                    const blockKeyboard = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        return false;
+                    };
 
-                        // Block Ctrl-based shortcuts
-                        if (e.ctrlKey) {
-                            // Block copy, paste, cut, new tab, new window, close, print, save, reload, view source, etc.
-                            if (['c', 'v', 'x', 'n', 't', 'w', 'p', 's', 'r', 'u'].includes(e.key.toLowerCase())) {
-                                e.preventDefault();
-                            }
-                            // Block dev tools
-                            if (e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
-                                e.preventDefault();
-                            }
-                        }
-
-                        // Block Alt-based shortcuts
-                        if (e.altKey && (e.key === 'F4' || e.key === 'Tab')) {
-                            e.preventDefault();
-                        }
-
-                        // Block Windows/Command key shortcuts (like Win+D, Cmd+Tab)
-                        // Note: This has limitations and might not block all OS-level shortcuts.
-                        if (e.metaKey) {
-                            e.preventDefault();
-                        }
-                    });
+                    window.addEventListener('keydown', blockKeyboard, true);
+                    window.addEventListener('keypress', blockKeyboard, true);
+                    window.addEventListener('keyup', blockKeyboard, true);
 
                     // 4. Detect Tab Switching
                     document.addEventListener('visibilitychange', () => {
                         // When tab is hidden and we are not already handling a violation
                         if (document.visibilityState === 'hidden' && !this.isHandlingViolation) {
-                            this.handleViolation();
+                            this.handleViolation('tab_switch');
                         }
                     });
                 },
 
                 checkFullScreen() {
-                    this.isFullScreen = !!document.fullscreenElement;
+                    const isNowFullScreen = !!document.fullscreenElement;
+                    
+                    // If we were full screen, setup is done, and now we are not -> Violation
+                    if (this.isFullScreen && !isNowFullScreen && this.isSetupComplete) {
+                        this.handleViolation('fullscreen_exit');
+                    }
+                    
+                    this.isFullScreen = isNowFullScreen;
                 },
 
                 triggerFullScreen() {
-                    document.documentElement.requestFullscreen().catch(err => {
+                    document.documentElement.requestFullscreen().then(() => {
+                        // Attempt to lock system keys (Chrome/Edge only)
+                        if (navigator.keyboard && navigator.keyboard.lock) {
+                            navigator.keyboard.lock();
+                        }
+                    }).catch(err => {
                         console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
                     });
                 },
 
-                handleViolation() {
-                    this.isHandlingViolation = true; // Set flag to prevent re-entry
-                    
-                    this.violationCount++;
-                    if (this.violationCount > this.maxViolations) {
-                        this.violationMessage = `Violation limit exceeded. Your exam will be submitted automatically.`;
-                        this.showViolationWarning = true;
-                        setTimeout(() => this.submitExam(), 4000); // Give time to read message
+                handleScreenStop() {
+                    this.screenStopCount++;
+                    if (this.screenStopCount >= 2) {
+                        this.handleViolation('screen_stop', true);
                     } else {
-                        this.violationMessage = `Warning: Leaving the exam window is prohibited. This is violation ${this.violationCount} of ${this.maxViolations}. Further violations will result in automatic submission.`;
+                        this.violationMessage = "Warning: You stopped screen sharing. Do not stop it again or the exam will be submitted. Click below to restart screen sharing.";
                         this.showViolationWarning = true;
+                        this.isHandlingViolation = true;
                     }
                 },
 
+                handleViolation(type = 'unknown', forceSubmit = false) {
+                    if (this.isHandlingViolation) return;
+                    this.isHandlingViolation = true;
+
+                    // Show warning immediately to prevent overlay conflict
+                    this.violationMessage = "Verifying exam security...";
+                    this.showViolationWarning = true;
+
+                    // Send AJAX to backend
+                    fetch('{{ route("student.exams.violation", $exam->id) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ type: type, session_token: this.sessionToken })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'terminate' || forceSubmit) {
+                            this.violationMessage = forceSubmit 
+                                ? "Screen sharing stopped. Your exam will be submitted automatically." 
+                                : data.message;
+                            this.showViolationWarning = true;
+                            setTimeout(() => this.submitExam(), 3000);
+                        } else {
+                            this.violationCount = data.count ?? (this.violationCount + 1);
+                            this.violationMessage = `Warning: Suspicious activity detected (${type}). This is violation ${this.violationCount} of ${this.maxViolations}.`;
+                            this.showViolationWarning = true;
+                        }
+                    })
+                    .then(() => {
+                        // If status was 409 (Conflict), the fetch throws or returns error json
+                        // You might want to handle specific status codes here if fetch doesn't reject on 409 automatically
+                        // (Fetch only rejects on network error usually)
+                    })
+                    .catch(err => {
+                        console.error('Violation log failed', err);
+                        // Fallback: increment locally
+                        this.violationCount++;
+                        
+                        if (forceSubmit || this.violationCount > this.maxViolations) {
+                             this.violationMessage = "Screen sharing stopped or violation limit exceeded. Exam submitting...";
+                             this.showViolationWarning = true;
+                             setTimeout(() => this.submitExam(), 3000);
+                        } else {
+                             this.showViolationWarning = true;
+                        }
+                    });
+                },
+
                 dismissViolationWarning() {
+                    // Check if screen share needs to be restored (if stopped once)
+                    if (this.screenStopCount === 1 && this.screenStream && this.screenStream.getVideoTracks()[0].readyState === 'ended') {
+                        navigator.mediaDevices.getDisplayMedia({ video: true })
+                            .then(stream => {
+                                this.screenStream = stream;
+                                // Re-attach listener
+                                this.screenStream.getVideoTracks()[0].addEventListener('ended', () => {
+                                    this.handleScreenStop();
+                                });
+                                
+                                // Log warning to backend
+                                fetch('{{ route("student.exams.violation", $exam->id) }}', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                                    body: JSON.stringify({ type: 'screen_stop_warning', session_token: this.sessionToken })
+                                }).catch(e => console.error(e));
+
+                                this.showViolationWarning = false;
+                                setTimeout(() => { this.isHandlingViolation = false; }, 100);
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                this.violationMessage = "Screen sharing is required. Please try again.";
+                            });
+                        return;
+                    }
+
+                    if (!this.isFullScreen) {
+                        this.triggerFullScreen();
+                    }
+
                     this.showViolationWarning = false;
                     // Reset flag after user acknowledges, with a small delay
                     setTimeout(() => {
@@ -371,7 +451,7 @@
                 formatTime(seconds) {
                     const h = Math.floor(seconds / 3600);
                     const m = Math.floor((seconds % 3600) / 60);
-                    const s = seconds % 60;
+                    const s = Math.floor(seconds % 60);
                     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
                 },
 
@@ -391,6 +471,79 @@
                     if (this.answers[id]) return 'bg-green-500 text-white border-green-600';
                     if (this.reviewList.includes(id)) return 'bg-yellow-50 text-yellow-700 border-yellow-400';
                     return 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50';
+                },
+
+                async initWebRTC() {
+                    if (!this.mediaStream) return;
+
+                    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+                    this.peerConnection = new RTCPeerConnection(config);
+
+                    // Handle ICE Candidates
+                    this.peerConnection.onicecandidate = (event) => {
+                        if (event.candidate) {
+                            fetch('{{ route("student.exams.signal", $exam->id) }}', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                                body: JSON.stringify({
+                                    type: 'student_ice',
+                                    payload: JSON.stringify(event.candidate),
+                                    session_token: this.sessionToken
+                                })
+                            });
+                        }
+                    };
+
+                    // Add tracks
+                    this.mediaStream.getTracks().forEach(track => {
+                        this.peerConnection.addTrack(track, this.mediaStream);
+                    });
+
+                    // Add Screen Tracks
+                    if (this.screenStream) {
+                        this.screenStream.getTracks().forEach(track => {
+                            this.peerConnection.addTrack(track, this.screenStream);
+                        });
+                    }
+
+                    // Create Offer
+                    const offer = await this.peerConnection.createOffer();
+                    await this.peerConnection.setLocalDescription(offer);
+
+                    // Wait for ICE gathering to complete (simplest for polling)
+                    await new Promise(resolve => {
+                        if (this.peerConnection.iceGatheringState === 'complete') {
+                            resolve();
+                        } else {
+                            const checkIce = () => {
+                                if (this.peerConnection.iceGatheringState === 'complete') {
+                                    this.peerConnection.removeEventListener('icegatheringstatechange', checkIce);
+                                    resolve();
+                                }
+                            };
+                            this.peerConnection.addEventListener('icegatheringstatechange', checkIce);
+                        }
+                    });
+
+                    // Send Offer
+                    await fetch('{{ route("student.exams.signal", $exam->id) }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                        body: JSON.stringify({ type: 'offer', payload: JSON.stringify(this.peerConnection.localDescription) })
+                    });
+
+                    // Poll for Answer
+                    const pollAnswer = setInterval(async () => {
+                        const res = await fetch('{{ route("student.exams.signal", $exam->id) }}?type=get_answer&_token={{ csrf_token() }}', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                            body: JSON.stringify({ type: 'get_answer' })
+                        });
+                        const data = await res.json();
+                        if (data.answer && !this.peerConnection.currentRemoteDescription) {
+                            await this.peerConnection.setRemoteDescription(JSON.parse(data.answer));
+                            clearInterval(pollAnswer);
+                        }
+                    }, 3000);
                 }
             }
         }

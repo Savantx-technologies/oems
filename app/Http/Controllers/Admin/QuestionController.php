@@ -99,7 +99,7 @@ class QuestionController extends Controller
 
         try {
 
-            $question = Question::create([
+            $question = Question::forceCreate([
 
                 'school_id' => $admin->school_id,
                 'created_by' => $admin->id,
@@ -236,7 +236,7 @@ class QuestionController extends Controller
                 ? $request->type
                 : 'mcq';
 
-            $question->update([
+            $question->forceFill([
 
                 'class' => $request->class,
                 'subject' => $request->subject,
@@ -253,7 +253,7 @@ class QuestionController extends Controller
                 'correct_option' => $type === 'mcq'
                     ? $request->correct_option
                     : null,
-            ]);
+            ])->save();
 
         });
 

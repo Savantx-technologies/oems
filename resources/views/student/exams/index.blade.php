@@ -75,6 +75,7 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 @php
+                                    $isAttempted = in_array($exam->id, $attemptedExamIds ?? []);
                                     $now = now();
                                     $start = $exam->schedule?->start_at;
                                     $end = $exam->schedule?->end_at;
@@ -83,7 +84,11 @@
                                     $isExpired = $end && $now->greaterThan($end);
                                 @endphp
 
-                                @if($isLive)
+                                @if($isAttempted)
+                                    <span class="inline-flex items-center px-3 py-1 bg-green-50 text-green-700 text-xs font-medium rounded border border-green-100">
+                                        Submitted
+                                    </span>
+                                @elseif($isLive)
                                     <a href="{{ route('student.exams.live', $exam->id) }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-xs font-semibold rounded hover:bg-green-700 transition">
                                         Start Exam
                                     </a>
@@ -122,6 +127,7 @@
                 <div class="flex items-center justify-between">
                     <span class="text-base font-semibold text-gray-800">{{ $exam->title }}</span>
                     @php
+                        $isAttempted = in_array($exam->id, $attemptedExamIds ?? []);
                         $now = now();
                         $start = $exam->schedule?->start_at;
                         $end = $exam->schedule?->end_at;
@@ -130,7 +136,11 @@
                         $isExpired = $end && $now->greaterThan($end);
                     @endphp
 
-                    @if($isLive)
+                    @if($isAttempted)
+                        <span class="ml-2 inline-flex items-center px-2.5 py-0.5 bg-green-50 text-green-700 text-xs font-medium rounded border border-green-100">
+                            Submitted
+                        </span>
+                    @elseif($isLive)
                         <a href="{{ route('student.exams.live', $exam->id) }}" class="ml-2 inline-flex items-center px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded hover:bg-green-700 transition whitespace-nowrap">
                             Start Exam
                         </a>

@@ -31,6 +31,11 @@ class Exam extends Model
         'selected_questions' => 'array',
     ];
 
+    public function school()
+    {
+        return $this->belongsTo(School::class);
+    }
+
     public function questions()
     {
         return $this->belongsToMany(Question::class)

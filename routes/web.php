@@ -13,6 +13,8 @@ use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\RequestController as AdminRequestController;
 use App\Http\Controllers\Admin\StaffRequestController;
 use App\Http\Controllers\Admin\StudentController;
+use App\Http\Controllers\Admin\LiveMonitorController;
+use App\Http\Controllers\Admin\AttemptControlController;
 
 // Student Controllers
 use App\Http\Controllers\Student\Auth\LoginController as StudentLoginController;
@@ -28,6 +30,9 @@ use App\Http\Controllers\SuperAdmin\SchoolController;
 use App\Http\Controllers\SuperAdmin\SecurityLogController;
 use App\Http\Controllers\SuperAdmin\StaffRequestController as SuperAdminStaffRequestController;
 use App\Http\Controllers\SuperAdmin\StudentController as SuperAdminStudentController;
+use App\Http\Controllers\SuperAdmin\ExamController as SuperAdminExamController;
+use App\Http\Controllers\SuperAdmin\LiveMonitorController as SuperAdminLiveMonitorController;
+use App\Http\Controllers\SuperAdmin\AttemptControlController as SuperAdminAttemptControlController;
 
 // System Utility Routes
 Route::get('/clear-cache', function () {
@@ -116,6 +121,27 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
             Route::post('{id}/reset-exam', [SuperAdminStudentController::class, 'resetExam'])->name('reset-exam');
             Route::post('bulk-action', [SuperAdminStudentController::class, 'bulkAction'])->name('bulk-action');
         });
+
+        // Exam Management
+        Route::prefix('exams')->name('exams.')->group(function () {
+            Route::get('/', [SuperAdminExamController::class, 'index'])->name('index');
+            Route::get('/violation-summary', [SuperAdminExamController::class, 'violationSummary'])->name('violation-summary');
+            
+            // Live Monitor
+            Route::get('/{id}/monitor', [SuperAdminLiveMonitorController::class, 'index'])->name('monitor');
+            Route::get('/{id}/monitor/data', [SuperAdminLiveMonitorController::class, 'data'])->name('monitor.data');
+            
+            // WebRTC & Controls (Nested under attempts for cleaner API, but grouped here for SuperAdmin)
+            Route::prefix('../attempts')->group(function() {
+                Route::get('{attemptId}/stream', [SuperAdminLiveMonitorController::class, 'stream'])->name('attempts.stream');
+                Route::post('{attemptId}/signal', [SuperAdminLiveMonitorController::class, 'sendSignal'])->name('attempts.signal');
+                Route::post('{attemptId}/terminate', [SuperAdminAttemptControlController::class, 'terminate'])->name('attempts.terminate');
+                Route::post('{attemptId}/extend', [SuperAdminAttemptControlController::class, 'extendTime'])->name('attempts.extend');
+            });
+
+            Route::get('/{id}', [SuperAdminExamController::class, 'show'])->name('show');
+            Route::post('{id}/force-close', [SuperAdminExamController::class, 'forceClose'])->name('force-close');
+        });
     });
 });
 
@@ -160,6 +186,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('students/bulk-create', [StudentController::class, 'bulkCreate'])->name('students.bulk_create');
         Route::post('students/bulk-store', [StudentController::class, 'bulkStore'])->name('students.bulk_store');
         Route::resource('students', StudentController::class);
+    
+        Route::get('/admin/exams/{exam}/monitor', 
+        [LiveMonitorController::class, 'index']
+    )->name('admin.exams.monitor');
     });
 
     Route::get('questions/bulk-upload', [QuestionController::class, 'bulkForm'])
@@ -226,6 +256,17 @@ Route::get('practice-exams/{exam}/solution', [ExamController::class, 'solution']
     ->name('exams.practice.solutions');
 
 
+    // Live Monitoring & Control Room
+    Route::get('exams/{id}/monitor', [LiveMonitorController::class, 'index'])->name('exams.monitor');
+    Route::get('exams/{id}/monitor/data', [LiveMonitorController::class, 'data'])->name('exams.monitor.data');
+    
+    // WebRTC Signaling (Admin Side)
+    Route::get('attempts/{attemptId}/stream', [LiveMonitorController::class, 'stream'])->name('attempts.stream');
+    Route::post('attempts/{attemptId}/signal', [LiveMonitorController::class, 'sendSignal'])->name('attempts.signal');
+
+    // Attempt Controls
+    Route::post('attempts/{attemptId}/terminate', [AttemptControlController::class, 'terminate'])->name('attempts.terminate');
+    Route::post('attempts/{attemptId}/extend', [AttemptControlController::class, 'extendTime'])->name('attempts.extend');
 });
 
 // =====================
@@ -244,6 +285,12 @@ Route::prefix('student')->name('student.')->group(function () {
         Route::get('exams/history', [StudentExamController::class, 'history'])->name('exams.history');
         Route::get('exams/{id}/live', [StudentExamController::class, 'live'])->name('exams.live');
         Route::post('exams/{id}/submit', [StudentExamController::class, 'submit'])->name('exams.submit');
+        Route::post('exams/{id}/violation', [StudentExamController::class, 'logViolation'])->name('exams.violation');
+        
+        // Heartbeat & Signaling
+        Route::post('exams/{id}/heartbeat', [StudentExamController::class, 'heartbeat'])->name('exams.heartbeat');
+        Route::post('exams/{id}/signal', [StudentExamController::class, 'signal'])->name('exams.signal');
+
         Route::post('logout', [StudentLoginController::class, 'logout'])->name('logout');
         Route::view('profile', 'student.profile')->name('profile');
     });
