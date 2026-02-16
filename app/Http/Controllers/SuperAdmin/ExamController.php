@@ -1,0 +1,88 @@
+<?php
+
+namespace App\Http\Controllers\SuperAdmin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Exam;
+use App\Models\School;
+use App\Models\Question;
+use App\Models\ExamViolation;
+
+class ExamController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = Exam::query();
+
+        if ($request->filled('school_id')) {
+            $query->where('school_id', $request->school_id);
+        }
+
+        // Eager load school to display school name
+        $exams = $query->with(['school', 'schedule'])
+            ->latest()
+            ->paginate(20);
+
+        $schools = School::orderBy('name')->get();
+
+        return view('superadmin.exams.index', compact('exams', 'schools'));
+    }
+
+    public function show($id)
+    {
+        $exam = Exam::with(['school', 'schedule'])->findOrFail($id);
+
+        $questionIds = $exam->selected_questions ?? [];
+        $questions = collect();
+
+        if (!empty($questionIds)) {
+            $idsString = implode(',', $questionIds);
+            $questions = Question::whereIn('id', $questionIds)
+                ->orderByRaw("FIELD(id, $idsString)")
+                ->get();
+        }
+
+        $attempts = $exam->attempts()->with('user')->latest()->paginate(20);
+
+        return view('superadmin.exams.show', compact('exam', 'questions', 'attempts'));
+    }
+
+    public function forceClose($id)
+    {
+        $exam = Exam::findOrFail($id);
+        $exam->update(['status' => 'closed']);
+
+        return back()->with('success', 'Exam force closed successfully.');
+    }
+
+    public function violationSummary(Request $request)
+    {
+        $query = ExamViolation::with(['user', 'attempt.exam.school']);
+
+        if ($request->filled('school_id')) {
+            $query->whereHas('attempt.exam', function($q) use ($request) {
+                $q->where('school_id', $request->school_id);
+            });
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('user', function($q2) use ($search) {
+                    $q2->where('name', 'like', "%{$search}%")
+                       ->orWhere('admission_number', 'like', "%{$search}%");
+                })->orWhereHas('attempt.exam', function($q3) use ($search) {
+                    $q3->where('title', 'like', "%{$search}%");
+                })->orWhereHas('attempt.exam.school', function($q4) use ($search) {
+                    $q4->where('name', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        $violations = $query->latest()->paginate(20);
+        $schools = School::orderBy('name')->get();
+
+        return view('superadmin.exams.violation_summary', compact('violations', 'schools'));
+    }
+}

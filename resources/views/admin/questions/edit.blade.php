@@ -73,8 +73,8 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         Question
                     </label>
-                    <textarea name="question" rows="3" required
-                        class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">{{ old('question',$question->question) }}</textarea>
+                    <textarea name="question_text" rows="3" required
+                        class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">{{ old('question_text',$question->question_text) }}</textarea>
                 </div>
 
                 <div class="grid md:grid-cols-2 gap-5">

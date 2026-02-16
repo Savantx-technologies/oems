@@ -15,6 +15,15 @@ class ExamController extends Controller
     {
         $admin = auth('admin')->user();
 
+        // Auto-close expired exams (single query)
+        Exam::where('school_id', $admin->school_id)
+            ->where('status', 'published')
+            ->whereHas('schedule', function ($q) {
+                $q->where('end_at', '<=', now());
+            })
+            ->update(['status' => 'closed']);
+
+        // Now fetch paginated exams
         $exams = Exam::with('schedule')
             ->where('school_id', $admin->school_id)
             ->latest()
@@ -22,6 +31,8 @@ class ExamController extends Controller
 
         return view('admin.exams.index', compact('exams'));
     }
+
+
 
     public function create()
     {
@@ -99,14 +110,22 @@ class ExamController extends Controller
 
         $exam->update([
             'selected_questions' => $questions->pluck('id')->values()->toArray(),
-            'total_marks' => $questions->sum('marks')
+            'total_marks' => $questions->sum('marks'),
         ]);
 
-        return redirect()->route('admin.exams.index');
+        if ($exam->exam_type === 'mock') {
+
+            $exam->update([
+                'status' => 'published'
+            ]);
+
+            return redirect()
+                ->route('admin.exams.index')
+                ->with('success', 'Mock exam published successfully.');
+        }
+
+        return redirect()->route('admin.exams.schedule', $exam->id);
     }
-
-
-
 
     public function publish($id)
     {
@@ -117,6 +136,9 @@ class ExamController extends Controller
 
         if (empty($exam->selected_questions) || count($exam->selected_questions) === 0) {
             return back()->with('error', 'Attach questions first');
+        }
+        if ($exam->exam_type !== 'mock' && !$exam->schedule) {
+            return back()->with('error', 'Schedule exam first');
         }
 
         if (!$exam->schedule) {
@@ -236,7 +258,47 @@ class ExamController extends Controller
             ->with('success', 'Exam updated successfully.');
     }
 
+    public function practice()
+    {
+        $admin = auth('admin')->user();
 
+        $exams = Exam::where('school_id', $admin->school_id)
+            ->where('exam_type', 'practice')
+            ->where('status', 'published')
+            ->latest()
+            ->paginate(20);
+
+        return view('admin.exams.practice', compact('exams'));
+    }
+
+    public function solution(Exam $exam)
+    {
+        $admin = auth('admin')->user();
+
+        abort_if($exam->school_id !== $admin->school_id, 403);
+
+        // Ensure it's practice exam
+        if ($exam->exam_type !== 'practice') {
+            abort(404);
+        }
+
+        $questions = Question::whereIn('id', $exam->selected_questions ?? [])
+            ->get();
+
+        return view('admin.exams.solution', compact('exam', 'questions'));
+    }
+
+    public function practiceSolutions()
+    {
+        $admin = auth('admin')->user();
+
+        $exams = Exam::where('school_id', $admin->school_id)
+            ->where('exam_type', 'practice')
+            ->latest()
+            ->paginate(20);
+
+        return view('admin.exams.practice-solutions', compact('exams'));
+    }
 
 
 }

@@ -10,6 +10,8 @@ $readyToPublish = $hasQuestions && $hasSchedule;
 
 @section('content')
 
+@section('content')
+
 <div class="max-w-5xl mx-auto space-y-6">
 
     <!-- Header -->
@@ -28,19 +30,30 @@ $readyToPublish = $hasQuestions && $hasSchedule;
             Back to exams
         </a>
     </div>
-    @if(!$readyToPublish && $exam->status === 'draft')
+
+    {{-- Warning box --}}
+    @if(
+    $exam->status === 'draft'
+    && (
+    !$hasQuestions
+    || ($exam->exam_type !== 'mock' && !$hasSchedule)
+    )
+    )
 
     <div class="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
         <p class="font-semibold mb-1">Cannot publish this exam yet</p>
 
         <ul class="list-disc list-inside space-y-1">
+
             @if(!$hasQuestions)
             <li>No questions are attached to this exam.</li>
             @endif
 
-            @if(!$hasSchedule)
+            {{-- FIX : schedule warning only for non-mock --}}
+            @if($exam->exam_type !== 'mock' && !$hasSchedule)
             <li>Exam schedule is not set.</li>
             @endif
+
         </ul>
 
         <div class="mt-3 flex gap-2">
@@ -52,7 +65,8 @@ $readyToPublish = $hasQuestions && $hasSchedule;
             </a>
             @endif
 
-            @if(!$hasSchedule)
+            {{-- FIX : schedule button only for non-mock --}}
+            @if($exam->exam_type !== 'mock' && !$hasSchedule)
             <a href="{{ route('admin.exams.schedule',$exam->id) }}"
                 class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium">
                 Set Schedule
@@ -63,35 +77,12 @@ $readyToPublish = $hasQuestions && $hasSchedule;
     </div>
 
     @endif
-    @if($sets->count() > 1)
 
-    <div class="flex items-center gap-2 mb-4">
 
-        <span class="text-sm font-medium text-gray-700">
-            Question Set:
-        </span>
-
-        @foreach($sets as $code)
-
-        <a href="{{ route('admin.exams.show', $exam->id) }}?set={{ $code }}" class="px-3 py-1.5 rounded-lg text-sm font-semibold
-                  {{ $set === $code
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-            Set {{ $code }}
-        </a>
-
-        @endforeach
-
-    </div>
-
-    @endif
     <!-- Basic info -->
     <div class="bg-white rounded-xl border shadow-sm">
         <div class="p-6 grid md:grid-cols-3 gap-6">
-            {{-- <div>
-                <p class="text-xs text-gray-500">Exam Set</p>
-                <p class="font-medium">{{ $exam->set_code }}</p>
-            </div> --}}
+
             <div>
                 <p class="text-xs text-gray-500">Academic session</p>
                 <p class="font-medium">{{ $exam->academic_session }}</p>
@@ -114,22 +105,25 @@ $readyToPublish = $hasQuestions && $hasSchedule;
 
             <div>
                 <p class="text-xs text-gray-500">Passing marks</p>
-                <p class="font-medium">
-                    {{ $exam->pass_marks ?? '-' }}
-                </p>
+                <p class="font-medium">{{ $exam->pass_marks ?? '-' }}</p>
             </div>
 
             <div>
                 <p class="text-xs text-gray-500">Status</p>
-                <p class="font-medium">
-                    {{ ucfirst($exam->status) }}
-                </p>
+                <p class="font-medium">{{ ucfirst($exam->status) }}</p>
             </div>
 
         </div>
     </div>
 
-    <!-- Schedule -->
+
+    {{-- =========================
+    Schedule section
+    (hidden for mock)
+    ========================= --}}
+
+    @if($exam->exam_type !== 'mock')
+
     <div class="bg-white rounded-xl border shadow-sm">
         <div class="px-6 py-4 border-b">
             <h3 class="font-semibold text-gray-800">Schedule</h3>
@@ -161,13 +155,18 @@ $readyToPublish = $hasQuestions && $hasSchedule;
             </div>
 
             @else
+
             <div class="text-sm text-red-600">
                 Exam is not scheduled yet.
             </div>
+
             @endif
 
         </div>
     </div>
+
+    @endif
+
 
     <!-- Questions -->
     <div class="bg-white rounded-xl border shadow-sm">
@@ -179,7 +178,6 @@ $readyToPublish = $hasQuestions && $hasSchedule;
             <span class="text-sm text-gray-500">
                 {{ count($exam->selected_questions ?? []) }} questions
             </span>
-
         </div>
 
         <div class="overflow-x-auto">
@@ -192,7 +190,6 @@ $readyToPublish = $hasQuestions && $hasSchedule;
                         <th class="px-5 py-3 text-left">Question</th>
                         <th class="px-5 py-3 text-left">Marks</th>
                         <th class="px-5 py-3 text-left">Set</th>
-
                     </tr>
                 </thead>
 
@@ -201,21 +198,10 @@ $readyToPublish = $hasQuestions && $hasSchedule;
                     @forelse($questions as $q)
 
                     <tr>
-                        <td class="px-5 py-3">
-                            {{ $loop->iteration }}
-                        </td>
-
-                        <td class="px-5 py-3">
-                            {{ $q->question_text }}
-                        </td>
-
-                        <td class="px-5 py-3">
-                            {{ $q->marks }}
-                        </td>
-
-                        <td class="px-5 py-3">
-                            A
-                        </td>
+                        <td class="px-5 py-3">{{ $loop->iteration }}</td>
+                        <td class="px-5 py-3">{{ $q->question_text}}</td>
+                        <td class="px-5 py-3">{{ $q->marks }}</td>
+                        <td class="px-5 py-3">A</td>
                     </tr>
 
                     @empty
@@ -230,7 +216,6 @@ $readyToPublish = $hasQuestions && $hasSchedule;
 
                 </tbody>
 
-
             </table>
 
         </div>
@@ -238,5 +223,8 @@ $readyToPublish = $hasQuestions && $hasSchedule;
     </div>
 
 </div>
+
+@endsection
+
 
 @endsection

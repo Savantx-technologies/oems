@@ -53,7 +53,7 @@
                     </td>
 
                     <td class="px-4 py-3 text-gray-700">
-                        {{ Str::limit($q->question, 60) }}
+                        {{ Str::limit($q->question_text, 60) }}
                     </td>
 
                     <td class="px-4 py-3">

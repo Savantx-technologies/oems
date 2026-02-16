@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\QuestionsImport;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuestionController extends Controller
 {
@@ -20,7 +21,7 @@ class QuestionController extends Controller
 
         $questions = Question::where('school_id', $admin->school_id)
             ->latest()->paginate(20);
-             $type = DB::selectOne("
+        $type = DB::selectOne("
         SHOW COLUMNS FROM questions WHERE Field = 'difficulty'
     ");
 
@@ -31,7 +32,7 @@ class QuestionController extends Controller
         }, explode(',', $matches[1]));
 
 
-        return view('admin.questions.index', compact('questions','difficulties'));
+        return view('admin.questions.index', compact('questions', 'difficulties'));
     }
 
     public function create()
@@ -80,7 +81,7 @@ class QuestionController extends Controller
 
             'passage_id' => 'required_if:type,summary|nullable|exists:passages,id',
 
-            'question' => 'required|string',
+            'question_text' => 'required|string',
             'marks' => 'required|integer|min:1',
             'difficulty' => 'required',
             // only for mcq
@@ -98,7 +99,7 @@ class QuestionController extends Controller
 
         try {
 
-            $question = Question::create([
+            $question = Question::forceCreate([
 
                 'school_id' => $admin->school_id,
                 'created_by' => $admin->id,
@@ -109,7 +110,7 @@ class QuestionController extends Controller
 
                 'passage_id' => $request->passage_id,
 
-                'question' => $request->question,
+                'question_text' => $request->question_text,
                 'marks' => $request->marks,
 
                 'option_a' => $request->type == 'mcq' ? $request->option_a : null,
@@ -145,7 +146,7 @@ class QuestionController extends Controller
                 'class' => $question->class,
                 'subject' => $question->subject,
                 'type' => $question->type,
-                'question' => $question->question,
+                'question_text' => $question->question_text,
                 'marks' => $question->marks,
             ]);
 
@@ -154,8 +155,8 @@ class QuestionController extends Controller
         /* Normal submit */
         return redirect()->route(
             $request->has('save_add_more')
-                ? 'admin.questions.create'
-                : 'admin.questions.index'
+            ? 'admin.questions.create'
+            : 'admin.questions.index'
         );
     }
 
@@ -165,27 +166,28 @@ class QuestionController extends Controller
     {
         return view('admin.questions.bulk-upload');
     }
-    // public function bulkUpload(Request $request)
-    // {
-    //     $request->validate([
-    //         'file' => 'required|file|mimes:xlsx,csv'
-    //     ]);
+    public function bulkUpload(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt,xlsx'
+        ]);
 
-    //     Excel::import(new QuestionsImport, $request->file('file'));
+        $admin = auth('admin')->user();
 
-    //     fclose($file);
+        $import = new QuestionsImport($admin);
 
-    //     $report = [
-    //         'imported' => $imported,
-    //         'skipped' => $skipped,
-    //         'failed' => $failed,
-    //         'errors' => $errors
-    //     ];
+        Excel::import($import, $request->file('file'));
 
-    //     return redirect()
-    //         ->route('admin.questions.index')
-    //         ->with('success', 'All sheets imported successfully.');
-    // }
+        return redirect()
+            ->route('admin.questions.index')
+            ->with(
+                'success',
+                "Questions imported successfully. 
+             Imported: {$import->imported}, 
+             Skipped: {$import->skipped}"
+            );
+    }
+
 
     public function edit(Question $question)
     {
@@ -217,7 +219,7 @@ class QuestionController extends Controller
             'class' => 'required',
             'subject' => 'required',
             'type' => 'required|in:mcq,subjective,summary',
-            'question' => 'required',
+            'question_text' => 'required',
             'marks' => 'required|integer|min:1',
 
             'option_a' => 'required_if:type,mcq',
@@ -234,12 +236,12 @@ class QuestionController extends Controller
                 ? $request->type
                 : 'mcq';
 
-            $question->update([
+            $question->forceFill([
 
                 'class' => $request->class,
                 'subject' => $request->subject,
                 'type' => $type,
-                'question' => $request->question,
+                'question_text' => $request->question_text,
                 'marks' => $request->marks,
                 'difficulty' => $request->difficulty,
                 'option_a' => $type === 'mcq' ? $request->option_a : null,
@@ -251,7 +253,7 @@ class QuestionController extends Controller
                 'correct_option' => $type === 'mcq'
                     ? $request->correct_option
                     : null,
-            ]);
+            ])->save();
 
         });
 
@@ -273,5 +275,50 @@ class QuestionController extends Controller
         return back()->with('success', 'Question deleted');
     }
 
+    public function downloadSample()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename=questions_sample.csv',
+        ];
 
+        $columns = [
+            'class',
+            'subject',
+            'difficulty',
+            'question_text',
+            'marks',
+            'option_a',
+            'option_b',
+            'option_c',
+            'option_d',
+            'correct_option'
+        ];
+
+        $callback = function () use ($columns) {
+
+            $file = fopen('php://output', 'w');
+
+            // header row
+            fputcsv($file, $columns);
+
+            // example row
+            fputcsv($file, [
+                '8',
+                'Science',
+                'medium',
+                'What is photosynthesis?',
+                '2',
+                'Process by which plants make food',
+                'Process of breathing',
+                'Water cycle',
+                'Soil erosion',
+                'A'
+            ]);
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

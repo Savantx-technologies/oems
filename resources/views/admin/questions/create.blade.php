@@ -56,7 +56,7 @@
                         <td class="px-4 py-2">{{ $q->subject }}</td>
                         <td class="px-4 py-2 capitalize">{{ $q->type }}</td>
                         <td class="px-4 py-2 text-gray-700">
-                            {{ Str::limit($q->question,70) }}
+                            {{ Str::limit($q->question_text,70) }}
                         </td>
                         <td class="px-4 py-2">{{ $q->marks }}</td>
                     </tr>
@@ -147,7 +147,7 @@
                 <!-- Question -->
                 <div>
                     <label class="block text-sm font-medium mb-1">Question</label>
-                    <textarea name="question" rows="3" required
+                    <textarea name="question_text" rows="3" required
                         class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                 </div>
 
@@ -436,7 +436,7 @@ saveAddBtn.addEventListener('click', function(e){
         }
 
         // reset only question + options
-        form.querySelector('textarea[name="question"]').value = '';
+        form.querySelector('textarea[name="question_text"]').value = '';
 
         if(typeSelect.value === 'mcq'){
 

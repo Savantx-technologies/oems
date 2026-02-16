@@ -27,6 +27,19 @@
     <!-- Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
+    <script>
+        document.addEventListener('keydown', function(e) {
+            // Block F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U
+            if (
+                e.key === 'F12' || e.keyCode === 123 ||
+                (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+                (e.ctrlKey && e.key.toUpperCase() === 'U')
+            ) {
+                e.preventDefault();
+            }
+        });
+    </script>
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -60,7 +73,7 @@
     </style>
 </head>
 
-<body class="bg-gray-50 h-full" x-data="{ sidebarOpen: false }">
+<body class="bg-gray-50 h-full" x-data="{ sidebarOpen: false }" oncontextmenu="return false">
 
     <!-- Sidebar Backdrop -->
     <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" x-cloak></div>

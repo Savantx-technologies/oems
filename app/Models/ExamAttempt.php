@@ -20,6 +20,8 @@ class ExamAttempt extends Model
     protected $casts = [
         'started_at' => 'datetime',
         'submitted_at' => 'datetime',
+        'expires_at' => 'datetime',
+        'last_activity_at' => 'datetime',
     ];
 
     public function user()
@@ -35,5 +37,10 @@ class ExamAttempt extends Model
     public function answers()
     {
         return $this->hasMany(UserExamAnswer::class, 'attempt_id');
+    }
+
+    public function violations()
+    {
+        return $this->hasMany(ExamViolation::class, 'attempt_id');
     }
 }
