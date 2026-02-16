@@ -28,11 +28,11 @@
                 <thead class="sticky top-0 bg-gray-100 border-b z-10">
                     <tr class="text-gray-700">
                         <th class="px-3 py-2 text-left">Time</th>
-                        <th class="px-3 py-2 text-left">User</th>
                         <th class="px-3 py-2 text-left">Event</th>
                         <th class="px-3 py-2 text-left">IP</th>
                         <th class="px-3 py-2 text-left">Browser</th>
-                        <th class="px-3 py-2 text-left">Payload</th>
+                        <th class="px-3 py-2 text-left">Location</th>
+
                     </tr>
                 </thead>
 
@@ -52,14 +52,6 @@
                             </div>
                         </td>
 
-                        {{-- user --}}
-                        <td class="px-3 py-2">
-                            <div class="font-medium capitalize">
-                                {{ $log->guard }}
-                            </div>
-                            <div class="text-xs text-gray-500">
-                                ID: {{ $log->user_id ?? '-' }}
-                            </div>
                         </td>
 
                         {{-- event --}}
@@ -84,29 +76,20 @@
                         </td>
 
                         {{-- browser (short, not full UA) --}}
-                        <td class="px-3 py-2 text-xs text-gray-600 max-w-[220px] truncate"
-                            title="{{ $log->user_agent }}">
-                            {{ $log->user_agent }}
+                        {{-- browser --}}
+                        <td class="px-3 py-2 text-xs text-gray-600">
+                            <div class="font-medium">
+                                {{ $log->browser }} {{ $log->browser_version }}
+                            </div>
+                            <div class="text-gray-400">
+                                {{ $log->platform }}
+                            </div>
+                        </td>
+                        {{-- location --}}
+                        <td class="px-3 py-2 text-xs text-gray-700">
+                            {{ $log->location }}
                         </td>
 
-                        {{-- payload --}}
-                        <td class="px-3 py-2 text-xs">
-
-                            @if($log->payload)
-                            <details class="cursor-pointer">
-                                <summary class="text-blue-600 hover:underline">
-                                    View
-                                </summary>
-
-                                <pre class="mt-2 p-2 bg-gray-50 border rounded text-xs max-h-40 overflow-auto">
-{{ json_encode($log->payload, JSON_PRETTY_PRINT) }}
-                                    </pre>
-                            </details>
-                            @else
-                            <span class="text-gray-400">—</span>
-                            @endif
-
-                        </td>
 
                     </tr>
 

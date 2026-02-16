@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Exam extends Model
 {
@@ -23,12 +24,12 @@ class Exam extends Model
         'instructions',
         'total_marks',
         'status',
-         'selected_questions',
+        'selected_questions',
     ];
 
     protected $casts = [
-    'selected_questions' => 'array',
-];
+        'selected_questions' => 'array',
+    ];
 
     public function questions()
     {
@@ -40,11 +41,21 @@ class Exam extends Model
 
     public function schedule()
     {
-        return $this->hasOne(\App\Models\ExamSchedule::class);
+        return $this->hasOne(\App\Models\ExamSchedule::class,'exam_id');
     }
 
     public function attempts()
     {
         return $this->hasMany(ExamAttempt::class);
     }
+
+   public function isExpired()
+{
+    if (!$this->schedule) {
+        return false;
+    }
+
+    return now()->greaterThanOrEqualTo($this->schedule->end_at);
+}
+
 }

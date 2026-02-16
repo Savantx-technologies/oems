@@ -12,8 +12,9 @@ class ExamSchedule extends Model
         'end_at',
         'late_entry_allowed',
         'late_entry_minutes',
-        'max_attempts'
+        'max_attempts',
     ];
+
 
     protected $casts = [
         'start_at' => 'datetime',

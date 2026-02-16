@@ -139,10 +139,13 @@
                             <li>
                                 <div class="px-5 py-2 text-gray-500 text-xs uppercase font-bold mt-2">Students</div>
                             </li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.students.index') ? 'text-white bg-white/10' : '' }}" href="{{ route('admin.students.index') }}">View
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.students.index') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.students.index') }}">View
                                     Students</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Reset Attempt</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Request Block Student</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
+                                    href="#">Reset Attempt</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
+                                    href="#">Request Block Student</a></li>
                         </ul>
                     </div>
                 </li>
@@ -270,10 +273,21 @@
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Practice Exam</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Solution View</a></li>
+                            <li>
+                                <a href="{{ route('admin.exams.practice') }}"
+                                    class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10">
+                                    Practice Exam
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="{{ route('admin.exams.practice.solutions') }}"
+                                    class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10">
+                                    Solution View
+                                </a>
+                            </li>
+
+
                         </ul>
                     </div>
                 </li>
@@ -358,8 +372,11 @@
                         <ul class="flex flex-col py-1">
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="#">Activity Logs</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Login History</a></li>
+                          <li>
+                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.security.logs') ? 'text-white bg-white/10' : '' }}" href="{{ route('admin.security.logs') }}">
+                                    Login History
+                                </a>
+                            </li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="#">Violation Logs</a></li>
                         </ul>

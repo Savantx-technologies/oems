@@ -216,6 +216,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         ->name('exams.update');
     Route::delete('exams/{id}', [ExamController::class, 'destroy'])
         ->name('exams.destroy');
+
+        Route::get('practice-exams', [ExamController::class, 'practice'])
+    ->name('exams.practice');
+
+Route::get('practice-exams/{exam}/solution', [ExamController::class, 'solution'])
+    ->name('exams.solution');
+    Route::get('practice-solutions', [ExamController::class, 'practiceSolutions'])
+    ->name('exams.practice.solutions');
+
+
 });
 
 // =====================

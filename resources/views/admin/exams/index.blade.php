@@ -69,19 +69,30 @@
                         </td>
 
                         <td class="px-5 py-3 text-sm text-gray-600">
-                            @if($exam->schedule)
+
+                            @if($exam->exam_type === 'mock')
+
+                            <span class="text-gray-400">-</span>
+
+                            @elseif($exam->schedule)
+
                             <div>
                                 {{ $exam->schedule->start_at->format('d M Y H:i') }}
                             </div>
                             <div class="text-xs text-gray-500">
                                 to {{ $exam->schedule->end_at->format('d M Y H:i') }}
                             </div>
+
                             @else
+
                             <span class="text-xs text-red-600 font-medium">
                                 Not scheduled
                             </span>
+
                             @endif
+
                         </td>
+
 
                         <td class="px-5 py-3">
                             {{ $exam->total_marks }}
@@ -108,7 +119,7 @@
                         <td class="px-5 py-3 text-right">
                             <div class="flex justify-end gap-2">
 
-                                @if($exam->status !== 'closed')
+                                @if($exam->status === 'draft')
 
                                 <a href="{{ route('admin.exams.questions',$exam->id) }}"
                                     class="px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
@@ -119,17 +130,7 @@
                                     class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">
                                     Schedule
                                 </a>
-
-                                @else
-
-                                <span
-                                    class="px-3 py-1.5 text-center w-full font-semibold rounded-lg bg-gray-200 text-red-700">
-                                    Exam closed
-                                </span>
-
                                 @endif
-
-
                                 @php
                                 $ready = $exam->schedule
                                 && !empty($exam->selected_questions)

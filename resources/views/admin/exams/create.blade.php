@@ -76,8 +76,6 @@
                         class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
                         required>
                         <option value="">Select type</option>
-                        <option value="unit">Unit Test</option>
-                        <option value="term">Term Exam</option>
                         <option value="practice">Practice</option>
                         <option value="mock">Mock</option>
                         <option value="final">Final</option>
