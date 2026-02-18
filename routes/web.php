@@ -131,16 +131,16 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
             Route::get('/{id}/monitor', [SuperAdminLiveMonitorController::class, 'index'])->name('monitor');
             Route::get('/{id}/monitor/data', [SuperAdminLiveMonitorController::class, 'data'])->name('monitor.data');
             
-            // WebRTC & Controls (Nested under attempts for cleaner API, but grouped here for SuperAdmin)
-            Route::prefix('../attempts')->group(function() {
-                Route::get('{attemptId}/stream', [SuperAdminLiveMonitorController::class, 'stream'])->name('attempts.stream');
-                Route::post('{attemptId}/signal', [SuperAdminLiveMonitorController::class, 'sendSignal'])->name('attempts.signal');
-                Route::post('{attemptId}/terminate', [SuperAdminAttemptControlController::class, 'terminate'])->name('attempts.terminate');
-                Route::post('{attemptId}/extend', [SuperAdminAttemptControlController::class, 'extendTime'])->name('attempts.extend');
-            });
-
             Route::get('/{id}', [SuperAdminExamController::class, 'show'])->name('show');
             Route::post('{id}/force-close', [SuperAdminExamController::class, 'forceClose'])->name('force-close');
+        });
+
+        // WebRTC & Controls (Attempts)
+        Route::prefix('attempts')->name('attempts.')->group(function() {
+            Route::get('{attemptId}/stream', [SuperAdminLiveMonitorController::class, 'stream'])->name('stream');
+            Route::post('{attemptId}/signal', [SuperAdminLiveMonitorController::class, 'sendSignal'])->name('signal');
+            Route::post('{attemptId}/terminate', [SuperAdminAttemptControlController::class, 'terminate'])->name('terminate');
+            Route::post('{attemptId}/extend', [SuperAdminAttemptControlController::class, 'extendTime'])->name('extend');
         });
     });
 });
@@ -281,7 +281,9 @@ Route::prefix('student')->name('student.')->group(function () {
 
     Route::middleware(['auth', \App\Http\Middleware\CheckSchoolActive::class . ':web'])->group(function () {
         Route::get('dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
+        Route::get('system-check', [StudentDashboardController::class, 'systemCheck'])->name('system.check');
         Route::get('exams', [StudentExamController::class, 'index'])->name('exams.index');
+        Route::get('exams/mock', [StudentExamController::class, 'mock'])->name('exams.mock');
         Route::get('exams/history', [StudentExamController::class, 'history'])->name('exams.history');
         Route::get('exams/{id}/live', [StudentExamController::class, 'live'])->name('exams.live');
         Route::post('exams/{id}/submit', [StudentExamController::class, 'submit'])->name('exams.submit');

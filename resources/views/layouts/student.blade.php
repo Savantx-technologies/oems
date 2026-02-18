@@ -127,9 +127,9 @@
                                 </a>
                             </li>
                             <li>
-                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('student.exams.practice') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ Route::has('student.exams.practice') ? route('student.exams.practice') : '#' }}">
-                                    Demo / Practice
+                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('student.exams.mock') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ Route::has('student.exams.mock') ? route('student.exams.mock') : '#' }}">
+                                    Mock Exams
                                 </a>
                             </li>
                             <li>

@@ -119,6 +119,14 @@
                         <td class="px-5 py-3 text-right">
                             <div class="flex justify-end gap-2">
 
+                                @php
+                                $now = now();
+                                $isLive = $exam->schedule && $now->between($exam->schedule->start_at, $exam->schedule->end_at);
+                                // Mock exams don't need a schedule to be ready for publishing
+                                $ready = ($exam->exam_type === 'mock' || $exam->schedule)
+                                    && !empty($exam->selected_questions) && count($exam->selected_questions) > 0;
+                                @endphp
+
                                 @if($exam->status === 'draft')
 
                                 <a href="{{ route('admin.exams.questions',$exam->id) }}"
@@ -132,8 +140,8 @@
                                 </a>
                                 @endif
 
-                                {{-- Monitor Button: Show if exam is published --}}
-                                @if($exam->status === 'published')
+                                {{-- Monitor Button: Show if exam is published and is currently live --}}
+                                @if($exam->status === 'published' && $isLive)
                                 <a href="{{ route('admin.exams.monitor', $exam->id) }}"
                                     class="px-3 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-700">
                                     <i class="bi bi-camera-video"></i> Monitor
@@ -146,12 +154,6 @@
                                     Exam closed
                                 </span>
                                 @endif
-
-                                @php
-                                $ready = $exam->schedule
-                                && !empty($exam->selected_questions)
-                                && count($exam->selected_questions) > 0;
-                                @endphp
 
                                 @if($exam->status === 'draft')
                                 @if($ready)

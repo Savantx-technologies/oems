@@ -20,6 +20,7 @@ class ExamController extends Controller
         $exams = Exam::where('school_id', $student->school_id)
             ->where('class', $student->grade)
             ->where('status', 'published')
+            ->where('exam_type', '!=', 'mock')
             ->where(function ($query) use ($now) {
                 $query->whereHas('schedule', function ($q) use ($now) {
                     $q->where('end_at', '>', $now);
@@ -34,6 +35,19 @@ class ExamController extends Controller
             ->toArray();
 
         return view('student.exams.index', compact('exams', 'attemptedExamIds'));
+    }
+
+    public function mock()
+    {
+        $student = Auth::user();
+
+        $exams = Exam::where('school_id', $student->school_id)
+            ->where('exam_type', 'mock')
+            ->where('status', 'published')
+            ->latest()
+            ->paginate(10);
+
+        return view('student.exams.mock', compact('exams'));
     }
 
     public function history()
@@ -65,9 +79,11 @@ class ExamController extends Controller
             ->with(['schedule'])
             ->firstOrFail();
 
-        // 1. Strict Schedule Validation
-        if (!$exam->schedule || !$now->between($exam->schedule->start_at, $exam->schedule->end_at)) {
-            return redirect()->route('student.exams.index')->with('error', 'This exam is not currently live.');
+        // 1. Strict Schedule Validation (Skip for Mock)
+        if ($exam->exam_type !== 'mock') {
+            if (!$exam->schedule || !$now->between($exam->schedule->start_at, $exam->schedule->end_at)) {
+                return redirect()->route('student.exams.index')->with('error', 'This exam is not currently live.');
+            }
         }
 
         // 2. Lifecycle Management: Create or Retrieve Attempt (Safe method)
@@ -75,6 +91,20 @@ class ExamController extends Controller
             'user_id' => $student->id,
             'exam_id' => $exam->id,
         ]);
+
+        // Mock Exam: Allow retakes if expired or submitted
+        if ($exam->exam_type === 'mock' && $attempt->exists) {
+            $baseExpiresAt = $attempt->expires_at ?? $attempt->started_at->copy()->addMinutes($exam->duration_minutes);
+            $expiresAt = $baseExpiresAt->addSeconds($attempt->extra_time_seconds ?? 0);
+            
+            if ($attempt->submitted_at || $attempt->status !== 'in_progress' || $now->greaterThan($expiresAt)) {
+                $attempt->delete();
+                $attempt = new \App\Models\ExamAttempt([
+                    'user_id' => $student->id,
+                    'exam_id' => $exam->id,
+                ]);
+            }
+        }
 
         if (!$attempt->exists) {
             $attempt->school_id = $student->school_id;
@@ -86,7 +116,7 @@ class ExamController extends Controller
         }
 
         // 3. Check Status
-        if ($attempt->submitted_at) {
+        if ($exam->exam_type !== 'mock' && $attempt->submitted_at) {
             return redirect()->route('student.exams.index')->with('error', 'You have already submitted this exam.');
         }
 
@@ -139,20 +169,31 @@ class ExamController extends Controller
         })->values();
 
         // Prepare data for JS frontend
-        $questionsData = $questions->map(function ($q) {
+        $questionsData = $questions->map(function ($q) use ($exam) {
             $options = [];
             if ($q->option_a) $options[] = ['id' => 'A', 'text' => $q->option_a];
             if ($q->option_b) $options[] = ['id' => 'B', 'text' => $q->option_b];
             if ($q->option_c) $options[] = ['id' => 'C', 'text' => $q->option_c];
             if ($q->option_d) $options[] = ['id' => 'D', 'text' => $q->option_d];
 
-            return [
+            $data = [
                 'id' => $q->id,
                 'text' => $q->question_text,
                 'marks' => $q->marks,
                 'options' => $options
             ];
+
+            // For mock exams, send correct answer for local validation
+            if ($exam->exam_type === 'mock') {
+                $data['correct_option'] = $q->correct_option;
+            }
+
+            return $data;
         })->values();
+
+        if ($exam->exam_type === 'mock') {
+            return view('student.exams.live_mock', compact('exam', 'questionsData', 'remainingSeconds', 'sessionToken'));
+        }
 
         return view('student.exams.live', compact('exam', 'questionsData', 'remainingSeconds', 'sessionToken'));
     }
@@ -386,7 +427,8 @@ class ExamController extends Controller
         if ($request->type === 'get_answer') {
             $stream = DB::table('exam_streams')->where('attempt_id', $attempt->id)->first();
             return response()->json([
-                'answer' => $stream ? $stream->answer : null
+                'answer' => $stream ? $stream->answer : null,
+                'admin_ice_candidates' => $stream ? $stream->admin_ice_candidates : null
             ]);
         }
 

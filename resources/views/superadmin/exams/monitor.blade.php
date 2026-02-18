@@ -71,8 +71,7 @@
 
                     <!-- Live Camera Feed Area -->
                     <div x-show="streaming" x-transition class="relative w-full bg-black rounded-lg overflow-hidden aspect-video border border-gray-800">
-                        <video x-ref="video" autoplay playsinline class="w-full h-full object-contain" x-show="!showScreen"></video>
-                        <video x-ref="screen" autoplay playsinline class="w-full h-full object-contain" x-show="showScreen"></video>
+                        <video x-ref="video" autoplay playsinline muted class="w-full h-full object-contain"></video>
                         
                         <div x-show="loading" class="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-xs">
                             <i class="bi bi-arrow-repeat animate-spin mr-2"></i> Connecting...
@@ -81,12 +80,6 @@
                         <button @click="toggleCamera(student.id)" class="absolute top-2 right-2 bg-red-600/80 hover:bg-red-600 text-white p-1 rounded text-xs">
                             <i class="bi bi-x-lg"></i>
                         </button>
-
-                        <div class="absolute bottom-2 left-2" x-show="hasScreen">
-                            <button @click="showScreen = !showScreen" class="bg-gray-800/80 hover:bg-gray-700 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-                                <i class="bi" :class="showScreen ? 'bi-person-video' : 'bi-display'"></i> <span x-text="showScreen ? 'Show Camera' : 'Show Screen'"></span>
-                            </button>
-                        </div>
                     </div>
 
                     <!-- Stats -->
@@ -195,8 +188,6 @@ function studentCard() {
         loading: false,
         pc: null,
         iceInterval: null,
-        showScreen: false,
-        hasScreen: false,
 
         async toggleCamera(studentId) {
             if (this.streaming) {
@@ -209,21 +200,27 @@ function studentCard() {
         async startCamera(studentId) {
             this.streaming = true;
             this.loading = true;
-            this.showScreen = false;
-            this.hasScreen = false;
 
             if (this.pc) this.pc.close();
 
             const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
             this.pc = new RTCPeerConnection(config);
 
+            this.pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    fetch(`/superadmin/attempts/${studentId}/signal`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                        body: JSON.stringify({ type: 'admin_ice', payload: JSON.stringify(event.candidate) })
+                    });
+                }
+            };
+
             this.pc.ontrack = (event) => {
                 const stream = event.streams[0];
+                // Only accept the first stream as the camera feed, ignore screen share.
                 if (!this.$refs.video.srcObject) {
                     this.$refs.video.srcObject = stream;
-                } else if (this.$refs.video.srcObject.id !== stream.id) {
-                    this.$refs.screen.srcObject = stream;
-                    this.hasScreen = true;
                 }
                 this.loading = false;
             };
@@ -298,7 +295,6 @@ function studentCard() {
             this.streaming = false;
             this.loading = false;
             this.$refs.video.srcObject = null;
-            this.$refs.screen.srcObject = null;
             if (this.iceInterval) clearInterval(this.iceInterval);
             if (this.pc) { this.pc.close(); this.pc = null; }
         }

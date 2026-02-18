@@ -79,8 +79,25 @@ class LiveMonitorController extends Controller
 
     public function sendSignal(Request $request, $attemptId)
     {
-        // SuperAdmin generally views streams (receives offers/answers) but might need to send ICE candidates if initiating connection
-        // For viewing, the logic is handled mostly client-side via the offer/answer exchange initiated by the viewer.
+        if ($request->type === 'answer') {
+            DB::table('exam_streams')->updateOrInsert(
+                ['attempt_id' => $attemptId],
+                ['answer' => $request->payload, 'updated_at' => now()]
+            );
+            return response()->json(['status' => 'saved']);
+        }
+
+        if ($request->type === 'admin_ice') {
+            DB::table('exam_streams')->updateOrInsert(
+                ['attempt_id' => $attemptId],
+                [
+                    'admin_ice_candidates' => DB::raw("CONCAT(IFNULL(admin_ice_candidates,''), '" . addslashes($request->payload) . "||')"),
+                    'updated_at' => now()
+                ]
+            );
+            return response()->json(['status' => 'ice_saved']);
+        }
+
         return response()->json(['status' => 'ok']);
     }
 }
