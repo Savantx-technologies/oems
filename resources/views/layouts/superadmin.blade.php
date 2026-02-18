@@ -19,37 +19,8 @@
     <!-- Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-        [x-cloak] {
-            display: none !important;
-        }
-
-        /* Custom Scrollbar for Sidebar */
-        .sidebar-scroll::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .sidebar-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 3px;
-        }
-
-        .sidebar-scroll {
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-        }
-
-        .nav-link-active {
-            color: #fff !important;
-            background: rgba(255, 255, 255, 0.05);
-            border-left-color: #3b82f6 !important;
-            /* blue-500 */
-        }
-    </style>
 </head>
 
 <body class="bg-gray-50 h-full">

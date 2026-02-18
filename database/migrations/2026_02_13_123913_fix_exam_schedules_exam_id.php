@@ -31,6 +31,13 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        //
+         Schema::table('exam_schedules', function (Blueprint $table) {
+
+        $table->dropForeign(['exam_id']);
+
+        $table->foreign('exam_id')
+              ->references('id')
+              ->on('exams');
+    });
     }
 };

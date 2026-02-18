@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('questions', function (Blueprint $table) {
-            $table->string('correct_option', 1)->nullable()->after('option_d');
+            $table->string('correct_option')->nullable()->after('option_d');
 
         });
     }

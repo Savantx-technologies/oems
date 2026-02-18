@@ -11,9 +11,12 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('exam_schedules', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('exam_id');
+            $table->engine = 'InnoDB';
 
+            $table->id();
+            $table->foreignId('exam_id')
+                ->constrained('exams')
+                ->cascadeOnDelete();
             $table->dateTime('start_at');
             $table->dateTime('end_at');
             $table->timestamps();

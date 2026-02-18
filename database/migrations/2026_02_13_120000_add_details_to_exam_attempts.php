@@ -16,7 +16,7 @@ return new class extends Migration
                 $table->timestamp('expires_at')->nullable()->after('started_at');
             }
             if (!Schema::hasColumn('exam_attempts', 'question_order')) {
-                $table->json('question_order')->nullable()->after('session_token');
+                $table->json('question_order')->nullable()->after('expires_at');
             }
             if (!Schema::hasColumn('exam_attempts', 'terminated_reason')) {
                 $table->string('terminated_reason')->nullable()->after('status');

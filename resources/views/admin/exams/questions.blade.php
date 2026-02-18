@@ -61,10 +61,13 @@
 
                     <thead class="bg-gray-50 text-xs uppercase text-gray-600">
                         <tr>
-                            <th class="px-5 py-3 w-10"></th>
+                            <th class="px-5 py-3 w-10">
+                                <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-indigo-600">
+                            </th>
                             <th class="px-5 py-3 text-left">Class</th>
                             <th class="px-5 py-3 text-left">Subject</th>
                             <th class="px-5 py-3 text-left">Question</th>
+                            <th class="px-5 py-3 text-left">Difficulty</th>
                             <th class="px-5 py-3 text-left w-24">Marks</th>
                         </tr>
                     </thead>
@@ -94,6 +97,9 @@
                             <td class="px-5 py-3 text-gray-800 question-text">
                                 {{ $q->question_text }}
                             </td>
+                            <td class="px-5 py-3 text-gray-800 question-text">
+                                {{ $q->difficulty }}
+                            </td>
 
                             <td class="px-5 py-3">
                                 <span
@@ -122,55 +128,78 @@
         </div>
 
     </form>
-    <div id="confirmBox" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+    <!-- Confirm Modal -->
+    <div id="confirmBox" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden
+            flex items-center justify-center z-50 p-4">
 
-        <div class="bg-white rounded-lg w-full max-w-4xl p-6">
+        <div class="bg-white rounded-2xl shadow-2xl
+                w-full max-w-4xl overflow-hidden">
 
-            <h3 class="text-lg font-semibold mb-2">
-                Confirm questions for exam
-            </h3>
+            <!-- Header -->
+            <div class="px-6 py-5 border-b bg-gradient-to-r from-indigo-50 to-white">
 
-            <p class="text-sm text-gray-600 mb-4">
-                {{ $exam->title }} – Class {{ $exam->class }} – {{ $exam->subject }}
-            </p>
+                <h3 class="text-lg font-semibold text-gray-800">
+                    Confirm Questions for Exam
+                </h3>
 
-            <div class="max-h-96 overflow-y-auto border rounded">
+                <p class="text-sm text-gray-600 mt-1">
+                    {{ $exam->title }}
+                    <span class="mx-2">•</span>
+                    Class {{ $exam->class }}
+                    <span class="mx-2">•</span>
+                    {{ $exam->subject }}
+                </p>
 
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-3 py-2">#</th>
-                            <th class="px-3 py-2">Difficulty</th>
-                            <th class="px-3 py-2">Question</th>
-                            <th class="px-3 py-2">Marks</th>
+            </div>
+
+            <!-- Table Section -->
+            <div class="max-h-[400px] overflow-y-auto px-6 py-4 bg-gray-50">
+
+                <table class="min-w-full text-sm border-separate border-spacing-y-2">
+
+                    <thead>
+                        <tr class="text-xs uppercase text-gray-500">
+                            <th class="px-4 py-2 text-left">#</th>
+                            <th class="px-4 py-2 text-left">Difficulty</th>
+                            <th class="px-4 py-2 text-left">Question</th>
+                            <th class="px-4 py-2 text-right">Marks</th>
                         </tr>
                     </thead>
-                    <tbody id="confirmTable"></tbody>
+
+                    <tbody id="confirmTable">
+                        <!-- JS will insert rows here -->
+                    </tbody>
+
                 </table>
 
             </div>
 
-            <div class="flex justify-end gap-3 mt-4">
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t bg-white flex justify-end gap-3">
 
-                <button type="button" id="cancelConfirm" class="px-4 py-2 border rounded">
+                <button type="button" id="cancelConfirm" class="px-5 py-2 rounded-lg border border-gray-300
+                       text-sm text-gray-600 hover:bg-gray-100 transition">
                     Cancel
                 </button>
 
-                <button type="submit" form="attachForm" class="px-5 py-2 bg-indigo-600 text-white rounded">
+                <button type="submit" form="attachForm" class="px-6 py-2 rounded-lg bg-indigo-600 text-white
+                       text-sm font-medium hover:bg-indigo-700 shadow transition">
                     Confirm & Attach
                 </button>
 
             </div>
 
         </div>
+
     </div>
+
 
 
 </div>
 
 
 <script>
-const checks = document.querySelectorAll('.question-check');
+    const checks = document.querySelectorAll('.question-check');
 const rows   = document.querySelectorAll('.question-row');
 
 const filterDifficulty = document.getElementById('filterDifficulty');

@@ -59,13 +59,9 @@
                     <pre
                         class="bg-gray-100 border rounded-md px-2 py-2 text-xs text-gray-800 overflow-x-auto whitespace-pre">
 class,subject,question_text,marks,option_a,option_b,option_c,option_d,correct_option
-8,Science,What is photosynthesis?,2,Process in plants,Animal breathing,Water cycle,Soil erosion,A
+8,Science,What is photosynthesis?,2,Process in plants,Animal breathing,Water cycle,Soil erosion,2
 </pre>
-                    <p class="mt-2 text-xs text-gray-500">
-                        <strong>Note:</strong> <span class="text-red-600 font-semibold">correct_option</span> must be
-                        one of: <span class="font-mono">A</span>, <span class="font-mono">B</span>, <span
-                            class="font-mono">C</span>, or <span class="font-mono">D</span>.
-                    </p>
+                   
                 </div>
 
                 <div class="flex justify-end gap-3">

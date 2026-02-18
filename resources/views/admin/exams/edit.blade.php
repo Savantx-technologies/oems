@@ -66,7 +66,7 @@
                     </label>
                     <select name="exam_type"
                         class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="practice" @selected($exam->exam_type=='practice')>Practice</option>
+                        <option value="term" @selected($exam->exam_type=='term')>Term</option>
                         <option value="mock" @selected($exam->exam_type=='mock')>Mock</option>
                         <option value="final" @selected($exam->exam_type=='final')>Final</option>
                     </select>

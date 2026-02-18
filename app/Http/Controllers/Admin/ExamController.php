@@ -263,8 +263,8 @@ class ExamController extends Controller
         $admin = auth('admin')->user();
 
         $exams = Exam::where('school_id', $admin->school_id)
-            ->where('exam_type', 'practice')
-            ->where('status', 'published')
+            ->where('exam_type', 'mock')
+            // ->where('status', 'published')
             ->latest()
             ->paginate(20);
 
@@ -278,7 +278,7 @@ class ExamController extends Controller
         abort_if($exam->school_id !== $admin->school_id, 403);
 
         // Ensure it's practice exam
-        if ($exam->exam_type !== 'practice') {
+        if ($exam->exam_type !== 'mock') {
             abort(404);
         }
 
@@ -293,7 +293,7 @@ class ExamController extends Controller
         $admin = auth('admin')->user();
 
         $exams = Exam::where('school_id', $admin->school_id)
-            ->where('exam_type', 'practice')
+            ->where('exam_type', 'mock')
             ->latest()
             ->paginate(20);
 

@@ -15,12 +15,32 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuestionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $admin = auth('admin')->user();
 
-        $questions = Question::where('school_id', $admin->school_id)
-            ->latest()->paginate(20);
+        $query = Question::where('school_id', $admin->school_id);
+
+        // Apply search if entered
+        if ($request->filled('search')) {
+
+            $search = trim($request->search);
+
+            $query->where(function ($q) use ($search) {
+
+                // If numeric → filter by class
+                if (is_numeric($search)) {
+                    $q->where('class', $search);
+                }
+
+                // Always allow subject search
+                $q->orWhere('subject', 'like', "%{$search}%");
+            });
+        }
+
+        $questions = $query->latest()->paginate(20);
+
+        // Difficulty enum logic (unchanged)
         $type = DB::selectOne("
         SHOW COLUMNS FROM questions WHERE Field = 'difficulty'
     ");
@@ -31,9 +51,9 @@ class QuestionController extends Controller
             return trim($value, "'");
         }, explode(',', $matches[1]));
 
-
         return view('admin.questions.index', compact('questions', 'difficulties'));
     }
+
 
     public function create()
     {
@@ -98,6 +118,22 @@ class QuestionController extends Controller
         DB::beginTransaction();
 
         try {
+            $correctOptionText = null;
+
+            if ($request->type === 'mcq') {
+
+                $selected = $request->correct_option;
+
+                $options = [
+                    'A' => $request->option_a,
+                    'B' => $request->option_b,
+                    'C' => $request->option_c,
+                    'D' => $request->option_d,
+                ];
+
+                $correctOptionText = $options[$selected] ?? null;
+            }
+
 
             $question = Question::forceCreate([
 
@@ -118,9 +154,8 @@ class QuestionController extends Controller
                 'option_c' => $request->type == 'mcq' ? $request->option_c : null,
                 'option_d' => $request->type == 'mcq' ? $request->option_d : null,
 
-                'correct_option' => $request->type == 'mcq'
-                    ? $request->correct_option
-                    : null,
+                'correct_option' => $correctOptionText,
+
 
             ]);
             DB::commit();
@@ -235,6 +270,19 @@ class QuestionController extends Controller
             $type = in_array($request->type, ['mcq', 'subjective', 'summary'])
                 ? $request->type
                 : 'mcq';
+            $correctOptionText = null;
+
+            if ($type === 'mcq') {
+
+                $options = [
+                    'A' => $request->option_a,
+                    'B' => $request->option_b,
+                    'C' => $request->option_c,
+                    'D' => $request->option_d,
+                ];
+
+                $correctOptionText = $options[$request->correct_option] ?? null;
+            }
 
             $question->forceFill([
 
@@ -250,9 +298,8 @@ class QuestionController extends Controller
                 'option_d' => $type === 'mcq' ? $request->option_d : null,
 
                 // already text (because of your JS sync)
-                'correct_option' => $type === 'mcq'
-                    ? $request->correct_option
-                    : null,
+                'correct_option' => $correctOptionText,
+
             ])->save();
 
         });
