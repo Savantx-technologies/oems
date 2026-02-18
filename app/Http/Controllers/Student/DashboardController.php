@@ -21,4 +21,9 @@ class DashboardController extends Controller
 
         return view('student.dashboard', compact('upcomingExams'));
     }
+
+    public function systemCheck()
+    {
+        return view('student.system_check');
+    }
 }

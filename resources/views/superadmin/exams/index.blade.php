@@ -66,26 +66,32 @@
                             </td>
                             <td class="px-6 py-3 text-right">
                                 @php
+                                    $now = now();
+                                    $isLive = $exam->schedule && $now->between($exam->schedule->start_at, $exam->schedule->end_at);
                                     $isOver = $exam->schedule && $exam->schedule->end_at && $exam->schedule->end_at->isPast();
                                 @endphp
-                                <a href="{{ route('superadmin.exams.show', $exam->id) }}" class="text-indigo-600 hover:text-indigo-900 text-xs font-medium mr-3">
-                                    View
-                                </a>
-                                @if($exam->status === 'published')
-                                    <a href="{{ route('superadmin.exams.monitor', $exam->id) }}" class="text-blue-600 hover:text-blue-900 text-xs font-medium mr-3"><i class="bi bi-camera-video"></i> Monitor</a>
-                                @endif
-                                @if($exam->status === 'published')
-                                    <form action="{{ route('superadmin.exams.force-close', $exam->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to {{ $isOver ? 'close' : 'force stop' }} this exam?');" class="inline">
-                                        @csrf
-                                        <button type="submit" class="{{ $isOver ? 'text-orange-600 hover:text-orange-900' : 'text-red-600 hover:text-red-900' }} text-xs font-medium">
-                                            {{ $isOver ? 'Mark Closed' : 'Force Stop' }}
-                                        </button>
-                                    </form>
-                                @elseif($exam->status === 'draft')
-                                    <span class="text-gray-400 text-xs">Draft</span>
-                                @else
-                                    <span class="text-gray-400 text-xs">Closed</span>
-                                @endif
+                                <div class="flex flex-wrap justify-end gap-x-3 gap-y-2">
+                                    <a href="{{ route('superadmin.exams.show', $exam->id) }}" class="text-indigo-600 hover:text-indigo-900 text-xs font-medium">
+                                        View
+                                    </a>
+                                    @if($exam->status === 'published' && $isLive)
+                                        <a href="{{ route('superadmin.exams.monitor', $exam->id) }}" class="text-blue-600 hover:text-blue-900 text-xs font-medium">
+                                            <i class="bi bi-camera-video"></i> Monitor
+                                        </a>
+                                    @endif
+                                    @if($exam->status === 'published')
+                                        <form action="{{ route('superadmin.exams.force-close', $exam->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to {{ $isOver ? 'close' : 'force stop' }} this exam?');" class="inline">
+                                            @csrf
+                                            <button type="submit" class="{{ $isOver ? 'text-orange-600 hover:text-orange-900' : 'text-red-600 hover:text-red-900' }} text-xs font-medium">
+                                                {{ $isOver ? 'Mark Closed' : 'Force Stop' }}
+                                            </button>
+                                        </form>
+                                    @elseif($exam->status === 'draft')
+                                        <span class="text-gray-400 text-xs">Draft</span>
+                                    @else
+                                        <span class="text-gray-400 text-xs">Closed</span>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty
