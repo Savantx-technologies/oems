@@ -195,7 +195,7 @@ class ExamController extends Controller
             return view('student.exams.live_mock', compact('exam', 'questionsData', 'remainingSeconds', 'sessionToken'));
         }
 
-        return view('student.exams.live', compact('exam', 'questionsData', 'remainingSeconds', 'sessionToken'));
+        return view('student.exams.live', compact('exam', 'attempt', 'questionsData', 'remainingSeconds', 'sessionToken'));
     }
 
     public function submit(Request $request, $id)
@@ -400,38 +400,61 @@ class ExamController extends Controller
         ]);
     }
 
-    public function signal(Request $request, $id)
+    public function signal(Request $request, $attemptId)
     {
         $student = Auth::user();
-        $attempt = ExamAttempt::where('user_id', $student->id)->where('exam_id', $id)->firstOrFail();
+        $attempt = ExamAttempt::where('user_id', $student->id)->where('id', $attemptId)->firstOrFail();
+        $stream = \App\Models\ExamStream::findOrFail($request->stream_id);
 
-        if ($request->type === 'offer') {
-            DB::table('exam_streams')->updateOrInsert(
-                ['attempt_id' => $attempt->id],
-                ['offer' => $request->payload, 'updated_at' => now()]
-            );
-            return response()->json(['status' => 'offer_stored']);
+        // Security check
+        if ($stream->attempt_id !== $attempt->id) {
+            return response()->json(['status' => 'error', 'message' => 'Mismatched attempt'], 403);
         }
 
-        if ($request->type === 'student_ice') {
-            DB::table('exam_streams')->updateOrInsert(
-                ['attempt_id' => $attempt->id],
-                [
-                    'student_ice_candidates' => DB::raw("CONCAT(IFNULL(student_ice_candidates,''), '" . addslashes($request->payload) . "||')"),
-                    'updated_at' => now()
-                ]
-            );
-            return response()->json(['status' => 'ice_stored']);
-        }
-
-        if ($request->type === 'get_answer') {
-            $stream = DB::table('exam_streams')->where('attempt_id', $attempt->id)->first();
-            return response()->json([
-                'answer' => $stream ? $stream->answer : null,
-                'admin_ice_candidates' => $stream ? $stream->admin_ice_candidates : null
+        if ($request->type === 'offer' && $request->payload) {
+            $stream->update([
+                'offer' => $request->payload,
+                'status' => 'offer_sent'
             ]);
+            return response()->json(['status' => 'offer_sent']);
         }
 
-        return response()->json(['status' => 'invalid_type'], 400);
+        if ($request->type === 'student_ice' && $request->payload) {
+            $stream->student_ice_candidates .= $request->payload . '||';
+            $stream->save();
+            return response()->json(['status' => 'ice_saved']);
+        }
+
+        return response()->json(['status' => 'invalid_request'], 400);
+    }
+
+    public function pollSignals(Request $request, $attemptId)
+    {
+        $student = Auth::user();
+        $attempt = ExamAttempt::where('user_id', $student->id)->where('id', $attemptId)->firstOrFail();
+
+        $signals = [];
+
+        // 1. Check for new viewer requests
+        $newRequests = \App\Models\ExamStream::where('attempt_id', $attempt->id)->where('status', 'requesting')->get();
+        foreach ($newRequests as $req) {
+            $signals[] = ['type' => 'new_viewer', 'stream_id' => $req->id, 'session_id' => $req->viewer_session_id];
+        }
+
+        // 2. Check for answers and ICE candidates from viewers
+        $activeStreams = \App\Models\ExamStream::where('attempt_id', $attempt->id)->whereIn('status', ['offer_sent', 'connected'])->get();
+
+        foreach ($activeStreams as $stream) {
+            if ($stream->answer) {
+                $signals[] = ['type' => 'answer', 'stream_id' => $stream->id, 'payload' => $stream->answer];
+                $stream->update(['answer' => null, 'status' => 'connected']); // Consume answer
+            }
+            if ($stream->viewer_ice_candidates) {
+                $signals[] = ['type' => 'viewer_ice', 'stream_id' => $stream->id, 'payload' => $stream->viewer_ice_candidates];
+                $stream->update(['viewer_ice_candidates' => null]); // Consume ICE
+            }
+        }
+
+        return response()->json($signals);
     }
 }
