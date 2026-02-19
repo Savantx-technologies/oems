@@ -24,7 +24,9 @@ class LiveMonitorController extends Controller
         $exam = Exam::where('school_id', $admin->school_id)->findOrFail($id);
 
         $attempts = ExamAttempt::where('exam_id', $id)
-            ->with('user:id,name,admission_number,photo')
+            ->with(['user' => function ($q) {
+                $q->withTrashed();
+            }])
             ->select([
                 'id',
                 'user_id',
@@ -38,27 +40,22 @@ class LiveMonitorController extends Controller
             ->get()
             ->map(function ($attempt) {
                 $violationCount = DB::table('exam_violations')->where('attempt_id', $attempt->id)->count();
-
-                // ✅ Replacement Block
                 $remaining = 0;
-
                 if ($attempt->expires_at) {
-                    $expiresAt = $attempt->expires_at->copy()
-                        ->addSeconds($attempt->extra_time_seconds ?? 0);
-
+                    $expiresAt = $attempt->expires_at->copy()->addSeconds($attempt->extra_time_seconds ?? 0);
                     $remaining = (int) now()->diffInSeconds($expiresAt, false);
                 }
-
                 $isIdle = $attempt->last_activity_at && now()->diffInSeconds($attempt->last_activity_at) > 30;
                 if ($attempt->status !== 'in_progress') $isIdle = false;
-
+                // Handle missing user gracefully
+                $user = $attempt->user;
                 return [
                     'id' => $attempt->id,
-                    'student_name' => $attempt->user->name,
-                    'admission_number' => $attempt->user->admission_number,
-                    'photo_url' => $attempt->user->photo ? asset('storage/' . $attempt->user->photo) : null,
+                    'student_name' => $user ? $user->name : 'Unknown',
+                    'admission_number' => $user ? $user->admission_number : null,
+                    'photo_url' => ($user && $user->photo) ? asset('storage/' . $user->photo) : null,
                     'status' => $attempt->status,
-                    'started_at' => $attempt->started_at->format('H:i:s'),
+                    'started_at' => $attempt->started_at ? $attempt->started_at->format('H:i:s') : null,
                     'remaining_seconds' => max(0, $remaining),
                     'last_activity_ago' => $attempt->last_activity_at ? now()->diffInSeconds($attempt->last_activity_at) : null,
                     'is_idle' => $isIdle,
@@ -70,42 +67,52 @@ class LiveMonitorController extends Controller
         return response()->json(['attempts' => $attempts]);
     }
 
-    public function stream($attemptId)
+    public function requestStream(Request $request, $attemptId)
     {
         $admin = auth('admin')->user();
         $attempt = ExamAttempt::where('school_id', $admin->school_id)->findOrFail($attemptId);
 
-        $stream = DB::table('exam_streams')->where('attempt_id', $attemptId)->first();
-
-        return response()->json([
-            'offer' => $stream ? $stream->offer : null,
-            'answer' => $stream ? $stream->answer : null,
-            'student_ice_candidates' => $stream ? $stream->student_ice_candidates : null
+        $stream = \App\Models\ExamStream::create([
+            'attempt_id' => $attempt->id,
+            'viewer_id' => $admin->id,
+            'viewer_type' => get_class($admin),
+            'viewer_session_id' => $request->input('session_id'),
+            'status' => 'requesting'
         ]);
+
+        return response()->json(['stream_id' => $stream->id]);
     }
 
-    public function sendSignal(Request $request, $attemptId)
+    public function viewerSignal(Request $request, $streamId)
     {
         $admin = auth('admin')->user();
-        $attempt = ExamAttempt::where('school_id', $admin->school_id)->findOrFail($attemptId);
+        $stream = \App\Models\ExamStream::where('viewer_id', $admin->id)->where('viewer_type', get_class($admin))->findOrFail($streamId);
 
         if ($request->type === 'answer') {
-            DB::table('exam_streams')->updateOrInsert(
-                ['attempt_id' => $attemptId],
-                ['answer' => $request->payload, 'updated_at' => now()]
-            );
+            $stream->update(['answer' => $request->payload]);
             return response()->json(['status' => 'saved']);
         }
 
-        if ($request->type === 'admin_ice') {
-            DB::table('exam_streams')->updateOrInsert(
-                ['attempt_id' => $attemptId],
-                [
-                    'admin_ice_candidates' => DB::raw("CONCAT(IFNULL(admin_ice_candidates,''), '" . addslashes($request->payload) . "||')"),
-                    'updated_at' => now()
-                ]
-            );
+        if ($request->type === 'viewer_ice') {
+            $stream->viewer_ice_candidates .= $request->payload . '||';
+            $stream->save();
             return response()->json(['status' => 'ice_saved']);
         }
+
+        return response()->json(['status' => 'invalid_type'], 400);
+    }
+
+    public function pollViewer(Request $request, $streamId)
+    {
+        $admin = auth('admin')->user();
+        $stream = \App\Models\ExamStream::where('viewer_id', $admin->id)->where('viewer_type', get_class($admin))->findOrFail($streamId);
+
+        $offer = $stream->offer;
+        $ice = $stream->student_ice_candidates;
+
+        // Consume the data after reading to prevent re-sending
+        $stream->update(['student_ice_candidates' => null]);
+
+        return response()->json(['offer' => $offer, 'ice_candidates' => $ice]);
     }
 }

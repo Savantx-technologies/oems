@@ -205,6 +205,7 @@
                 showViolationWarning: false,
                 violationMessage: '',
 
+                peerConnections: {}, // { stream_id: pc }
                 get currentQuestion() {
                     return this.questions[this.currentIndex];
                 },
@@ -227,7 +228,7 @@
                         this.startExam();
 
                     } catch (err) {
-                        console.error(err);
+                        console.error("Permission error:", err);
                         this.permissionError = "Access denied: " + err.message + ". Please allow access to proceed.";
                         
                         // Cleanup if partial success
@@ -242,7 +243,7 @@
                     this.initTimer();
                     this.initSecurity();
                     this.initHeartbeat();
-                    this.initWebRTC();
+                    this.initSignaling();
                     
                     // Monitor screen stream stop
                     if(this.screenStream) {
@@ -266,7 +267,7 @@
                 },
                 
                 initHeartbeat() {
-                    setInterval(() => {
+                    const heartbeatInterval = setInterval(() => {
                         fetch('{{ route("student.exams.heartbeat", $exam->id) }}', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
@@ -275,6 +276,7 @@
                         .then(res => res.json())
                         .then(data => {
                             if (data.status === 'terminated' || data.status === 'expired' || data.status === 'submitted') {
+                                clearInterval(heartbeatInterval);
                                 window.location.href = '{{ route("student.exams.index") }}';
                             }
                             // Sync timer if needed, or handle extra time
@@ -287,7 +289,7 @@
                         });
                     }, 15000); // 15 seconds
                 },
-
+                
                 initSecurity() {
                     // 1. Full Screen Enforcement
                     this.checkFullScreen();
@@ -473,77 +475,93 @@
                     return 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50';
                 },
 
-                async initWebRTC() {
-                    if (!this.mediaStream) return;
+                // New WebRTC Signaling Logic
+                initSignaling() {
+                    // Poll for signals from viewers (new requests, answers, ICE)
+                    setInterval(() => this.pollSignals(), 3000);
+                },
 
+                async pollSignals() {
+                    const res = await fetch('{{ route("student.exams.pollSignals", $attempt->id) }}');
+                    const signals = await res.json();
+
+                    for (const signal of signals) {
+                        switch(signal.type) {
+                            case 'new_viewer':
+                                await this.handleNewViewer(signal.stream_id);
+                                break;
+                            case 'answer':
+                                await this.handleAnswer(signal.stream_id, signal.payload);
+                                break;
+                            case 'viewer_ice':
+                                this.handleViewerIce(signal.stream_id, signal.payload);
+                                break;
+                        }
+                    }
+                },
+
+                async handleNewViewer(streamId) {
+                    if (this.peerConnections[streamId] || !this.mediaStream) return;
+                    console.log('New viewer requested stream. ID:', streamId);
+                    
                     const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-                    this.peerConnection = new RTCPeerConnection(config);
+                    const pc = new RTCPeerConnection(config);
+                    this.peerConnections[streamId] = pc;
 
-                    // Handle ICE Candidates
-                    this.peerConnection.onicecandidate = (event) => {
+                    pc.onicecandidate = (event) => {
                         if (event.candidate) {
-                            fetch('{{ route("student.exams.signal", $exam->id) }}', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                                body: JSON.stringify({
-                                    type: 'student_ice',
-                                    payload: JSON.stringify(event.candidate),
-                                    session_token: this.sessionToken
-                                })
-                            });
+                            this.sendStudentSignal(streamId, 'student_ice', JSON.stringify(event.candidate));
                         }
                     };
 
-                    // Add tracks
-                    this.mediaStream.getTracks().forEach(track => {
-                        this.peerConnection.addTrack(track, this.mediaStream);
-                    });
+                    pc.onconnectionstatechange = () => {
+                        if (pc.connectionState === 'disconnected' || pc.connectionState === 'closed' || pc.connectionState === 'failed') {
+                            pc.close();
+                            delete this.peerConnections[streamId];
+                        }
+                    };
 
-                    // Add Screen Tracks
+                    // Add all media tracks to the new peer connection
+                    this.mediaStream.getTracks().forEach(track => pc.addTrack(track, this.mediaStream));
                     if (this.screenStream) {
-                        this.screenStream.getTracks().forEach(track => {
-                            this.peerConnection.addTrack(track, this.screenStream);
-                        });
+                        this.screenStream.getTracks().forEach(track => pc.addTrack(track, this.screenStream));
                     }
 
-                    // Create Offer
-                    const offer = await this.peerConnection.createOffer();
-                    await this.peerConnection.setLocalDescription(offer);
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
 
-                    // Wait for ICE gathering to complete (simplest for polling)
-                    await new Promise(resolve => {
-                        if (this.peerConnection.iceGatheringState === 'complete') {
-                            resolve();
-                        } else {
-                            const checkIce = () => {
-                                if (this.peerConnection.iceGatheringState === 'complete') {
-                                    this.peerConnection.removeEventListener('icegatheringstatechange', checkIce);
-                                    resolve();
-                                }
-                            };
-                            this.peerConnection.addEventListener('icegatheringstatechange', checkIce);
-                        }
-                    });
+                    await this.sendStudentSignal(streamId, 'offer', JSON.stringify(pc.localDescription));
+                },
 
-                    // Send Offer
-                    await fetch('{{ route("student.exams.signal", $exam->id) }}', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                        body: JSON.stringify({ type: 'offer', payload: JSON.stringify(this.peerConnection.localDescription) })
-                    });
+                async handleAnswer(streamId, answerPayload) {
+                    const pc = this.peerConnections[streamId];
+                    if (pc && !pc.currentRemoteDescription) {
+                        console.log('Received answer from viewer:', streamId);
+                        await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(answerPayload)));
+                    }
+                },
 
-                    // Poll for Answer
-                    const pollAnswer = setInterval(async () => {
-                        const res = await fetch('{{ route("student.exams.signal", $exam->id) }}?type=get_answer&_token={{ csrf_token() }}', {
-                            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                            body: JSON.stringify({ type: 'get_answer' })
+                handleViewerIce(streamId, icePayload) {
+                    const pc = this.peerConnections[streamId];
+                    if (pc) {
+                        icePayload.split('||').forEach(candidateStr => {
+                            if (candidateStr) {
+                                pc.addIceCandidate(new RTCIceCandidate(JSON.parse(candidateStr))).catch(e => console.error("ICE Add Error:", e));
+                            }
                         });
-                        const data = await res.json();
-                        if (data.answer && !this.peerConnection.currentRemoteDescription) {
-                            await this.peerConnection.setRemoteDescription(JSON.parse(data.answer));
-                            clearInterval(pollAnswer);
-                        }
-                    }, 3000);
+                    }
+                },
+
+                sendStudentSignal(streamId, type, payload) {
+                    return fetch('{{ route("student.exams.signal", $attempt->id) }}', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                                body: JSON.stringify({
+                                    stream_id: streamId,
+                                    type: type,
+                                    payload: payload
+                                })
+                            });
                 }
             }
         }
