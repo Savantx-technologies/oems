@@ -6,8 +6,7 @@
 <div class="max-w-3xl mx-auto space-y-8">
 
     <div class="pt-2">
-        <h1 class="text-2xl font-bold text-gray-900">Bulk Upload Questions</h1>
-        <p class="text-sm text-gray-500 mt-1">
+        <p class="text-sm text-gray-500 mt-1 text-center">
             Upload multiple MCQ questions by providing a CSV file in the specified format below.
         </p>
     </div>
@@ -59,7 +58,7 @@
                     <pre
                         class="bg-gray-100 border rounded-md px-2 py-2 text-xs text-gray-800 overflow-x-auto whitespace-pre">
 class,subject,question_text,marks,option_a,option_b,option_c,option_d,correct_option
-8,Science,What is photosynthesis?,2,Process in plants,Animal breathing,Water cycle,Soil erosion,2
+8,Science,What is photosynthesis?,2,Process in plants,Animal breathing,Water cycle,Soil erosion,A
 </pre>
                    
                 </div>

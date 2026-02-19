@@ -94,23 +94,20 @@ class QuestionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-
             'class' => 'required|string',
             'subject' => 'required|string',
             'type' => 'required|in:mcq,subjective,summary',
-
             'passage_id' => 'required_if:type,summary|nullable|exists:passages,id',
-
             'question_text' => 'required|string',
             'marks' => 'required|integer|min:1',
             'difficulty' => 'required',
+
             // only for mcq
             'option_a' => 'required_if:type,mcq',
             'option_b' => 'required_if:type,mcq',
             'option_c' => 'required_if:type,mcq',
             'option_d' => 'required_if:type,mcq',
-            'correct_option' => 'required_if:type,mcq|string'
-
+            'correct_option' => 'required_if:type,mcq|in:A,B,C,D'
         ]);
 
         $admin = auth('admin')->user();
@@ -118,34 +115,22 @@ class QuestionController extends Controller
         DB::beginTransaction();
 
         try {
-            $correctOptionText = null;
+
+            $correctOptionValue = null;
 
             if ($request->type === 'mcq') {
-
-                $selected = $request->correct_option;
-
-                $options = [
-                    'A' => $request->option_a,
-                    'B' => $request->option_b,
-                    'C' => $request->option_c,
-                    'D' => $request->option_d,
-                ];
-
-                $correctOptionText = $options[$selected] ?? null;
+                // Store only A/B/C/D
+                $correctOptionValue = strtoupper($request->correct_option);
             }
 
-
             $question = Question::forceCreate([
-
                 'school_id' => $admin->school_id,
                 'created_by' => $admin->id,
                 'difficulty' => $request->difficulty,
                 'class' => $request->class,
                 'subject' => $request->subject,
                 'type' => $request->type,
-
                 'passage_id' => $request->passage_id,
-
                 'question_text' => $request->question_text,
                 'marks' => $request->marks,
 
@@ -154,17 +139,14 @@ class QuestionController extends Controller
                 'option_c' => $request->type == 'mcq' ? $request->option_c : null,
                 'option_d' => $request->type == 'mcq' ? $request->option_d : null,
 
-                'correct_option' => $correctOptionText,
-
-
+                'correct_option' => $correctOptionValue,
             ]);
+
             DB::commit();
 
         } catch (\Throwable $e) {
-
             DB::rollBack();
             throw $e;
-
         }
 
         /* Store recent questions for current session */
@@ -172,10 +154,8 @@ class QuestionController extends Controller
         $recent[] = $question->id;
         session()->put('recent_questions', array_unique($recent));
 
-
         /* Save & Add More (AJAX) */
         if ($request->ajax() && $request->has('save_add_more')) {
-
             return response()->json([
                 'id' => $question->id,
                 'class' => $question->class,
@@ -184,16 +164,15 @@ class QuestionController extends Controller
                 'question_text' => $question->question_text,
                 'marks' => $question->marks,
             ]);
-
         }
 
-        /* Normal submit */
         return redirect()->route(
             $request->has('save_add_more')
             ? 'admin.questions.create'
             : 'admin.questions.index'
         );
     }
+
 
 
 
@@ -251,18 +230,18 @@ class QuestionController extends Controller
         abort_if($question->school_id != $admin->school_id, 403);
 
         $request->validate([
-            'class' => 'required',
-            'subject' => 'required',
+            'class' => 'required|string',
+            'subject' => 'required|string',
             'type' => 'required|in:mcq,subjective,summary',
-            'question_text' => 'required',
+            'question_text' => 'required|string',
             'marks' => 'required|integer|min:1',
+            'difficulty' => 'required',
 
             'option_a' => 'required_if:type,mcq',
             'option_b' => 'required_if:type,mcq',
             'option_c' => 'required_if:type,mcq',
             'option_d' => 'required_if:type,mcq',
-            'difficulty' => 'required',
-            'correct_option' => 'required_if:type,mcq|string'
+            'correct_option' => 'required_if:type,mcq|in:A,B,C,D'
         ]);
 
         DB::transaction(function () use ($request, $question) {
@@ -270,45 +249,37 @@ class QuestionController extends Controller
             $type = in_array($request->type, ['mcq', 'subjective', 'summary'])
                 ? $request->type
                 : 'mcq';
-            $correctOptionText = null;
+
+            $correctOptionValue = null;
 
             if ($type === 'mcq') {
-
-                $options = [
-                    'A' => $request->option_a,
-                    'B' => $request->option_b,
-                    'C' => $request->option_c,
-                    'D' => $request->option_d,
-                ];
-
-                $correctOptionText = $options[$request->correct_option] ?? null;
+                // ✅ Store only A/B/C/D
+                $correctOptionValue = strtoupper($request->correct_option);
             }
 
             $question->forceFill([
-
                 'class' => $request->class,
                 'subject' => $request->subject,
                 'type' => $type,
                 'question_text' => $request->question_text,
                 'marks' => $request->marks,
                 'difficulty' => $request->difficulty,
+
                 'option_a' => $type === 'mcq' ? $request->option_a : null,
                 'option_b' => $type === 'mcq' ? $request->option_b : null,
                 'option_c' => $type === 'mcq' ? $request->option_c : null,
                 'option_d' => $type === 'mcq' ? $request->option_d : null,
 
-                // already text (because of your JS sync)
-                'correct_option' => $correctOptionText,
-
+                // ✅ Correct fix
+                'correct_option' => $correctOptionValue,
             ])->save();
-
         });
-
 
         return redirect()
             ->route('admin.questions.index')
             ->with('success', 'Question updated successfully');
     }
+
 
 
     public function destroy(Question $question)

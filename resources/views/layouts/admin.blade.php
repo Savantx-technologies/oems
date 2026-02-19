@@ -172,7 +172,7 @@
                             {{ $examOpen ? 'text-white bg-white/10 border-l-4 border-indigo-500' : 'text-gray-400 border-l-4 border-transparent' }}
                             hover:bg-white/5 hover:text-white transition-colors" href="#" @click.prevent="open = !open">
                         <div>
-                            <i class="bi bi-file-earmark-text mr-2"></i>
+                            <i class="bi bi-file-earmark-text mr-2"></i>    
                             Exams
                         </div>
                         <i class="bi bi-chevron-down text-xs transition-transform"
