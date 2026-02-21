@@ -1,0 +1,236 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Exam;
+use App\Models\ExamAttempt;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+
+class ReportController extends Controller
+{
+    public function index()
+    {
+        return redirect()->route('admin.reports.exams');
+    }
+
+    public function exams(Request $request)
+    {
+        $admin = auth('admin')->user();
+
+        $query = Exam::where('school_id', $admin->school_id);
+
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        // Assuming 'attempts' relationship exists on Exam model
+        $exams = $query->withCount('attempts')->latest()->paginate(15);
+
+        return view('admin.reports.exams', compact('exams'));
+    }
+
+    public function examDetail($id)
+    {
+        $admin = auth('admin')->user();
+        $exam = Exam::where('school_id', $admin->school_id)->findOrFail($id);
+
+        $attempts = ExamAttempt::where('exam_id', $id)
+            ->with('user')
+            ->latest()
+            ->paginate(20);
+
+        $totalAttempts = ExamAttempt::where('exam_id', $id)->count();
+        
+        // Statistics
+        $avgScore = ExamAttempt::where('exam_id', $id)->avg('score') ?? 0;
+        $maxScore = ExamAttempt::where('exam_id', $id)->max('score') ?? 0;
+        $minScore = ExamAttempt::where('exam_id', $id)->min('score') ?? 0;
+        $passed   = ExamAttempt::where('exam_id', $id)->where('score', '>=', $exam->pass_marks)->count();
+
+        return view('admin.reports.exam_detail', compact(
+            'exam',
+            'attempts',
+            'totalAttempts',
+            'avgScore',
+            'maxScore',
+            'minScore',
+            'passed'
+        ));
+    }
+
+    public function analytics(Request $request)
+    {
+        $admin = auth('admin')->user();
+        $schoolId = $admin->school_id;
+
+        // Overall Stats
+        $examIds = Exam::where('school_id', $schoolId)->pluck('id');
+
+        $totalExams = $examIds->count();
+        $totalAttempts = ExamAttempt::whereIn('exam_id', $examIds)->count();
+        $overallAvgScore = ExamAttempt::whereIn('exam_id', $examIds)->avg('score');
+        $totalStudents = User::where('school_id', $schoolId)->where('role', 'student')->count();
+
+        // Performance by Subject
+        $subjectPerformance = DB::table('exams')
+            ->join('exam_attempts', 'exams.id', '=', 'exam_attempts.exam_id')
+            ->where('exams.school_id', $schoolId)
+            ->where('exams.total_marks', '>', 0)
+            ->select(
+                'exams.subject',
+                DB::raw('AVG(exam_attempts.score / exams.total_marks * 100) as average_percentage')
+            )
+            ->groupBy('exams.subject')
+            ->orderBy('average_percentage', 'desc')
+            ->limit(10) // Limit for display
+            ->get();
+
+        // Performance by Class
+        $classPerformance = DB::table('exams')
+            ->join('exam_attempts', 'exams.id', '=', 'exam_attempts.exam_id')
+            ->where('exams.school_id', $schoolId)
+            ->where('exams.total_marks', '>', 0)
+            ->select(
+                'exams.class',
+                DB::raw('AVG(exam_attempts.score / exams.total_marks * 100) as average_percentage')
+            )
+            ->groupBy('exams.class')
+            ->orderBy('exams.class')
+            ->get();
+
+        return view('admin.reports.analytics', compact(
+            'totalExams', 'totalAttempts', 'overallAvgScore', 'totalStudents', 'subjectPerformance', 'classPerformance'
+        ));
+    }
+
+    public function exportExamDetail($id)
+    {
+        $admin = auth('admin')->user();
+        $exam = Exam::where('school_id', $admin->school_id)->findOrFail($id);
+
+        $attempts = ExamAttempt::where('exam_id', $id)
+            ->with('user')
+            ->latest()
+            ->get();
+
+        $fileName = 'exam_report_' . $exam->id . '_' . now()->format('Ymd') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$fileName\"",
+        ];
+
+        $callback = function () use ($attempts, $exam) {
+            $file = fopen('php://output', 'w');
+
+            // Header row
+            fputcsv($file, [
+                'Student Name',
+                'Admission Number',
+                'Status',
+                'Score',
+                'Total Marks',
+                'Percentage',
+                'Submitted At',
+            ]);
+
+            // Data rows
+            foreach ($attempts as $attempt) {
+                $percentage = $exam->total_marks > 0 ? (($attempt->score ?? 0) / $exam->total_marks) * 100 : 0;
+                fputcsv($file, [
+                    $attempt->user->name ?? 'Unknown Student',
+                    $attempt->user->admission_number ?? '-',
+                    ucfirst(str_replace('_', ' ', $attempt->status)),
+                    $attempt->score ?? 0,
+                    $exam->total_marks,
+                    round($percentage, 2) . '%',
+                    $attempt->updated_at->format('d M Y H:i'),
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function examViolations($id)
+    {
+        $admin = auth('admin')->user();
+        $exam = Exam::where('school_id', $admin->school_id)->findOrFail($id);
+
+        $violations = DB::table('exam_violations')
+            ->join('exam_attempts', 'exam_violations.attempt_id', '=', 'exam_attempts.id')
+            ->join('users', 'exam_violations.user_id', '=', 'users.id')
+            ->where('exam_attempts.exam_id', $id)
+            ->select(
+                'exam_violations.*',
+                'users.name as student_name',
+                'users.admission_number',
+                'users.email'
+            )
+            ->orderBy('exam_violations.created_at', 'desc')
+            ->paginate(20);
+
+        return view('admin.reports.exam_violations', compact('exam', 'violations'));
+    }
+
+    public function exportExamViolations($id)
+    {
+        $admin = auth('admin')->user();
+        $exam = Exam::where('school_id', $admin->school_id)->findOrFail($id);
+
+        $violations = DB::table('exam_violations')
+            ->join('exam_attempts', 'exam_violations.attempt_id', '=', 'exam_attempts.id')
+            ->join('users', 'exam_violations.user_id', '=', 'users.id')
+            ->where('exam_attempts.exam_id', $id)
+            ->select(
+                'exam_violations.*',
+                'users.name as student_name',
+                'users.admission_number',
+                'users.email'
+            )
+            ->orderBy('exam_violations.created_at', 'desc')
+            ->get();
+
+        $fileName = 'violation_report_' . $exam->id . '_' . now()->format('Ymd') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$fileName\"",
+        ];
+
+        $callback = function () use ($violations) {
+            $file = fopen('php://output', 'w');
+
+            // Header row
+            fputcsv($file, [
+                'Student Name',
+                'Admission Number',
+                'Email',
+                'Violation Type',
+                'Timestamp',
+                'IP Address',
+            ]);
+
+            // Data rows
+            foreach ($violations as $violation) {
+                fputcsv($file, [
+                    $violation->student_name,
+                    $violation->admission_number,
+                    $violation->email,
+                    ucfirst(str_replace('_', ' ', $violation->type)),
+                    \Carbon\Carbon::parse($violation->occurred_at)->format('d M Y H:i:s'),
+                    $violation->ip_address,
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+}

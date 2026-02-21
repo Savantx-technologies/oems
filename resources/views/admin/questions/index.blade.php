@@ -1,6 +1,9 @@
 @extends('layouts.admin')
 
+@section('title', 'Question Bank')
+
 @section('content')
+<div class="max-w-7xl mx-auto">
 
 <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
 

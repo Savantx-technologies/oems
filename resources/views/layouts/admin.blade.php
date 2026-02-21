@@ -75,10 +75,9 @@
                                     Admission</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="{{ route('admin.students.bulk_create') }}">Bulk Upload</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Signup Link</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Batch Assignment</a></li>
+                            
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.students.batch.assign') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.students.batch.assign') }}">Batch Assignment</a></li>
                         </ul>
                     </div>
                 </li>
@@ -299,8 +298,8 @@
                 </li>
 
                 <!-- Reports -->
-                <li x-data="{ open: false }">
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                <li x-data="{ open: {{ request()->routeIs('admin.reports.*') ? 'true' : 'false' }} }">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.reports.*') ? 'text-white bg-white/10 border-l-4 border-indigo-500' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-bar-chart mr-2"></i> Reports</div>
                         <i class="bi bi-chevron-down text-xs transition-transform"
@@ -308,14 +307,12 @@
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Exam Reports</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Performance Analytics</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Violation Reports</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Export PDF / Excel</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.reports.index') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.reports.index') }}">Overview</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.reports.exams') || request()->routeIs('admin.reports.exams.detail') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.reports.exams') }}">Exam Reports</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.reports.analytics') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.reports.analytics') }}">Performance Analytics</a></li>
                         </ul>
                     </div>
                 </li>
@@ -332,8 +329,6 @@
                         <ul class="flex flex-col py-1">
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="#">School Profile</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Branding</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="#">Exam Rules</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"

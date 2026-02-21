@@ -219,4 +219,43 @@ class StudentController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+    /**
+     * Show the batch assignment page.
+     */
+    public function batchAssign(Request $request)
+    {
+        $admin = auth('admin')->user();
+
+        $query = User::where('role', 'student')
+            ->where('school_id', $admin->school_id);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('admission_number', 'like', "%{$search}%");
+            });
+        }
+
+        $students = $query->latest()->paginate(50);
+
+        return view('admin.students.batch_assignment', compact('students'));
+    }
+
+    /**
+     * Process bulk batch update.
+     */
+    public function batchUpdate(Request $request)
+    {
+        $request->validate([
+            'student_ids' => 'required|array',
+            'grade' => 'required|string|max:50',
+        ]);
+
+        User::whereIn('id', $request->student_ids)->update(['grade' => $request->grade]);
+
+        return back()->with('success', 'Batch/Grade assigned successfully to selected students.');
+    }
 }
