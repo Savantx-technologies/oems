@@ -365,6 +365,18 @@
         .pdf-btn:hover {
             background-color: #b91c1c;
         }
+          .list-disc {
+            text-align: center;
+            list-style: none;
+        }
+
+        .sub-heading {
+            text-align: center;
+        }
+
+        .li {
+            list-style: none;
+        }
     </style>
 </head>
 
@@ -418,36 +430,67 @@
                         Customer Relationship Management</p>
                 </div>
 
-                <div class="flex justify-center items-center w-full my-8">
+                 <div class="flex justify-center items-center w-full my-8">
                     <div class="training-outcome-box glass p-8 rounded-2xl shadow-lg w-full max-w-2xl">
-                        <h2 class="text-3xl font-bold mb-4 text-center text-gray-800 tracking-tight">Training Outcome</h2>
-                        <p class="text-center text-lg mb-6 text-gray-600">
+
+                        <h2 class="text-3xl font-bold mb-4 text-center text-gray-800 tracking-tight">
+                            Training Outcome
+                        </h2>
+
+                        <p class=" sub-heading text-lg mb-6 text-center text-gray-600">
                             At the end of this program, the student will be able to:
                         </p>
-                        <ul class="text-3xl font-bold mb-4 text-center text-gray-800 tracking-tight">
-                            <li class="flex items-start gap-3">
-                                <span class="text-green-600 text-2xl mt-1 flex-shrink-0"><i class="bi bi-check-circle-fill"></i></span>
-                                <span class="leading-relaxed">Work as a Courier Executive – Operations independently</span>
+
+                        <ul class="list-disc space-y-4">
+                            <li>
+                                <div class="flex items-start gap-3">
+                                    <i class="bi bi-check-circle-fill text-green-600 text-xl mt-1"></i>
+                                    <span class="text-justify">
+                                        Contribute to business growth through data-driven decision-making
+                                    </span>
+                                </div>
                             </li>
-                            <li class="flex items-start gap-3">
-                                <span class="text-green-600 text-2xl mt-1 flex-shrink-0"><i class="bi bi-check-circle-fill"></i></span>
-                                <span class="leading-relaxed">Handle ERP-based reporting and data analysis</span>
+                            <li>
+                                <div class="flex items-start gap-3">
+                                    <i class="bi bi-check-circle-fill text-green-600 text-xl mt-1"></i>
+                                    <span class="text-justify">
+                                        Demonstrate professional ethics and workplace readiness
+                                    </span>
+                                </div>
                             </li>
-                            <li class="flex items-start gap-3">
-                                <span class="text-green-600 text-2xl mt-1 flex-shrink-0"><i class="bi bi-check-circle-fill"></i></span>
-                                <span class="leading-relaxed">Manage customer service and sales activities</span>
+
+                            <li>
+                                <div class="flex items-start gap-3">
+                                    <i class="bi bi-check-circle-fill text-green-600 text-xl mt-1"></i>
+                                    <span class="text-justify">
+                                        Work as a Courier Executive – Operations independently
+                                    </span>
+                                </div>
                             </li>
-                            <li class="flex items-start gap-3">
-                                <span class="text-green-600 text-2xl mt-1 flex-shrink-0"><i class="bi bi-check-circle-fill"></i></span>
-                                <span class="leading-relaxed">Ensure statutory, safety, GST, and customs compliance</span>
+                            <li>
+                                <div class="flex items-start gap-3">
+                                    <i class="bi bi-check-circle-fill text-green-600 text-xl mt-1"></i>
+                                    <span class="text-justify">
+                                        Ensure statutory, safety, GST, and customs compliance
+                                    </span>
+                                </div>
                             </li>
-                            <li class="flex items-start gap-3">
-                                <span class="text-green-600 text-2xl mt-1 flex-shrink-0"><i class="bi bi-check-circle-fill"></i></span>
-                                <span class="leading-relaxed">Contribute to business growth through data-driven decision-making</span>
+                            <li>
+                                <div class="flex items-start gap-3">
+                                    <i class="bi bi-check-circle-fill text-green-600 text-xl mt-1"></i>
+                                    <span class="text-justify">
+                                        Handle ERP-based reporting and data analysis
+                                    </span>
+                                </div>
                             </li>
-                            <li class="flex items-start gap-3">
-                                <span class="text-green-600 text-2xl mt-1 flex-shrink-0"><i class="bi bi-check-circle-fill"></i></span>
-                                <span class="leading-relaxed">Demonstrate professional ethics and workplace readiness</span>
+
+                            <li>
+                                <div class="flex items-start gap-3">
+                                    <i class="bi bi-check-circle-fill text-green-600 text-xl mt-1"></i>
+                                    <span class="text-justify">
+                                        Manage customer service and sales activities
+                                    </span>
+                                </div>
                             </li>
                         </ul>
                     </div>
