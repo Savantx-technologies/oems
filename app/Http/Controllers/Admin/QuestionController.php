@@ -15,45 +15,44 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuestionController extends Controller
 {
-    public function index(Request $request)
-    {
-        $admin = auth('admin')->user();
+   public function index(Request $request)
+{
+    $admin = auth('admin')->user();
 
-        $query = Question::where('school_id', $admin->school_id);
+    $query = Question::where('school_id', $admin->school_id);
 
-        // Apply search if entered
-        if ($request->filled('search')) {
-
-            $search = trim($request->search);
-
-            $query->where(function ($q) use ($search) {
-
-                // If numeric → filter by class
-                if (is_numeric($search)) {
-                    $q->where('class', $search);
-                }
-
-                // Always allow subject search
-                $q->orWhere('subject', 'like', "%{$search}%");
-            });
-        }
-
-        $questions = $query->latest()->paginate(20);
-
-        // Difficulty enum logic (unchanged)
-        $type = DB::selectOne("
-        SHOW COLUMNS FROM questions WHERE Field = 'difficulty'
-    ");
-
-        preg_match("/^enum\((.*)\)$/", $type->Type, $matches);
-
-        $difficulties = array_map(function ($value) {
-            return trim($value, "'");
-        }, explode(',', $matches[1]));
-
-        return view('admin.questions.index', compact('questions', 'difficulties'));
+    // 🔹 If class selected → filter
+    if ($request->filled('class')) {
+        $query->where('class', $request->class);
     }
 
+    // 🔹 Search filter
+    if ($request->filled('search')) {
+
+        $search = trim($request->search);
+
+        $query->where(function ($q) use ($search) {
+
+            if (is_numeric($search)) {
+                $q->where('class', $search);
+            }
+
+            $q->orWhere('subject', 'like', "%{$search}%")
+              ->orWhere('question_text', 'like', "%{$search}%");
+        });
+    }
+
+    $questions = $query->latest()->paginate(20);
+
+    // 🔹 Get available classes dynamically
+    $classes = Question::where('school_id', $admin->school_id)
+        ->select('class')
+        ->distinct()
+        ->orderBy('class')
+        ->pluck('class');
+
+    return view('admin.questions.index', compact('questions', 'classes'));
+}
 
     public function create()
     {

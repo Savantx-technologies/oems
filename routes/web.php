@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminResultController;
 use App\Http\Controllers\Admin\PassageController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
@@ -271,6 +272,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // Attempt Controls
     Route::post('attempts/{attemptId}/terminate', [AttemptControlController::class, 'terminate'])->name('attempts.terminate');
     Route::post('attempts/{attemptId}/extend', [AttemptControlController::class, 'extendTime'])->name('attempts.extend');
+
+    Route::get('results/pending', [AdminResultController::class, 'pending'])
+        ->name('results.pending');
+
+    Route::post('results/{attempt}/approve', [AdminResultController::class, 'approve'])
+        ->name('results.approve');
+
+    Route::post('results/{attempt}/reject', [AdminResultController::class, 'reject'])
+        ->name('results.reject');
+    Route::get('results/list', [AdminResultController::class, 'list'])
+        ->name('results.list');
+
 });
 
 // =====================
@@ -285,6 +298,10 @@ Route::prefix('student')->name('student.')->group(function () {
 
     Route::middleware(['auth', \App\Http\Middleware\CheckSchoolActive::class . ':web'])->group(function () {
         Route::get('dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
+        Route::get('result/{attempt}', [StudentExamController::class, 'result'])
+            ->name('result');
+        Route::get('results', [StudentExamController::class, 'results'])
+            ->name('results.index');
         Route::get('system-check', [StudentDashboardController::class, 'systemCheck'])->name('system.check');
         Route::get('exams', [StudentExamController::class, 'index'])->name('exams.index');
         Route::get('exams/mock', [StudentExamController::class, 'mock'])->name('exams.mock');
@@ -300,5 +317,7 @@ Route::prefix('student')->name('student.')->group(function () {
 
         Route::post('logout', [StudentLoginController::class, 'logout'])->name('logout');
         Route::view('profile', 'student.profile')->name('profile');
+
+
     });
 });

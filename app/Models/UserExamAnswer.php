@@ -14,6 +14,8 @@ class UserExamAnswer extends Model
         'question_id',
         'selected_option_id',
         'is_correct',
+        'marks_awarded',
+
     ];
 
     public function question()

@@ -15,6 +15,18 @@ class ExamAttempt extends Model
         'score',
         'started_at',
         'submitted_at',
+        'approval_status',
+        'approved_by',
+        'approved_at',
+        'status',
+        'expires_at',
+        'last_activity_at',
+        'session_token',
+        'extra_time_seconds',
+        'terminated_reason',
+        'terminated_at',
+        'ip_address',
+        'question_order',
     ];
 
     protected $casts = [

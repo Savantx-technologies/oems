@@ -14,12 +14,12 @@
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-@vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
-   
+
 </head>
 
 <body class="bg-gray-50 h-full">
@@ -170,9 +170,10 @@
                 <li x-data="{ open: {{ $examOpen ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3
                             {{ $examOpen ? 'text-white bg-white/10 border-l-4 border-indigo-500' : 'text-gray-400 border-l-4 border-transparent' }}
-                            hover:bg-white/5 hover:text-white transition-colors" href="#" @click.prevent="open = !open">
+                            hover:bg-white/5 hover:text-white transition-colors" href="#"
+                        @click.prevent="open = !open">
                         <div>
-                            <i class="bi bi-file-earmark-text mr-2"></i>    
+                            <i class="bi bi-file-earmark-text mr-2"></i>
                             Exams
                         </div>
                         <i class="bi bi-chevron-down text-xs transition-transform"
@@ -274,12 +275,21 @@
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Auto Evaluation</a></li>
+                            <li>
+                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.results.*') ? 'bg-white/10 text-white' : '' }}"
+                                    href="{{ route('admin.results.pending') }}">
+                                    Auto Evaluation
+                                </a>
+                            </li>
+
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="#">Manual Checking</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Result Approval</a></li>
+                            <li>
+                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
+                                    href="{{ route('admin.results.list') }}">
+                                    Result Approval
+                                </a>
+                            </li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="#">Scorecards</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
@@ -344,8 +354,9 @@
                         <ul class="flex flex-col py-1">
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="#">Activity Logs</a></li>
-                          <li>
-                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.security.logs') ? 'text-white bg-white/10' : '' }}" href="{{ route('admin.security.logs') }}">
+                            <li>
+                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.security.logs') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.security.logs') }}">
                                     Login History
                                 </a>
                             </li>
