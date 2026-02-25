@@ -40,13 +40,29 @@ class AdminResultController extends Controller
         return back()->with('success', 'Result rejected');
     }
 
-    public function list()
-{
-    $attempts = ExamAttempt::with(['user', 'exam'])
-        ->whereIn('approval_status', ['approved', 'rejected'])
-        ->latest()
-        ->get();
+    public function list(Request $request)
+    {
+        $query = ExamAttempt::with(['user', 'exam'])
+            ->where('approval_status', 'approved');
 
-    return view('admin.results.list', compact('attempts'));
-}
+        $attempts = $query->get();
+
+        // If class not selected → show class cards
+        if (!$request->filled('class')) {
+
+            $classes = $attempts
+                ->groupBy(fn($item) => $item->exam->class);
+
+            return view('admin.results.list', compact('classes'));
+        }
+
+        // If class selected → show students of that class
+        $class = $request->class;
+
+        $students = $attempts
+            ->where('exam.class', $class)
+            ->groupBy('user_id');
+
+        return view('admin.results.list', compact('students', 'class'));
+    }
 }

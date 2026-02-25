@@ -313,6 +313,25 @@ cancelBtn.addEventListener('click', function(){
 updateSummary();
 applyFilter();
 
+
+document.getElementById('selectAll').addEventListener('change', function () {
+
+    const isChecked = this.checked;
+
+    const rows = document.querySelectorAll('.question-row');
+
+    rows.forEach(row => {
+
+        const checkbox = row.querySelector('.question-check');
+
+        if (checkbox) {
+            checkbox.checked = isChecked;
+        }
+
+    });
+
+});
+
 </script>
 
 

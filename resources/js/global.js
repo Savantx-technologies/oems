@@ -54,20 +54,4 @@ window.debounce = function(func, delay = 500) {
         }, delay);
     };
 };
-document.getElementById('selectAll').addEventListener('change', function () {
 
-    const isChecked = this.checked;
-
-    const rows = document.querySelectorAll('.question-row');
-
-    rows.forEach(row => {
-
-        const checkbox = row.querySelector('.question-check');
-
-        if (checkbox) {
-            checkbox.checked = isChecked;
-        }
-
-    });
-
-});
