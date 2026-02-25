@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->string('email')->unique();
             $table->string('mobile')->nullable();
             $table->string('password');
-            $table->enum('role', ['superadmin', 'school_admin', 'sub_admin', 'invigilator', 'staff'])->default('school_admin');
+            $table->enum('role', ['school_admin', 'sub_admin', 'invigilator', 'staff'])->default('school_admin');
             $table->enum('status', ['active', 'blocked', 'pending'])->default('pending');
 
             // Aadhaar / Govt info

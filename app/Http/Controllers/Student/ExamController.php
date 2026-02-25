@@ -12,6 +12,9 @@ use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Services\ExamAutoEvaluationService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Admin;
+use App\Models\Notification;
+
 class ExamController extends Controller
 {
     public function index()
@@ -395,6 +398,20 @@ class ExamController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        // Notify Admins about the violation
+        $admins = Admin::where('school_id', $student->school_id)->get();
+        foreach ($admins as $admin) {
+            Notification::create([
+                'notifiable_id' => $admin->id,
+                'notifiable_type' => get_class($admin),
+                'title' => 'Violation Alert',
+                'message' => "Student {$student->name} ({$student->admission_number}) recorded a violation in exam '{$exam->title}'. Type: " . ucfirst($request->input('type')),
+                'type' => 'violation',
+                'data' => ['exam_id' => $exam->id, 'attempt_id' => $attempt->id],
+                'is_read' => 0
+            ]);
+        }
 
         // Check total violations
         $count = DB::table('exam_violations')->where('attempt_id', $attempt->id)->count();

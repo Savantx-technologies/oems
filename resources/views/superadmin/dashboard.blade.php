@@ -5,7 +5,7 @@
 @section('content')
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
     <!-- Total Schools -->
-    <div class="bg-white rounded-lg border border-gray-200 shadow-sm h-full">
+    <a href="{{ route('superadmin.schools.index') }}" class="block bg-white rounded-lg border border-gray-200 shadow-sm h-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
         <div class="p-6">
             <div class="flex justify-between items-center mb-3">
                 <h6 class="text-gray-500 text-xs uppercase font-bold">Total Schools</h6>
@@ -13,13 +13,15 @@
                     <i class="bi bi-building text-xl"></i>
                 </div>
             </div>
-            <h3 class="text-2xl font-bold mb-1">45</h3>
-            <small class="text-green-600 font-medium"><i class="bi bi-arrow-up-short"></i> 12% New</small>
+            <h3 class="text-2xl font-bold mb-1">{{ $totalSchools }}</h3>
+            @if($schoolGrowthPercentage > 0)
+                <small class="text-green-600 font-medium"><i class="bi bi-arrow-up-short"></i> {{ round($schoolGrowthPercentage) }}% New</small>
+            @endif
         </div>
-    </div>
+    </a>
 
     <!-- Total Admins -->
-    <div class="bg-white rounded-lg border border-gray-200 shadow-sm h-full">
+    <a href="{{ route('superadmin.admins.index') }}" class="block bg-white rounded-lg border border-gray-200 shadow-sm h-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
         <div class="p-6">
             <div class="flex justify-between items-center mb-3">
                 <h6 class="text-gray-500 text-xs uppercase font-bold">Total Admins</h6>
@@ -27,13 +29,13 @@
                     <i class="bi bi-person-badge text-xl"></i>
                 </div>
             </div>
-            <h3 class="text-2xl font-bold mb-1">12</h3>
+            <h3 class="text-2xl font-bold mb-1">{{ $totalAdmins }}</h3>
             <small class="text-gray-500 font-medium">Active Staff</small>
         </div>
-    </div>
+    </a>
 
     <!-- Total Students -->
-    <div class="bg-white rounded-lg border border-gray-200 shadow-sm h-full">
+    <a href="{{ route('superadmin.students.index') }}" class="block bg-white rounded-lg border border-gray-200 shadow-sm h-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
         <div class="p-6">
             <div class="flex justify-between items-center mb-3">
                 <h6 class="text-gray-500 text-xs uppercase font-bold">Total Students</h6>
@@ -41,13 +43,15 @@
                     <i class="bi bi-people text-xl"></i>
                 </div>
             </div>
-            <h3 class="text-2xl font-bold mb-1">1,560</h3>
-            <small class="text-green-600 font-medium"><i class="bi bi-arrow-up-short"></i> 5% Growth</small>
+            <h3 class="text-2xl font-bold mb-1">{{ number_format($totalStudents) }}</h3>
+            @if($studentGrowthPercentage > 0)
+                <small class="text-green-600 font-medium"><i class="bi bi-arrow-up-short"></i> {{ round($studentGrowthPercentage) }}% Growth</small>
+            @endif
         </div>
-    </div>
+    </a>
 
     <!-- Active Exams -->
-    <div class="bg-white rounded-lg border border-gray-200 shadow-sm h-full">
+    <a href="{{ route('superadmin.exams.index') }}" class="block bg-white rounded-lg border border-gray-200 shadow-sm h-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
         <div class="p-6">
             <div class="flex justify-between items-center mb-3">
                 <h6 class="text-gray-500 text-xs uppercase font-bold">Active Exams</h6>
@@ -55,13 +59,13 @@
                     <i class="bi bi-file-earmark-text text-xl"></i>
                 </div>
             </div>
-            <h3 class="text-2xl font-bold mb-1">8</h3>
+            <h3 class="text-2xl font-bold mb-1">{{ $liveExams }}</h3>
             <small class="text-red-600 font-medium">Live Now</small>
         </div>
-    </div>
+    </a>
 
     <!-- Pending Approvals -->
-    <div class="bg-white rounded-lg border border-gray-200 shadow-sm h-full">
+    <a href="{{ route('superadmin.staff-requests.index') }}" class="block bg-white rounded-lg border border-gray-200 shadow-sm h-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
         <div class="p-6">
             <div class="flex justify-between items-center mb-3">
                 <h6 class="text-gray-500 text-xs uppercase font-bold">Pending</h6>
@@ -69,13 +73,13 @@
                     <i class="bi bi-clock-history text-xl"></i>
                 </div>
             </div>
-            <h3 class="text-2xl font-bold mb-1">4</h3>
+            <h3 class="text-2xl font-bold mb-1">{{ $pendingApprovals }}</h3>
             <small class="text-yellow-600 font-medium">Requires Action</small>
         </div>
-    </div>
+    </a>
 
     <!-- System Alerts -->
-    <div class="bg-white rounded-lg border border-gray-200 shadow-sm h-full">
+    <a href="{{ route('superadmin.security.logs') }}" class="block bg-white rounded-lg border border-gray-200 shadow-sm h-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
         <div class="p-6">
             <div class="flex justify-between items-center mb-3">
                 <h6 class="text-gray-500 text-xs uppercase font-bold">Alerts</h6>
@@ -83,10 +87,10 @@
                     <i class="bi bi-exclamation-triangle text-xl"></i>
                 </div>
             </div>
-            <h3 class="text-2xl font-bold mb-1">2</h3>
+            <h3 class="text-2xl font-bold mb-1">{{ $systemAlerts }}</h3>
             <small class="text-red-600 font-medium">Critical</small>
         </div>
-    </div>
+    </a>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
@@ -157,7 +161,7 @@
 <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
     <div class="px-6 py-3 border-b border-gray-200 bg-white flex justify-between items-center">
         <h6 class="text-lg font-bold">Recent Activity</h6>
-        <a href="#" class="text-sm px-3 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition">View All</a>
+        <a href="{{-- route('superadmin.security.logs') --}}" class="text-sm px-3 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition">View All</a>
     </div>
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
@@ -171,70 +175,36 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="bg-gray-100 rounded-full p-2 mr-2 border border-gray-200">
-                                <i class="bi bi-building text-blue-600"></i>
+                @forelse($recentActivities as $log)
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="bg-gray-100 rounded-full p-2 mr-3 border border-gray-200">
+                                    <i class="bi bi-person text-gray-600"></i>
+                                </div>
+                                <span class="font-medium">{{ $log->user->name ?? 'System' }}</span>
                             </div>
-                            <span class="font-medium">Greenwood High</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">New School Registration</td>
-                    <td class="px-6 py-4 whitespace-nowrap">School Mgmt</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">10 mins ago</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>
-                    </td>
-                </tr>
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="bg-gray-100 rounded-full p-2 mr-2 border border-gray-200">
-                                <i class="bi bi-person text-gray-600"></i>
-                            </div>
-                            <span class="font-medium">Admin User</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">Updated Exam Rules</td>
-                    <td class="px-6 py-4 whitespace-nowrap">System Config</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">45 mins ago</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Updated</span>
-                    </td>
-                </tr>
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="bg-gray-100 rounded-full p-2 mr-2 border border-gray-200">
-                                <i class="bi bi-exclamation-triangle text-red-600"></i>
-                            </div>
-                            <span class="font-medium">System Alert</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">High CPU Usage Detected</td>
-                    <td class="px-6 py-4 whitespace-nowrap">Infrastructure</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">1 hour ago</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Critical</span>
-                    </td>
-                </tr>
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="bg-gray-100 rounded-full p-2 mr-2 border border-gray-200">
-                                <i class="bi bi-people text-cyan-600"></i>
-                            </div>
-                            <span class="font-medium">Student Batch A</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">Bulk Import Completed</td>
-                    <td class="px-6 py-4 whitespace-nowrap">Student Control</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">2 hours ago</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Success</span>
-                    </td>
-                </tr>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ $log->description }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ $log->event }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ $log->created_at->diffForHumans() }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            @if($log->event === 'login')
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Success</span>
+                            @elseif($log->event === 'failed')
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Failed</span>
+                            @else
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Info</span>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="text-center py-10 text-gray-500">
+                            No recent activity.
+                        </td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>

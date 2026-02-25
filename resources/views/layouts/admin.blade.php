@@ -19,13 +19,31 @@
     <!-- Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
-
+    <style>
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        .sidebar-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+        }
+        .nav-link-active {
+            color: #fff !important;
+            background: rgba(255, 255, 255, 0.05);
+            border-left-color: #3b82f6 !important; /* blue-500 */
+        }
+    </style>
 </head>
 
-<body class="bg-gray-50 h-full">
+<body class="bg-gray-50 h-full" x-data="{ sidebarOpen: window.innerWidth >= 1024 }">
 
     <!-- Sidebar -->
-    <div class="fixed top-0 left-0 h-screen w-64 bg-gray-900 text-white flex flex-col z-50 transition-all duration-300">
+    <div class="fixed top-0 left-0 h-screen w-64 bg-gray-900 text-white flex flex-col z-50 transition-transform duration-300"
+        :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
         <div class="p-5 bg-white/5 border-b border-white/10 shrink-0">
             <div class="flex items-center justify-start">
                 @if(auth()->user()?->school?->logo)
@@ -48,20 +66,21 @@
         <div class="flex-1 overflow-y-auto sidebar-scroll py-2">
             <ul class="flex flex-col space-y-1">
                 @php
-                $questionOpen = request()->is('admin/questions*');
-                $examOpen = request()->is('admin/exams*');
+                    $questionOpen = request()->is('admin/questions*');
+                    $examOpen = request()->is('admin/exams*');
+                    $usersOpen = request()->is('admin/staff*') || request()->is('admin/students*') || request()->is('admin/requests/staff*');
                 @endphp
 
                 <!-- Dashboard -->
                 <li>
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.dashboard') ? 'nav-link-active' : '' }}"
                         href="{{ route('admin.dashboard') }}">
                         <div><i class="bi bi-speedometer2 mr-2"></i> Dashboard</div>
                     </a>
                 </li>
 
                 <!-- Admissions -->
-                <li x-data="{ open: false }">
+                <li x-data="{ open: {{ request()->routeIs('admin.students.create') || request()->routeIs('admin.students.bulk_create') || request()->routeIs('admin.students.batch.assign') ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-person-plus mr-2"></i> Admissions</div>
@@ -70,12 +89,12 @@
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.students.create') ? 'text-white bg-white/10' : '' }}"
                                     href="{{ route('admin.students.create') }}">New
                                     Admission</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.students.bulk_create') ? 'text-white bg-white/10' : '' }}"
                                     href="{{ route('admin.students.bulk_create') }}">Bulk Upload</a></li>
-                            
+
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.students.batch.assign') ? 'text-white bg-white/10' : '' }}"
                                     href="{{ route('admin.students.batch.assign') }}">Batch Assignment</a></li>
                         </ul>
@@ -83,9 +102,8 @@
                 </li>
 
                 <!-- Users (School Only) -->
-                <li x-data="{ open: {{ request()->is('admin/staff/create*') ? 'true' : 'false' }} }">
-                    @php $isUsersActive = request()->is('admin/staff/create*'); @endphp
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $isUsersActive ? 'nav-link-active' : '' }}"
+                <li x-data="{ open: {{ $usersOpen ? 'true' : 'false' }} }">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $usersOpen ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-people mr-2"></i> Users</div>
                         <i class="bi bi-chevron-down text-xs transition-transform"
@@ -98,7 +116,11 @@
                                 </div>
                             </li>
                             <li>
-                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ $isUsersActive ? 'text-white bg-white/10' : '' }}"
+                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.staff.index') || request()->routeIs('admin.staff.edit') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.staff.index') }}">Manage Staff</a>
+                            </li>
+                            <li>
+                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.staff.create.*') ? 'text-white bg-white/10' : '' }}"
                                     href="{{ route('admin.staff.create.step1') }}">Add Staff</a>
                             </li>
                             <li>
@@ -123,8 +145,8 @@
                 <!-- Question Bank -->
                 <li x-data="{ open: {{ $questionOpen ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3
-        {{ $questionOpen ? 'text-white bg-white/10 border-l-4 border-indigo-500' : 'text-gray-400 border-l-4 border-transparent' }}
-        hover:bg-white/5 hover:text-white transition-colors" href="#" @click.prevent="open = !open">
+                        {{ $questionOpen ? 'text-white bg-white/10 border-l-4 border-indigo-500' : 'text-gray-400 border-l-4 border-transparent' }}
+                        hover:bg-white/5 hover:text-white transition-colors" href="#" @click.prevent="open = !open">
                         <div>
                             <i class="bi bi-collection mr-2"></i>
                             Question Bank
@@ -138,27 +160,19 @@
 
                             <li>
                                 <a href="{{ route('admin.questions.index') }}" class="block px-5 py-2 pl-11 text-sm
-                    {{ request()->routeIs('admin.questions.index')
-    ? 'text-white bg-white/10'
-    : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
+                                {{ request()->routeIs('admin.questions.index')
+                                    ? 'text-white bg-white/10'
+                                    : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
                                     All Questions (MCQ)
                                 </a>
                             </li>
 
                             <li>
                                 <a href="{{ route('admin.questions.create') }}" class="block px-5 py-2 pl-11 text-sm
-                    {{ request()->routeIs('admin.questions.create')
-    ? 'text-white bg-white/10'
-    : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
+                                  {{ request()->routeIs('admin.questions.create')
+                                    ? 'text-white bg-white/10'
+                                    : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
                                     Add New Question
-                                </a>
-                            </li>
-
-                            {{-- future --}}
-                            <li>
-                                <a href="{{ route('admin.questions.bulk.form') }}"
-                                    class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10">
-                                    Bulk Upload
                                 </a>
                             </li>
                         </ul>
@@ -366,22 +380,35 @@
     </div>
 
     <!-- Main Content -->
-    <div class="ml-64 min-h-screen flex flex-col">
+    <div class="min-h-screen flex flex-col transition-all duration-300"
+        :class="sidebarOpen ? 'ml-64' : 'ml-0'">
         <!-- Topbar -->
         <nav class="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
-            <h5 class="mb-0 text-gray-600 font-medium text-lg">@yield('title')</h5>
+            <div class="flex items-center gap-4">
+                <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                    <i class="bi bi-list text-2xl"></i>
+                </button>
+                <h5 class="mb-0 text-gray-600 font-medium text-lg">@yield('title')</h5>
+            </div>
             <div class="flex items-center">
                 <div class="text-right mr-4">
                     <small class="block text-gray-500 leading-tight">Welcome, {{ auth()->user()->name ?? 'Admin'
                         }}</small>
                     <span class="font-bold text-gray-800">{{ auth()->user()?->school?->name ?? 'School' }}</span>
                 </div>
-                <div class="mr-4 relative">
-                    <i class="bi bi-bell text-xl text-gray-500"></i>
-                    <span
-                        class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-red-500 text-white rounded-full text-[10px]">
-                        5
-                    </span>
+                <div class="mr-4 relative" x-data="{
+                    unreadCount: {{ $unreadNotificationsCount ?? 0 }},
+                    checkNotifications() {
+                        fetch('{{ route('admin.notifications.unreadCount') }}')
+                            .then(res => res.json())
+                            .then(data => { this.unreadCount = data.count; })
+                            .catch(err => console.error(err));
+                    }
+                }" x-init="setInterval(() => checkNotifications(), 10000)">
+                    <a href="{{ route('admin.notifications') }}" class="text-gray-500 hover:text-gray-700 relative block">
+                        <i class="bi bi-bell text-xl"></i>
+                        <span x-show="unreadCount > 0" x-text="unreadCount" x-cloak class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-red-500 text-white rounded-full text-[10px]"></span>
+                    </a>
                 </div>
                 <!-- Profile Dropdown -->
                 <div class="relative" x-data="{ open: false }">

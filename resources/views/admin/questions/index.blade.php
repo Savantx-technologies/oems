@@ -16,6 +16,12 @@
 
         <div class="flex items-center gap-3">
 
+            <!-- Bulk Upload Button -->
+            <a href="{{ route('admin.questions.bulk.form') }}"
+                class="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition">
+                Bulk Upload
+            </a>
+
             <!-- Add Question Button -->
             <a href="{{ route('admin.questions.create') }}"
                 class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition">
@@ -86,6 +92,7 @@
 
             <thead class="bg-gray-100 text-xs uppercase text-gray-600">
                 <tr>
+                    <th class="px-4 py-3 text-left">#</th>
                     <th class="px-4 py-3 text-left">Subject</th>
                     <th class="px-4 py-3 text-left">Question</th>
                     <th class="px-4 py-3 text-left">Marks</th>
@@ -99,6 +106,10 @@
                 @forelse($questions as $q)
 
                 <tr class="hover:bg-gray-50 transition">
+
+                    <td class="px-4 py-3 text-gray-500 font-medium">
+                        {{ $loop->iteration + ($questions->currentPage() - 1) * $questions->perPage() }}
+                    </td>
 
                     <td class="px-4 py-3">{{ $q->subject }}</td>
 
@@ -186,7 +197,7 @@
                 @empty
 
                 <tr>
-                    <td colspan="7" class="px-6 py-10 text-center text-gray-500">
+                    <td colspan="6" class="px-6 py-10 text-center text-gray-500">
                         No questions found.
                     </td>
                 </tr>
