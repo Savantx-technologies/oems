@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class ExamController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $admin = auth('admin')->user();
 
@@ -24,10 +24,32 @@ class ExamController extends Controller
             ->update(['status' => 'closed']);
 
         // Now fetch paginated exams
-        $exams = Exam::with('schedule')
-            ->where('school_id', $admin->school_id)
-            ->latest()
-            ->paginate(20);
+        $query = Exam::with('schedule')
+            ->where('school_id', $admin->school_id);
+
+        if ($request->filled('filter')) {
+            $now = now();
+            switch ($request->filter) {
+                case 'live':
+                    $query->where('status', 'published')
+                        ->whereHas('schedule', function ($q) use ($now) {
+                            $q->where('start_at', '<=', $now)
+                                ->where('end_at', '>=', $now);
+                        });
+                    break;
+                case 'upcoming':
+                    $query->where('status', 'published')
+                        ->whereHas('schedule', function ($q) use ($now) {
+                            $q->where('start_at', '>', $now);
+                        });
+                    break;
+                case 'closed':
+                    $query->where('status', 'closed');
+                    break;
+            }
+        }
+
+        $exams = $query->latest()->paginate(20);
 
         return view('admin.exams.index', compact('exams'));
     }
@@ -128,8 +150,6 @@ class ExamController extends Controller
             'attached'
         ));
     }
-
-
     public function attachQuestions(Request $request, $id)
     {
         $admin = auth('admin')->user();
@@ -165,7 +185,6 @@ class ExamController extends Controller
 
         return redirect()->route('admin.exams.schedule', $exam->id);
     }
-
     public function publish($id)
     {
         $admin = auth('admin')->user();
@@ -338,6 +357,4 @@ class ExamController extends Controller
 
         return view('admin.exams.practice-solutions', compact('exams'));
     }
-
-
 }

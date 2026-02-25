@@ -8,9 +8,14 @@
 
     <!-- Page header -->
     <div class="flex items-center justify-between">
-        <div>
+        <div class="flex items-center gap-4">
             <h1 class="text-2xl font-semibold text-gray-800">Exams</h1>
-            <p class="text-sm text-gray-500">Manage all created exams</p>
+            <div class="flex items-center gap-1 text-sm font-medium border border-gray-200 bg-white shadow-sm rounded-full p-1">
+                <a href="{{ route('admin.exams.index', array_merge(request()->query(), ['filter' => null, 'page' => null])) }}" class="px-3 py-1 rounded-full transition-colors {{ !request('filter') ? 'bg-indigo-600 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">All</a>
+                <a href="{{ route('admin.exams.index', array_merge(request()->query(), ['filter' => 'live', 'page' => null])) }}" class="px-3 py-1 rounded-full transition-colors {{ request('filter') == 'live' ? 'bg-green-500 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">Live</a>
+                <a href="{{ route('admin.exams.index', array_merge(request()->query(), ['filter' => 'upcoming', 'page' => null])) }}" class="px-3 py-1 rounded-full transition-colors {{ request('filter') == 'upcoming' ? 'bg-yellow-500 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">Upcoming</a>
+                <a href="{{ route('admin.exams.index', array_merge(request()->query(), ['filter' => 'closed', 'page' => null])) }}" class="px-3 py-1 rounded-full transition-colors {{ request('filter') == 'closed' ? 'bg-red-500 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">Closed</a>
+            </div>
         </div>
 
         <a href="{{ route('admin.exams.create') }}"
@@ -208,7 +213,7 @@
             </table>
         </div>
         <div class="px-4 py-3 border-t">
-            {{ $exams->links() }}
+            {{ $exams->withQueryString()->links() }}
         </div>
     </div>
 </div>

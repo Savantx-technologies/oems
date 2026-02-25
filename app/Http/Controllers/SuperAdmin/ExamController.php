@@ -19,6 +19,28 @@ class ExamController extends Controller
             $query->where('school_id', $request->school_id);
         }
 
+        if ($request->filled('filter')) {
+            $now = now();
+            switch ($request->filter) {
+                case 'live':
+                    $query->where('status', 'published')
+                        ->whereHas('schedule', function ($q) use ($now) {
+                            $q->where('start_at', '<=', $now)
+                              ->where('end_at', '>=', $now);
+                        });
+                    break;
+                case 'upcoming':
+                    $query->where('status', 'published')
+                        ->whereHas('schedule', function ($q) use ($now) {
+                            $q->where('start_at', '>', $now);
+                        });
+                    break;
+                case 'closed':
+                    $query->where('status', 'closed');
+                    break;
+            }
+        }
+
         // Eager load school to display school name
         $exams = $query->with(['school', 'schedule'])
             ->latest()

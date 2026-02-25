@@ -435,7 +435,6 @@
                         <li>
                             <a href="{{ url('e-leaning') }}" class="hover:text-indigo-400 transition">E-Learning</a>
                         </li>
-                       
                     </ul>
                 </div>
 
@@ -445,15 +444,19 @@
                     <ul class="space-y-3 text-sm">
                         <li class="flex items-start gap-3">
                             <i class="bi bi-geo-alt text-indigo-500 mt-0.5"></i>
-                            <span>123 Education Lane,<br>Tech City, TC 90210</span>
-                        </li>
-                        <li class="flex items-center gap-3">
-                            <i class="bi bi-envelope text-indigo-500"></i>
-                            <a href="mailto:support@oems.com" class="hover:text-white transition">support@oems.com</a>
+                            <span>
+                                Sane Overseas Pvt Ltd<br>
+                                Plot No-1634, Second floor<br>
+                                Sector-82 JLPL
+                            </span>
                         </li>
                         <li class="flex items-center gap-3">
                             <i class="bi bi-telephone text-indigo-500"></i>
-                            <a href="tel:+1234567890" class="hover:text-white transition">+1 (234) 567-890</a>
+                            <a href="tel:01722972891" class="hover:text-white transition">0172-2972891</a>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <i class="bi bi-envelope text-indigo-500"></i>
+                            <a href="mailto:info@saneoverseas.in" class="hover:text-white transition">info@saneoverseas.in</a>
                         </li>
                     </ul>
                 </div>

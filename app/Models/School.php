@@ -24,4 +24,28 @@ class School extends Model
     {
         return $this->hasMany(Admin::class);
     }
+
+    /**
+     * Get the students associated with the school.
+     */
+    public function students()
+    {
+        return $this->hasMany(User::class)->where('role', 'student');
+    }
+
+    /**
+     * Get the exams associated with the school.
+     */
+    public function exams()
+    {
+        return $this->hasMany(Exam::class);
+    }
+
+    /**
+     * Get the exam attempts associated with the school.
+     */
+    public function attempts()
+    {
+        return $this->hasMany(ExamAttempt::class);
+    }
 }

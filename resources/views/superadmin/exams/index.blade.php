@@ -5,10 +5,21 @@
 @section('content')
 <div class="space-y-6">
     <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800">All Exams</h1>
-        
+        <div class="flex items-center gap-4">
+            <h1 class="text-2xl font-bold text-gray-800">All Exams</h1>
+            <div class="flex items-center gap-1 text-sm font-medium border border-gray-200 bg-white shadow-sm rounded-full p-1">
+                <a href="{{ route('superadmin.exams.index', array_merge(request()->query(), ['filter' => null, 'page' => null])) }}" class="px-3 py-1 rounded-full transition-colors {{ !request('filter') ? 'bg-indigo-600 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">All</a>
+                <a href="{{ route('superadmin.exams.index', array_merge(request()->query(), ['filter' => 'live', 'page' => null])) }}" class="px-3 py-1 rounded-full transition-colors {{ request('filter') == 'live' ? 'bg-green-500 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">Live</a>
+                <a href="{{ route('superadmin.exams.index', array_merge(request()->query(), ['filter' => 'upcoming', 'page' => null])) }}" class="px-3 py-1 rounded-full transition-colors {{ request('filter') == 'upcoming' ? 'bg-yellow-500 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">Upcoming</a>
+                <a href="{{ route('superadmin.exams.index', array_merge(request()->query(), ['filter' => 'closed', 'page' => null])) }}" class="px-3 py-1 rounded-full transition-colors {{ request('filter') == 'closed' ? 'bg-red-500 text-white shadow' : 'text-gray-600 hover:bg-gray-100' }}">Closed</a>
+            </div>
+        </div>
+
         <!-- Filter by School -->
         <form method="GET" class="flex items-center gap-2">
+            @if(request('filter'))
+                <input type="hidden" name="filter" value="{{ request('filter') }}">
+            @endif
             <select name="school_id" onchange="this.form.submit()" class="rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500 min-w-[200px]">
                 <option value="">All Schools</option>
                 @foreach($schools as $school)

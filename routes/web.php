@@ -22,12 +22,14 @@ use App\Http\Controllers\Admin\StudentController as AdminStudentController;
 use App\Http\Controllers\Admin\LiveMonitorController as AdminLiveMonitorController;
 use App\Http\Controllers\Admin\AttemptControlController as AdminAttemptControlController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
 
 // Student Controllers
 use App\Http\Controllers\Student\Auth\LoginController as StudentLoginController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
 use App\Http\Controllers\Student\ExamController as StudentExamController;
 use App\Http\Controllers\Student\ProfileController as StudentProfileController;
+use App\Http\Controllers\Student\NotificationController as StudentNotificationController;
 
 // SuperAdmin Controllers
 use App\Http\Controllers\SuperAdmin\AdminController;
@@ -41,6 +43,8 @@ use App\Http\Controllers\SuperAdmin\StudentController as SuperAdminStudentContro
 use App\Http\Controllers\SuperAdmin\ExamController as SuperAdminExamController;
 use App\Http\Controllers\SuperAdmin\LiveMonitorController as SuperAdminLiveMonitorController;
 use App\Http\Controllers\SuperAdmin\AttemptControlController as SuperAdminAttemptControlController;
+use App\Http\Controllers\SuperAdmin\NotificationController as SuperAdminNotificationController;
+use App\Http\Controllers\SuperAdmin\ReportController as SuperAdminReportController;
 
 // =========================
 // System Utility Routes
@@ -164,6 +168,22 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
             Route::get('{streamId}/poll', [SuperAdminLiveMonitorController::class, 'pollViewer'])->name('poll');
             Route::post('{streamId}/signal', [SuperAdminLiveMonitorController::class, 'viewerSignal'])->name('signal');
         });
+
+        // ---- Notifications ----
+        Route::get('notifications', [SuperAdminNotificationController::class, 'index'])->name('notifications.index');
+        Route::get('notifications/unread-count', [SuperAdminNotificationController::class, 'unreadCount'])->name('notifications.unreadCount');
+        Route::get('notifications/{notification}/read', [SuperAdminNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
+        Route::post('notifications/mark-read', [SuperAdminNotificationController::class, 'markAsRead'])->name('notifications.markRead');
+        Route::post('notifications/{notification}/mark-single-read', [SuperAdminNotificationController::class, 'markSingleAsRead'])->name('notifications.markSingleRead');
+
+        // ---- Reports ----
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/', [SuperAdminReportController::class, 'index'])->name('index');
+            Route::get('exams', [SuperAdminReportController::class, 'exams'])->name('exams');
+            Route::get('analytics', [SuperAdminReportController::class, 'analytics'])->name('analytics');
+            Route::get('violations', [SuperAdminReportController::class, 'violations'])->name('violations');
+            Route::get('schools', [SuperAdminReportController::class, 'schools'])->name('schools');
+        });
     });
 });
 
@@ -185,6 +205,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // --- Admin Dashboard & Session ---
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('logout', [AdminLoginController::class, 'logout'])->name('logout');
+
+        // --- Notifications ---
+        Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications');
+        Route::get('notifications/unread-count', [AdminNotificationController::class, 'unreadCount'])->name('notifications.unreadCount');
+        Route::get('notifications/{notification}/read', [AdminNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
+        Route::post('notifications/mark-read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.markRead');
+        Route::post('notifications/{notification}/mark-single-read', [AdminNotificationController::class, 'markSingleAsRead'])->name('notifications.markSingleRead');
 
         // --- Staff Creation Wizard ---
         Route::prefix('staff/create')->name('staff.create.')->group(function () {
@@ -209,6 +236,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('students/batch-assignment', [AdminStudentController::class, 'batchAssign'])->name('students.batch.assign');
         Route::post('students/batch-assignment', [AdminStudentController::class, 'batchUpdate'])->name('students.batch.update');
         Route::resource('students', AdminStudentController::class);
+
+        // --- Staff Management ---
+        Route::get('staff', [\App\Http\Controllers\Admin\StaffController::class, 'index'])->name('staff.index');
+        
     });
 
     // -- Questions Management --
@@ -320,6 +351,13 @@ Route::prefix('student')->name('student.')->group(function () {
         Route::post('exams/{id}/heartbeat', [StudentExamController::class, 'heartbeat'])->name('exams.heartbeat');
         Route::post('exams/{id}/signal', [StudentExamController::class, 'signal'])->name('exams.signal');
         Route::get('exams/{id}/poll-signals', [StudentExamController::class, 'pollSignals'])->name('exams.pollSignals');
+
+        // --- Notifications ---
+        Route::get('notifications', [StudentNotificationController::class, 'index'])->name('notifications');
+        Route::get('notifications/unread-count', [StudentNotificationController::class, 'unreadCount'])->name('notifications.unreadCount');
+        Route::get('notifications/{notification}/read', [StudentNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
+        Route::post('notifications/mark-read', [StudentNotificationController::class, 'markAsRead'])->name('notifications.markRead');
+        Route::post('notifications/{notification}/mark-single-read', [StudentNotificationController::class, 'markSingleAsRead'])->name('notifications.markSingleRead');
 
         // --- Session/Logout/Profile ---
         Route::post('logout', [StudentLoginController::class, 'logout'])->name('logout');

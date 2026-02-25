@@ -23,10 +23,11 @@
 
 </head>
 
-<body class="bg-gray-50 h-full">
+<body class="bg-gray-50 h-full" x-data="{ sidebarOpen: window.innerWidth >= 1024 }">
 
     <!-- Sidebar -->
-    <div class="fixed top-0 left-0 h-screen w-64 bg-gray-900 text-white flex flex-col z-50 transition-all duration-300">
+    <div class="fixed top-0 left-0 h-screen w-64 bg-gray-900 text-white flex flex-col z-50 transition-transform duration-300"
+         :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
         <div class="p-5 bg-white/5 border-b border-white/10 text-center shrink-0">
             <h5 class="mb-0 font-bold text-xl">ExamPlatform <span class="text-blue-500">Pro</span></h5>
         </div>
@@ -170,20 +171,19 @@
                 </li>
 
                 <!-- Reports & Analytics -->
-                <li x-data="{ open: false }">
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                <li x-data="{ open: {{ request()->routeIs('superadmin.reports.*') ? 'true' : 'false' }} }">
+                    @php $isReportsActive = request()->routeIs('superadmin.reports.*'); @endphp
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $isReportsActive ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-bar-chart mr-2"></i> Reports & Analytics</div>
                         <i class="bi bi-chevron-down text-xs transition-transform" :class="open ? 'rotate-180' : ''"></i>
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Exam Reports</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Performance Analytics</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Violation Reports</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">School-wise Reports</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Global Analytics</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Export PDF / Excel</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.reports.exams') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.reports.exams') }}">Exam Reports</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.reports.analytics') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.reports.analytics') }}">Performance Analytics</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.reports.violations') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.reports.violations') }}">Violation Reports</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.reports.schools') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.reports.schools') }}">School-wise Reports</a></li>
                         </ul>
                     </div>
                 </li>
@@ -282,20 +282,34 @@
     </div>
 
     <!-- Main Content -->
-    <div class="ml-64 min-h-screen flex flex-col">
+    <div class="min-h-screen flex flex-col transition-all duration-300"
+         :class="sidebarOpen ? 'ml-64' : 'ml-0'">
         <!-- Topbar -->
         <nav class="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
-            <h5 class="mb-0 text-gray-600 font-medium text-lg">@yield('title')</h5>
+            <div class="flex items-center gap-4">
+                <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                    <i class="bi bi-list text-2xl"></i>
+                </button>
+                <h5 class="mb-0 text-gray-600 font-medium text-lg">@yield('title')</h5>
+            </div>
             <div class="flex items-center">
                 <div class="text-right mr-4">
                     <small class="block text-gray-500 leading-tight">Welcome,</small>
                     <span class="font-bold text-gray-800">{{ auth()->user()?->name ?? 'Super Admin' }}</span>
                 </div>
-                <div class="mr-4 relative">
-                    <i class="bi bi-bell text-xl text-gray-500"></i>
-                    <span class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-red-500 text-white rounded-full text-[10px]">
-                        3
-                    </span>
+                <div class="mr-4 relative" x-data="{
+                    unreadCount: {{ $unreadNotificationsCount ?? 0 }},
+                    checkNotifications() {
+                        fetch('{{ route('superadmin.notifications.unreadCount') }}')
+                            .then(res => res.json())
+                            .then(data => { this.unreadCount = data.count; })
+                            .catch(err => console.error(err));
+                    }
+                }" x-init="setInterval(() => checkNotifications(), 15000)">
+                    <a href="{{ route('superadmin.notifications.index') }}" class="text-gray-500 hover:text-gray-700 relative block">
+                        <i class="bi bi-bell text-xl"></i>
+                        <span x-show="unreadCount > 0" x-text="unreadCount" x-cloak class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-red-500 text-white rounded-full text-[10px]"></span>
+                    </a>
                 </div>
                 <!-- Profile Dropdown -->
                 <div class="relative" x-data="{ open: false }">

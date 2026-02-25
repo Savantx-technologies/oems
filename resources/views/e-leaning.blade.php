@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Domestic Data Entry Operator - Training Delivery Plan</title>
+    <title>Courier Executive - Operations</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Google Fonts -->
@@ -381,9 +381,7 @@
 </head>
 
 <body>
-
     <div class="page-layout">
-
         <!-- Sidebar Navigation -->
         <nav class="sidebar">
             <h3>Training Modules</h3>
@@ -401,10 +399,8 @@
                 <li><a href="#module11">Module 11</a></li>
             </ul>
         </nav>
-
         <!-- Main Content -->
         <div class="content-area">
-
             <!-- Module 1 -->
             <div id="module1" class="module-section">
                 <div class="header-bar">

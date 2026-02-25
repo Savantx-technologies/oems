@@ -39,7 +39,7 @@
             </div>
 
             <div class="flex gap-3">
-                <a href="{{ route('student.exams.index') }}" class="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50">Exit</a>
+                <a href="{{ route('student.exams.mock') }}" class="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50">Exit</a>
                 <button @click="showResult = false; reviewMode = true; currentIndex = 0" class="flex-1 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">Review Answers</button>
             </div>
         </div>
@@ -138,7 +138,7 @@
                         class="px-6 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 flex items-center gap-2">
                     Finish Mock Exam <i class="bi bi-check-lg"></i>
                 </button>
-                <a x-show="reviewMode" href="{{ route('student.exams.index') }}" class="px-6 py-2 rounded-lg bg-gray-600 text-white font-medium hover:bg-gray-700 flex items-center gap-2">
+                <a x-show="reviewMode" href="{{ route('student.exams.mock') }}" class="px-6 py-2 rounded-lg bg-gray-600 text-white font-medium hover:bg-gray-700 flex items-center gap-2">
                     Exit Review <i class="bi bi-box-arrow-right"></i>
                 </a>
             </div>
@@ -216,7 +216,7 @@
                         .then(res => res.json())
                         .then(data => {
                             if (data.status === 'terminated' || data.status === 'expired' || data.status === 'submitted') {
-                                window.location.href = '{{ route("student.exams.index") }}';
+                                window.location.href = '{{ route("student.exams.mock") }}';
                             }
                             if (data.remaining_seconds !== undefined) {
                                 if (Math.abs(this.remainingSeconds - data.remaining_seconds) > 5) {
