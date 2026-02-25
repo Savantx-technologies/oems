@@ -3,7 +3,33 @@
 @section('title','Create Exam')
 
 @section('content')
+@if($lastExam)
 
+<div class="flex items-start gap-3 bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-sm text-indigo-800">
+
+    <div class="mt-0.5">
+        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+        </svg>
+    </div>
+
+    <div>
+        <p class="font-semibold">
+            How to Create Exam
+        </p>
+
+        <p class="mt-1">
+            The form is automatically filled with details from your last created exam.
+            If you are creating exams for multiple subjects under the same
+            session, title, and exam type, you only need to change the
+            <strong>Subject</strong>.
+        </p>
+    </div>
+
+</div>
+
+@endif
 <div class="max-w-5xl mx-auto py-0 space-y-8">
 
     <!-- ================= Header ================= -->
@@ -36,36 +62,80 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         Exam Title
                     </label>
-                    <input type="text" name="title" required class="w-full px-4 py-2 rounded-lg border border-gray-300
-                               focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
-                        placeholder="Mid Term Examination">
+                    <input type="text" name="title" value="{{ old('title', $lastExam->title ?? '') }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300
+    focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none" placeholder="Mid Term Examination">
+
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Class / Grade
-                    </label>
-                    <input type="text" name="class" required class="w-full px-4 py-2 rounded-lg border border-gray-300
-                               focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
-                        placeholder="8">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="text-sm font-medium text-gray-700">
+                            Class / Grade
+                        </label>
+
+                        <button type="button" onclick="showNewClassInput()"
+                            class="text-indigo-600 text-sm font-semibold hover:text-indigo-800">
+                            + Add
+                        </button>
+                    </div>
+
+                    <!-- Dropdown -->
+                    <select name="class" id="classSelect" class="w-full px-4 py-2 rounded-lg border border-gray-300
+        focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none">
+
+                        <option value="">Select Class</option>
+
+                        @foreach($classes as $class)
+                        <option value="{{ $class }}" {{ old('class', $lastExam->class ?? '') == $class ? 'selected' : ''
+                            }}>
+                            {{ $class }}
+                        </option>
+                        @endforeach
+
+                    </select>
+
+                    <!-- Hidden Input -->
+                    <input type="text" name="new_class" id="newClassInput" placeholder="Enter new class"
+                        class="hidden mt-2 w-full px-4 py-2 rounded-lg border border-gray-300">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Subject
-                    </label>
-                    <input type="text" name="subject" required class="w-full px-4 py-2 rounded-lg border border-gray-300
-                               focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
-                        placeholder="Science">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="text-sm font-medium text-gray-700">
+                            Subject
+                        </label>
+
+                        <button type="button" onclick="showNewSubjectInput()"
+                            class="text-indigo-600 text-sm font-semibold hover:text-indigo-800">
+                            + Add
+                        </button>
+                    </div>
+
+                    <!-- Dropdown -->
+                    <select name="subject" id="subjectSelect" class="w-full px-4 py-2 rounded-lg border border-gray-300
+        focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none">
+
+                        <option value="">Select Subject</option>
+
+                        @foreach($subjects as $sub)
+                        <option value="{{ $sub }}" {{ old('subject')==$sub ? 'selected' : '' }}>
+                            {{ $sub }}
+                        </option>
+                        @endforeach
+
+                    </select>
+
+                    <input type="text" name="new_subject" id="newSubjectInput" placeholder="Enter new subject"
+                        class="hidden mt-2 w-full px-4 py-2 rounded-lg border border-gray-300">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         Academic Session
                     </label>
-                    <input type="text" name="academic_session" required class="w-full px-4 py-2 rounded-lg border border-gray-300
-                               focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
-                        placeholder="2025–26">
+                    <input type="text" name="academic_session"
+                        value="{{ old('academic_session', $lastExam->academic_session ?? '') }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300
+    focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none" placeholder="2025–26">
                 </div>
 
                 <div>
@@ -73,11 +143,25 @@
                         Exam Type
                     </label>
                     <select name="exam_type" required class="w-full px-4 py-2 rounded-lg border border-gray-300
-                               focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none">
+    focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none">
+
                         <option value="">Select type</option>
-                        <option value="term">Term</option>
-                        <option value="mock">Mock</option>
-                        <option value="final">Final</option>
+
+                        <option value="term" {{ old('exam_type', $lastExam->exam_type ?? '') == 'term' ? 'selected' : ''
+                            }}>
+                            Term
+                        </option>
+
+                        <option value="mock" {{ old('exam_type', $lastExam->exam_type ?? '') == 'mock' ? 'selected' : ''
+                            }}>
+                            Mock
+                        </option>
+
+                        <option value="final" {{ old('exam_type', $lastExam->exam_type ?? '') == 'final' ? 'selected' :
+                            '' }}>
+                            Final
+                        </option>
+
                     </select>
                 </div>
 
@@ -206,6 +290,16 @@
     `;
     document.getElementById('instructionWrapper').appendChild(div);
 }
+function showNewClassInput() {
+    document.getElementById("classSelect").classList.add("hidden");
+    document.getElementById("newClassInput").classList.remove("hidden");
+}
+
+function showNewSubjectInput() {
+    document.getElementById("subjectSelect").classList.add("hidden");
+    document.getElementById("newSubjectInput").classList.remove("hidden");
+}
+
 </script>
 
 @endsection

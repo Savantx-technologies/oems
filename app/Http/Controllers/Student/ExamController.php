@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
+use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -10,7 +11,7 @@ use Illuminate\Support\Str;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Services\ExamAutoEvaluationService;
-
+use Barryvdh\DomPDF\Facade\Pdf;
 class ExamController extends Controller
 {
     public function index()
@@ -516,14 +517,34 @@ class ExamController extends Controller
 
     public function result($attemptId)
     {
-        $attempt = ExamAttempt::with('exam')
+        $student = auth()->user();
+
+        $firstAttempt = ExamAttempt::with('exam')
             ->where('id', $attemptId)
-            ->where('user_id', auth()->id())
+            ->where('user_id', $student->id)
             ->firstOrFail();
 
-        $exam = $attempt->exam;
+        $exam = $firstAttempt->exam;
 
-        return view('student.exams.result', compact('attempt', 'exam'));
+        // Fetch all subjects of same exam title + session + class
+        $allAttempts = ExamAttempt::with('exam')
+            ->where('user_id', $student->id)
+            ->whereHas('exam', function ($q) use ($exam) {
+                $q->where('title', $exam->title)
+                    ->where('academic_session', $exam->academic_session)
+                    ->where('class', $exam->class);
+            })
+            ->where('approval_status', 'approved')
+            ->get();
+
+        // Fetch school dynamically
+        $school = School::find($student->school_id);
+
+        return view('student.exams.result', compact(
+            'student',
+            'school',
+            'allAttempts'
+        ));
     }
 
 
@@ -532,12 +553,48 @@ class ExamController extends Controller
         $attempts = ExamAttempt::with('exam')
             ->where('user_id', auth()->id())
             ->latest()
-            ->paginate(10);
+            ->get(); // remove paginate
 
-        return view('student.exams.results', compact('attempts'));
+        // Group by Title + Session
+        $grouped = $attempts->groupBy(function ($item) {
+            return $item->exam->title . '|' . $item->exam->academic_session;
+        });
+
+        return view('student.exams.results', compact('grouped'));
     }
 
+    public function downloadMarksheet($attemptId)
+    {
+        $student = auth()->user();
 
+        $firstAttempt = ExamAttempt::with('exam')
+            ->where('id', $attemptId)
+            ->where('user_id', $student->id)
+            ->firstOrFail();
+
+        $exam = $firstAttempt->exam;
+
+        // Fetch all subjects of same exam
+        $allAttempts = ExamAttempt::with('exam')
+            ->where('user_id', $student->id)
+            ->whereHas('exam', function ($q) use ($exam) {
+                $q->where('title', $exam->title)
+                    ->where('academic_session', $exam->academic_session)
+                    ->where('class', $exam->class);
+            })
+            ->where('approval_status', 'approved')
+            ->get();
+
+        $school = School::find($student->school_id);
+
+        $pdf = Pdf::loadView('student.exams.marksheet_pdf', compact(
+            'student',
+            'allAttempts',
+            'school'
+        ))->setPaper('a4');
+
+        return $pdf->download('Marksheet.pdf');
+    }
 
 
 }

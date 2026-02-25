@@ -34,13 +34,45 @@ class ExamController extends Controller
 
 
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('admin.exams.create');
+        $admin = auth('admin')->user();
+
+        $classes = Question::where('school_id', $admin->school_id)
+            ->select('class')
+            ->distinct()
+            ->orderBy('class')
+            ->pluck('class');
+
+        $subjects = Question::where('school_id', $admin->school_id)
+            ->select('subject')
+            ->distinct()
+            ->orderBy('subject')
+            ->pluck('subject');
+
+        //  Fetch last exam (for auto-fill)
+        $lastExam = Exam::where('school_id', $admin->school_id)
+            ->latest()
+            ->first();
+
+        return view('admin.exams.create', compact(
+            'classes',
+            'subjects',
+            'lastExam'
+        ));
     }
 
     public function store(Request $request)
     {
+        // If new class entered, override dropdown
+        if ($request->filled('new_class')) {
+            $request->merge(['class' => $request->new_class]);
+        }
+
+        // If new subject entered, override dropdown
+        if ($request->filled('new_subject')) {
+            $request->merge(['subject' => $request->new_subject]);
+        }
         $request->validate([
             'title' => 'required',
             'class' => 'required',
@@ -85,11 +117,16 @@ class ExamController extends Controller
 
         $questions = Question::where('school_id', $admin->school_id)
             ->where('class', $exam->class)
+            ->where('subject', $exam->subject)
             ->get();
 
         $attached = $exam->selected_questions ?? [];
 
-        return view('admin.exams.questions', compact('exam', 'questions', 'attached'));
+        return view('admin.exams.questions', compact(
+            'exam',
+            'questions',
+            'attached'
+        ));
     }
 
 
@@ -106,6 +143,8 @@ class ExamController extends Controller
 
         $questions = Question::whereIn('id', $request->questions)
             ->where('school_id', $admin->school_id)
+            ->where('class', $exam->class)
+            ->where('subject', $exam->subject)
             ->get();
 
         $exam->update([

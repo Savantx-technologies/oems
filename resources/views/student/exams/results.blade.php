@@ -4,10 +4,22 @@
 @section('content')
 
 @php
-$total = $attempts->count();
-$approved = $attempts->where('approval_status','approved')->count();
-$pending = $attempts->where('approval_status','pending')->count();
-$rejected = $attempts->where('approval_status','rejected')->count();
+$total = $grouped->count();
+
+$approved = 0;
+$pending = 0;
+$rejected = 0;
+
+foreach ($grouped as $examGroup) {
+
+if ($examGroup->contains('approval_status','pending')) {
+$pending++;
+} elseif ($examGroup->contains('approval_status','rejected')) {
+$rejected++;
+} else {
+$approved++;
+}
+}
 @endphp
 
 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden pt-4">
@@ -78,53 +90,74 @@ $rejected = $attempts->where('approval_status','rejected')->count();
                 <!-- Table Body -->
                 <tbody class="divide-y divide-gray-100">
 
-                    @forelse($attempts as $attempt)
+                    @forelse($grouped as $key => $examGroup)
 
-                    <tr class="hover:bg-gray-50 transition duration-150">
+                    @php
+                    [$title, $session] = explode('|', $key);
+                    $firstAttempt = $examGroup->first();
 
-                        <!-- Exam -->
+                    // Status logic
+                    if ($examGroup->contains('approval_status','pending')) {
+                    $status = 'pending';
+                    } elseif ($examGroup->contains('approval_status','rejected')) {
+                    $status = 'rejected';
+                    } else {
+                    $status = 'approved';
+                    }
+
+                    // Calculate total obtained & total max
+                    $totalObtained = $examGroup->sum('score');
+                    $totalMax = $examGroup->sum(function($item){
+                    return $item->exam->total_marks;
+                    });
+
+                    $percentage = $totalMax > 0
+                    ? round(($totalObtained / $totalMax) * 100, 2)
+                    : 0;
+                    @endphp
+
+                    <tr class="hover:bg-gray-50 transition">
+
+                        <!-- Exam Title -->
                         <td class="px-8 py-6 font-medium text-gray-800">
-                            {{ $attempt->exam->title }}
+                            {{ $title }}
+                            <div class="text-xs text-gray-400 mt-1">
+                                Session: {{ $session }}
+                            </div>
                         </td>
 
-                        <!-- Score -->
+                        <!-- Total Score -->
                         <td class="px-8 py-6">
                             <span class="px-3 py-1 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-full">
-                                {{ $attempt->score ?? '-' }}
+                                {{ $totalObtained }} / {{ $totalMax }}
+                                ({{ $percentage }}%)
                             </span>
                         </td>
 
                         <!-- Status -->
                         <td class="px-8 py-6">
-
-                            @if($attempt->approval_status === 'approved')
-                            <span
-                                class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
-                                ● Approved
-                            </span>
-
-                            @elseif($attempt->approval_status === 'pending')
-                            <span
-                                class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full">
-                                ● Pending
-                            </span>
-
+                            @if($status === 'approved')
+                            <span class="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full">● Approved</span>
+                            @elseif($status === 'pending')
+                            <span class="px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full">● Pending</span>
                             @else
-                            <span
-                                class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">
-                                ● Rejected
-                            </span>
+                            <span class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-full">● Rejected</span>
                             @endif
-
                         </td>
 
-                        <!-- Action -->
-                        <td class="px-8 py-6 text-right">
+                        <!-- Actions -->
+                        <td class="px-8 py-6 text-right space-x-2">
 
-                            <a href="{{ route('student.result',$attempt->id) }}" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-xl
-                                          bg-indigo-600 text-white hover:bg-indigo-700
-                                          transition shadow-sm">
-                                View Details →
+                            <!-- View Button -->
+                            <a href="{{ route('student.result', $firstAttempt->id) }}" class="px-4 py-2 text-xs font-medium rounded-xl
+           bg-indigo-600 text-white hover:bg-indigo-700">
+                                View →
+                            </a>
+
+                            <!-- Download PDF Button -->
+                            <a href="{{ route('student.marksheet.download', $firstAttempt->id) }}" class="px-4 py-2 text-xs font-medium rounded-xl
+           bg-green-600 text-white hover:bg-green-700">
+                                Download
                             </a>
 
                         </td>
@@ -132,18 +165,11 @@ $rejected = $attempts->where('approval_status','rejected')->count();
                     </tr>
 
                     @empty
-
                     <tr>
                         <td colspan="4" class="px-8 py-14 text-center text-gray-400">
-                            <div class="flex flex-col items-center gap-2">
-                                <span class="text-lg">No results available</span>
-                                <span class="text-xs text-gray-400">
-                                    Once you complete exams, results will appear here.
-                                </span>
-                            </div>
+                            No results available.
                         </td>
                     </tr>
-
                     @endforelse
 
                 </tbody>
