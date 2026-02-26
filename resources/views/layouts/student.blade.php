@@ -103,11 +103,24 @@
             <ul class="flex flex-col space-y-1">
 
                 <!-- Dashboard -->
-                <li>
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('student.dashboard') ? 'nav-link-active' : '' }}"
-                        href="{{ Route::has('student.dashboard') ? route('student.dashboard') : '#' }}">
+                <li x-data="{ open: {{ request()->routeIs('student.dashboard') || request()->routeIs('student.elearning') ? 'true' : 'false' }} }">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('student.dashboard') || request()->routeIs('student.elearning') ? 'nav-link-active' : '' }}"
+                        href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-speedometer2 mr-2"></i> Dashboard</div>
+                        <i class="bi bi-chevron-down text-xs transition-transform" :class="open ? 'rotate-180' : ''"></i>
                     </a>
+                    <div x-show="open" x-collapse class="bg-black/20">
+                        <ul class="flex flex-col py-1">
+                            <li>
+                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('student.dashboard') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ Route::has('student.dashboard') ? route('student.dashboard') : '#' }}">Overview</a>
+                            </li>
+                            <li>
+                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('student.elearning') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ Route::has('student.elearning') ? route('student.elearning') : '#' }}">E-Learning Content</a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
 
                 <!-- My Exams -->

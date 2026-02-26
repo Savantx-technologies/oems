@@ -126,12 +126,18 @@ $approved++;
                             </div>
                         </td>
 
-                        <!-- Total Score -->
+                        <!-- Score Column -->
                         <td class="px-8 py-6">
+                            @if($status === 'approved')
                             <span class="px-3 py-1 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-full">
                                 {{ $totalObtained }} / {{ $totalMax }}
                                 ({{ $percentage }}%)
                             </span>
+                            @else
+                            <span class="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-500 rounded-full">
+                                Not Published
+                            </span>
+                            @endif
                         </td>
 
                         <!-- Status -->
@@ -148,17 +154,23 @@ $approved++;
                         <!-- Actions -->
                         <td class="px-8 py-6 text-right space-x-2">
 
-                            <!-- View Button -->
+                            @if($status === 'approved')
+
                             <a href="{{ route('student.result', $firstAttempt->id) }}" class="px-4 py-2 text-xs font-medium rounded-xl
-           bg-indigo-600 text-white hover:bg-indigo-700">
+               bg-indigo-600 text-white hover:bg-indigo-700">
                                 View →
                             </a>
 
-                            <!-- Download PDF Button -->
                             <a href="{{ route('student.marksheet.download', $firstAttempt->id) }}" class="px-4 py-2 text-xs font-medium rounded-xl
-           bg-green-600 text-white hover:bg-green-700">
+               bg-green-600 text-white hover:bg-green-700">
                                 Download
                             </a>
+
+                            @else
+                            <span class="text-xs text-gray-400 italic">
+                                Awaiting Approval
+                            </span>
+                            @endif
 
                         </td>
 

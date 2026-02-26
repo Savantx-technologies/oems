@@ -365,7 +365,8 @@
         .pdf-btn:hover {
             background-color: #b91c1c;
         }
-          .list-disc {
+
+        .list-disc {
             text-align: center;
             list-style: none;
         }

@@ -239,6 +239,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // --- Staff Management ---
         Route::get('staff', [\App\Http\Controllers\Admin\StaffController::class, 'index'])->name('staff.index');
+
+        // --- School Settings ---
+        Route::get('settings/school', [\App\Http\Controllers\Admin\SchoolSettingsController::class, 'edit'])->name('settings.school');
+        Route::put('settings/school', [\App\Http\Controllers\Admin\SchoolSettingsController::class, 'update'])->name('settings.school.update');
+        Route::get('settings/exam-rules', [\App\Http\Controllers\Admin\ExamRulesController::class, 'edit'])->name('settings.exam_rules');
+        Route::put('settings/exam-rules', [\App\Http\Controllers\Admin\ExamRulesController::class, 'update'])->name('settings.exam_rules.update');
+        Route::get('settings/notifications', [\App\Http\Controllers\Admin\NotificationSettingsController::class, 'edit'])->name('settings.notifications');
+        Route::put('settings/notifications', [\App\Http\Controllers\Admin\NotificationSettingsController::class, 'update'])->name('settings.notifications.update');
         
     });
 
@@ -325,6 +333,7 @@ Route::prefix('student')->name('student.')->group(function () {
     // -- Authenticated Student Area --
     Route::middleware(['auth', \App\Http\Middleware\CheckSchoolActive::class . ':web'])->group(function () {
         Route::get('dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
+        Route::view('elearning', 'student.elearning')->name('elearning');
         Route::get('result/{attempt}', [StudentExamController::class, 'result'])
             ->name('result');
         Route::get('results', [StudentExamController::class, 'results'])

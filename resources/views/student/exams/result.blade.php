@@ -9,6 +9,18 @@ $totalMax = 0;
 $totalObtained = 0;
 @endphp
 
+@if(!$first)
+<div class="max-w-4xl mx-auto mt-10 p-6 bg-red-50 border border-red-200 text-center rounded">
+    <h2 class="text-lg font-semibold text-red-600">
+        Result Not Available
+    </h2>
+    <p class="text-sm text-gray-600 mt-2">
+        This result is not approved or does not exist.
+    </p>
+</div>
+@return
+@endif
+
 <div class="max-w-5xl mx-auto bg-white p-10 border border-gray-300 shadow-xl relative">
 
     <!-- ================= SCHOOL HEADER ================= -->
@@ -38,9 +50,7 @@ $totalObtained = 0;
                 Academic Report
             </h2>
 
-            <p class="text-sm text-gray-600">
-                Academic Session : {{ $first->exam->academic_session }}
-            </p>
+            
         </div>
 
         <!-- Student Photo -->

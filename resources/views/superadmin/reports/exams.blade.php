@@ -55,6 +55,9 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($exams as $exam)
+                    @if($exam->exam_type === 'mock')
+                        @continue
+                    @endif
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-3 font-medium text-gray-800">
                             {{ $exam->title }}
