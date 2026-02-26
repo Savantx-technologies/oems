@@ -35,7 +35,7 @@ class ExamController extends Controller
             ->latest()
             ->paginate(10);
 
-        $attemptedExamIds = \App\Models\ExamAttempt::where('user_id', $student->id)
+        $attemptedExamIds = ExamAttempt::where('user_id', $student->id)
             ->pluck('exam_id')
             ->toArray();
 
@@ -92,7 +92,7 @@ class ExamController extends Controller
         }
 
         // 2. Lifecycle Management: Create or Retrieve Attempt (Safe method)
-        $attempt = \App\Models\ExamAttempt::firstOrNew([
+        $attempt = ExamAttempt::firstOrNew([
             'user_id' => $student->id,
             'exam_id' => $exam->id,
         ]);
@@ -104,7 +104,7 @@ class ExamController extends Controller
 
             if ($attempt->submitted_at || $attempt->status !== 'in_progress' || $now->greaterThan($expiresAt)) {
                 $attempt->delete();
-                $attempt = new \App\Models\ExamAttempt([
+                $attempt = new ExamAttempt([
                     'user_id' => $student->id,
                     'exam_id' => $exam->id,
                 ]);
@@ -265,7 +265,7 @@ class ExamController extends Controller
         $exam = Exam::findOrFail($id);
 
         // Find active attempt
-        $attempt = \App\Models\ExamAttempt::where('user_id', $student->id)
+        $attempt = ExamAttempt::where('user_id', $student->id)
             ->where('exam_id', $exam->id)
             ->first();
 

@@ -27,7 +27,7 @@
 
     <!-- Sidebar -->
     <div class="fixed top-0 left-0 h-screen w-64 bg-gray-900 text-white flex flex-col z-50 transition-transform duration-300"
-         :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+        :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
         <div class="p-5 bg-white/5 border-b border-white/10 text-center shrink-0">
             <h5 class="mb-0 font-bold text-xl">ExamPlatform <span class="text-blue-500">Pro</span></h5>
         </div>
@@ -124,10 +124,6 @@
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.students.index') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.students.index') }}">View Students</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Block / Unblock</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Reset Exam Attempt</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Transfer School</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Bulk Actions</a></li>
                         </ul>
                     </div>
                 </li>
@@ -143,9 +139,6 @@
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.exams.index') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.exams.index') }}">View All Exams</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Cancel Exam</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Extend Time</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Re-evaluate Exam</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.exams.violation-summary') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.exams.violation-summary') }}">Exam Violation Summary</a></li>
                         </ul>
                     </div>
@@ -283,7 +276,7 @@
 
     <!-- Main Content -->
     <div class="min-h-screen flex flex-col transition-all duration-300"
-         :class="sidebarOpen ? 'ml-64' : 'ml-0'">
+        :class="sidebarOpen ? 'ml-64' : 'ml-0'">
         <!-- Topbar -->
         <nav class="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
             <div class="flex items-center gap-4">
