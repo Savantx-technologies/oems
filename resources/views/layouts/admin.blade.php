@@ -332,8 +332,8 @@
                 </li>
 
                 <!-- School Settings -->
-                <li x-data="{ open: false }">
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                <li x-data="{ open: {{ request()->routeIs('admin.settings.school') || request()->routeIs('admin.settings.exam_rules') || request()->routeIs('admin.settings.notifications') ? 'true' : 'false' }} }">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.settings.school') || request()->routeIs('admin.settings.exam_rules') || request()->routeIs('admin.settings.notifications') ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-gear mr-2"></i> Settings</div>
                         <i class="bi bi-chevron-down text-xs transition-transform"
@@ -341,12 +341,12 @@
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">School Profile</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Exam Rules</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Notification Settings</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.settings.school') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.settings.school') }}">School Profile</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.settings.exam_rules') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.settings.exam_rules') }}">Exam Rules</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.settings.notifications') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.settings.notifications') }}">Notification Settings</a></li>
                         </ul>
                     </div>
                 </li>

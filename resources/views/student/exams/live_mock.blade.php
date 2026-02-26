@@ -16,6 +16,26 @@
 </head>
 <body class="bg-gray-50 h-screen flex flex-col overflow-hidden select-none" x-data="examApp()" x-init="init()">
 
+    <!-- Finish Confirmation Modal -->
+    <div x-show="showFinishConfirmation" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" x-cloak>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center transform transition-all scale-100" @click.away="showFinishConfirmation = false">
+            <div class="mb-5">
+                <div class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto text-indigo-600 text-3xl">
+                    <i class="bi bi-check2-circle"></i>
+                </div>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Submit Exam?</h3>
+            <p class="text-gray-500 mb-6 text-sm leading-relaxed">
+                Are you sure you want to finish the mock exam?
+            </p>
+            
+            <div class="flex gap-3">
+                <button @click="showFinishConfirmation = false" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 hover:text-gray-800 transition text-sm">Cancel</button>
+                <button @click="confirmFinish()" class="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 text-sm">Yes, Submit</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Result Modal -->
     <div x-show="showResult" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" x-cloak>
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 text-center transform transition-all scale-100">
@@ -182,6 +202,7 @@
                 remainingSeconds: {{ $remainingSeconds }},
                 sessionToken: '{{ $sessionToken }}',
                 showResult: false,
+                showFinishConfirmation: false,
                 reviewMode: false,
                 score: 0,
                 totalMarks: 0,
@@ -228,8 +249,19 @@
                 },
 
                 finishMockExam(force = false) {
-                    if (!force && !confirm('Are you sure you want to finish the mock exam?')) return;
-                    
+                    if (force) {
+                        this.processFinish();
+                    } else {
+                        this.showFinishConfirmation = true;
+                    }
+                },
+
+                confirmFinish() {
+                    this.showFinishConfirmation = false;
+                    this.processFinish();
+                },
+
+                processFinish() {
                     this.score = 0;
                     this.totalMarks = 0;
                     this.correctCount = 0;
