@@ -206,116 +206,6 @@ class ExamController extends Controller
 
         return view('student.exams.live', compact('exam', 'attempt', 'questionsData', 'remainingSeconds', 'sessionToken'));
     }
-
-    // public function submit(Request $request, $id)
-    // {
-    //     $student = Auth::user();
-    //     $exam = Exam::findOrFail($id);
-
-    //     $attempt = \App\Models\ExamAttempt::where('user_id', $student->id)
-    //         ->where('exam_id', $exam->id)
-    //         ->first();
-
-    //     // 1. Validate Attempt Ownership & Status
-    //     if (!$attempt || $attempt->submitted_at) {
-    //         return redirect()->route('student.exams.index')->with('error', 'Invalid submission or exam already submitted.');
-    //     }
-
-    //     // 2. Validate Session Token (Prevent multiple tabs)
-    //     if ($request->input('session_token') !== $attempt->session_token) {
-    //         return redirect()->route('student.exams.index')->with('error', 'Session expired. You may have opened the exam in another tab.');
-    //     }
-
-    //     // 3. Secure Time Validation (Server-Side)
-    //     $now = now();
-    //     $startTime = $attempt->started_at;
-    //     $durationSeconds = ($exam->duration_minutes * 60) + ($attempt->extra_time_seconds ?? 0);
-    //     // Allow 2 minutes buffer for network latency
-    //     $allowedEndTime = $startTime->copy()->addSeconds($durationSeconds + 120);
-
-    //     if ($now->greaterThan($allowedEndTime)) {
-    //         $attempt->submitted_at = $now;
-    //         $attempt->status = 'expired';
-    //         $attempt->save();
-    //         return redirect()->route('student.exams.index')->with('error', 'Submission rejected: Exam time exceeded.');
-    //     }
-
-    //     $answers = $request->input('answers', []);
-
-    //     // If it's a string (JSON or comma separated), decode it
-    //     if (is_string($answers)) {
-    //         $decoded = json_decode($answers, true);
-    //         if (json_last_error() === JSON_ERROR_NONE) {
-    //             $answers = $decoded;
-    //         } else {
-    //             $answers = []; // Invalid format, treat as empty
-    //         }
-    //     }
-
-    //     if (!is_array($answers)) {
-    //         $answers = [];
-    //     }
-
-    //     // 3. Validate Questions Belong to Exam
-    //     $validQuestionIds = $exam->selected_questions;
-    //     if (is_string($validQuestionIds)) {
-    //         $validQuestionIds = json_decode($validQuestionIds, true) ?? [];
-    //     }
-
-    //     // Fetch only valid questions from DB to prevent tampering
-    //     $questions = \App\Models\Question::whereIn('id', $validQuestionIds)->get();
-
-    //     $totalQuestions = $questions->count();
-    //     $totalCorrect = 0;
-
-    //     // 4. Atomic Transaction for Data Integrity
-    //     DB::beginTransaction();
-    //     try {
-    //         foreach ($questions as $question) {
-    //             $selectedOption = $answers[$question->id] ?? null;
-
-    //             // Validate option is allowed (A, B, C, D)
-    //             if ($selectedOption !== null && !in_array($selectedOption, ['A', 'B', 'C', 'D'])) {
-    //                 $selectedOption = null;
-    //             }
-
-    //             if ($selectedOption === null) continue;
-
-    //             $isCorrect = ($question->correct_option === $selectedOption) ? 1 : 0;
-
-    //             if ($isCorrect) {
-    //                 $totalCorrect++;
-    //             }
-
-    //             \App\Models\UserExamAnswer::forceCreate([
-    //                 'school_id' => $student->school_id,
-    //                 'attempt_id' => $attempt->id,
-    //                 'user_id' => $student->id,
-    //                 'exam_id' => $exam->id,
-    //                 'question_id' => $question->id,
-    //                 'selected_option' => $selectedOption,
-    //                 'is_correct' => $isCorrect,
-    //             ]);
-    //         }
-
-    //         // Update attempt with correct count and score
-    //         $score = $totalQuestions > 0 ? ($totalCorrect / $totalQuestions) * 100 : 0;
-
-    //         $attempt->total_questions = $totalQuestions;
-    //         $attempt->total_correct = $totalCorrect;
-    //         $attempt->score = $score;
-    //         $attempt->submitted_at = now();
-    //         $attempt->status = 'submitted';
-    //         $attempt->save();
-
-    //         DB::commit();
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return redirect()->back()->with('error', 'An error occurred while submitting. Please try again.');
-    //     }
-
-    //     return redirect()->route('student.exams.index')->with('success', 'Exam submitted successfully!');
-    // }
     public function submit(Request $request, $id)
     {
         $student = Auth::user();
@@ -365,7 +255,7 @@ class ExamController extends Controller
         app(ExamAutoEvaluationService::class)
             ->evaluate($attempt, $answers);
 
-        return redirect()->route('student.result', $attempt->id)
+        return redirect()->route('student.exams.index', $attempt->id)
             ->with('success', 'Exam submitted successfully.');
     }
     public function logViolation(Request $request, $id)
@@ -541,9 +431,15 @@ class ExamController extends Controller
             ->where('user_id', $student->id)
             ->firstOrFail();
 
+        // 🚨 If not approved → stop here
+        if ($firstAttempt->approval_status !== 'approved') {
+            return view('student.exams.result-pending', [
+                'status' => $firstAttempt->approval_status
+            ]);
+        }
+
         $exam = $firstAttempt->exam;
 
-        // Fetch all subjects of same exam title + session + class
         $allAttempts = ExamAttempt::with('exam')
             ->where('user_id', $student->id)
             ->whereHas('exam', function ($q) use ($exam) {
@@ -554,7 +450,6 @@ class ExamController extends Controller
             ->where('approval_status', 'approved')
             ->get();
 
-        // Fetch school dynamically
         $school = School::find($student->school_id);
 
         return view('student.exams.result', compact(
@@ -569,8 +464,11 @@ class ExamController extends Controller
     {
         $attempts = ExamAttempt::with('exam')
             ->where('user_id', auth()->id())
+            ->whereHas('exam', function ($q) {
+                $q->where('exam_type', '!=', 'mock');
+            })
             ->latest()
-            ->get(); // remove paginate
+            ->get();
 
         // Group by Title + Session
         $grouped = $attempts->groupBy(function ($item) {
