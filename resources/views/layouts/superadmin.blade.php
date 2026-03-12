@@ -96,19 +96,15 @@
                 </li>
 
                 <!-- Roles & Permissions -->
-                <li x-data="{ open: false }">
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                <li x-data="{ open: {{ request()->routeIs('superadmin.roles-permissions.*') ? 'true' : 'false' }} }">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('superadmin.roles-permissions.*') ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-shield-lock mr-2"></i> Roles & Permissions</div>
                         <i class="bi bi-chevron-down text-xs transition-transform" :class="open ? 'rotate-180' : ''"></i>
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Role List</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Create Role</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Assign Permissions</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Clone Role</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Permission Matrix</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.roles-permissions.index') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.roles-permissions.index') }}">Permission Matrix</a></li>
                         </ul>
                     </div>
                 </li>
@@ -201,20 +197,23 @@
                 </li>
 
                 <!-- System Configuration -->
-                <li x-data="{ open: false }">
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                <li x-data="{ open: {{ request()->routeIs('superadmin.settings.*') ? 'true' : 'false' }} }">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('superadmin.settings.*') ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-gear mr-2"></i> System Config</div>
                         <i class="bi bi-chevron-down text-xs transition-transform" :class="open ? 'rotate-180' : ''"></i>
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Exam Rules Engine</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.settings.exam-rules') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.settings.exam-rules') }}">Exam Rules Engine</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Proctoring Settings</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Camera Rules</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Anti-Cheat Settings</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Notification Templates</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Email / SMS Config</a></li>
+                            <li>
+                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.settings.system') ? 'text-white bg-white/10' : '' }}" 
+                                    href="{{ route('superadmin.settings.system') }}">General Settings</a>
+                            </li>
                         </ul>
                     </div>
                 </li>
@@ -255,7 +254,7 @@
                 </li>
 
                 <!-- Profile & Access -->
-                <li x-data="{ open: false }">
+                <li x-data="{ open: {{ (request()->routeIs('superadmin.profile') || request()->routeIs('superadmin.security.logs')) ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-person-circle mr-2"></i> Profile & Access</div>
@@ -263,9 +262,9 @@
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">My Profile</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Change Password</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Active Sessions</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.profile') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.profile') }}">My Profile</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.profile') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.profile') }}#security">Change Password</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.security.logs') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.security.logs') }}">Active Sessions</a></li>
                         </ul>
                     </div>
                 </li>
@@ -288,7 +287,7 @@
             <div class="flex items-center">
                 <div class="text-right mr-4">
                     <small class="block text-gray-500 leading-tight">Welcome,</small>
-                    <span class="font-bold text-gray-800">{{ auth()->user()?->name ?? 'Super Admin' }}</span>
+                    <span class="font-bold text-gray-800">{{ auth('superadmin')->user()?->name ?? 'Super Admin' }}</span>
                 </div>
                 <div class="mr-4 relative" x-data="{
                     unreadCount: {{ $unreadNotificationsCount ?? 0 }},
@@ -313,7 +312,12 @@
                     </button>
                     <ul x-show="open" x-cloak class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-100">
                         <li class="px-4 py-2 border-b border-gray-100">
-                            <span class="font-bold text-gray-800">{{ auth()->user()?->name ?? 'Super Admin' }}</span>
+                            <span class="font-bold text-gray-800">{{ auth('superadmin')->user()?->name ?? 'Super Admin' }}</span>
+                        </li>
+                        <li>
+                            <a href="{{ route('superadmin.profile') }}" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
+                                <i class="bi bi-person-circle mr-2"></i> My Profile
+                            </a>
                         </li>
                         <li>
                             <form id="logout-form" method="POST" action="{{ route('superadmin.logout') }}" class="m-0">

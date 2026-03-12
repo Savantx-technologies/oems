@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminResultController;
 use App\Http\Controllers\Admin\AttemptControlController;
 use App\Http\Controllers\Admin\PassageController;
+use App\Models\Admin;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
@@ -36,6 +37,7 @@ use App\Http\Controllers\SuperAdmin\AdminController;
 use App\Http\Controllers\SuperAdmin\AdminRequestController as SuperAdminAdminRequestController;
 use App\Http\Controllers\SuperAdmin\Auth\LoginController as SuperAdminLoginController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
+use App\Http\Controllers\SuperAdmin\RolePermissionController as SuperAdminRolePermissionController;
 use App\Http\Controllers\SuperAdmin\SchoolController;
 use App\Http\Controllers\SuperAdmin\SecurityLogController;
 use App\Http\Controllers\SuperAdmin\StaffRequestController as SuperAdminStaffRequestController;
@@ -44,7 +46,10 @@ use App\Http\Controllers\SuperAdmin\ExamController as SuperAdminExamController;
 use App\Http\Controllers\SuperAdmin\LiveMonitorController as SuperAdminLiveMonitorController;
 use App\Http\Controllers\SuperAdmin\AttemptControlController as SuperAdminAttemptControlController;
 use App\Http\Controllers\SuperAdmin\NotificationController as SuperAdminNotificationController;
+use App\Http\Controllers\SuperAdmin\ExamRulesController as SuperAdminExamRulesController;
+use App\Http\Controllers\SuperAdmin\ProfileController as SuperAdminProfileController;
 use App\Http\Controllers\SuperAdmin\ReportController as SuperAdminReportController;
+use App\Http\Controllers\SuperAdmin\SystemSettingsController;
 
 // =========================
 // System Utility Routes
@@ -176,6 +181,14 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
         Route::post('notifications/mark-read', [SuperAdminNotificationController::class, 'markAsRead'])->name('notifications.markRead');
         Route::post('notifications/{notification}/mark-single-read', [SuperAdminNotificationController::class, 'markSingleAsRead'])->name('notifications.markSingleRead');
 
+        // ---- Profile & Access ----
+        Route::get('profile', [SuperAdminProfileController::class, 'show'])->name('profile');
+        Route::put('profile/password', [SuperAdminProfileController::class, 'updatePassword'])->name('password.update');
+
+        // ---- Roles & Permissions ----
+        Route::get('roles-permissions', [SuperAdminRolePermissionController::class, 'edit'])->name('roles-permissions.index');
+        Route::put('roles-permissions', [SuperAdminRolePermissionController::class, 'update'])->name('roles-permissions.update');
+
         // ---- Reports ----
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [SuperAdminReportController::class, 'index'])->name('index');
@@ -183,6 +196,15 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
             Route::get('analytics', [SuperAdminReportController::class, 'analytics'])->name('analytics');
             Route::get('violations', [SuperAdminReportController::class, 'violations'])->name('violations');
             Route::get('schools', [SuperAdminReportController::class, 'schools'])->name('schools');
+        });
+
+        // ---- System Configuration ----
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::get('exam-rules', [SuperAdminExamRulesController::class, 'edit'])->name('exam-rules');
+            Route::put('exam-rules', [SuperAdminExamRulesController::class, 'update'])->name('exam-rules.update');
+            Route::get('system', [SystemSettingsController::class, 'edit'])->name('system');
+            Route::put('system', [SystemSettingsController::class, 'update'])->name('system.update');
+            Route::post('system/test-mail', [SystemSettingsController::class, 'sendTestMail'])->name('system.test-mail');
         });
     });
 });
@@ -213,111 +235,117 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('notifications/mark-read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.markRead');
         Route::post('notifications/{notification}/mark-single-read', [AdminNotificationController::class, 'markSingleAsRead'])->name('notifications.markSingleRead');
 
-        // --- Staff Creation Wizard ---
-        Route::prefix('staff/create')->name('staff.create.')->group(function () {
-            Route::get('step-1', [StaffRequestController::class, 'step1'])->name('step1');
-            Route::post('step-1', [StaffRequestController::class, 'postStep1'])->name('postStep1');
-            Route::get('step-2', [StaffRequestController::class, 'step2'])->name('step2');
-            Route::post('step-2', [StaffRequestController::class, 'postStep2'])->name('postStep2');
-            Route::get('step-3', [StaffRequestController::class, 'step3'])->name('step3');
-            Route::post('step-3', [StaffRequestController::class, 'postStep3'])->name('postStep3');
-            Route::get('review', [StaffRequestController::class, 'review'])->name('review');
-            Route::post('submit', [StaffRequestController::class, 'submit'])->name('submit');
+        Route::middleware('admin.section:users')->group(function () {
+            // --- Staff Creation Wizard ---
+            Route::prefix('staff/create')->name('staff.create.')->group(function () {
+                Route::get('step-1', [StaffRequestController::class, 'step1'])->name('step1');
+                Route::post('step-1', [StaffRequestController::class, 'postStep1'])->name('postStep1');
+                Route::get('step-2', [StaffRequestController::class, 'step2'])->name('step2');
+                Route::post('step-2', [StaffRequestController::class, 'postStep2'])->name('postStep2');
+                Route::get('step-3', [StaffRequestController::class, 'step3'])->name('step3');
+                Route::post('step-3', [StaffRequestController::class, 'postStep3'])->name('postStep3');
+                Route::get('review', [StaffRequestController::class, 'review'])->name('review');
+                Route::post('submit', [StaffRequestController::class, 'submit'])->name('submit');
+            });
+
+            // --- Staff Requests ---
+            Route::get('requests/staff/create', [AdminRequestController::class, 'createStaffRequest'])->name('requests.staff.create');
+            Route::post('requests/staff', [AdminRequestController::class, 'storeStaffRequest'])->name('requests.staff.store');
+
+            // --- Staff Management ---
+            Route::get('staff', [\App\Http\Controllers\Admin\StaffController::class, 'index'])->name('staff.index');
         });
 
-        // --- Staff Requests ---
-        Route::get('requests/staff/create', [AdminRequestController::class, 'createStaffRequest'])->name('requests.staff.create');
-        Route::post('requests/staff', [AdminRequestController::class, 'storeStaffRequest'])->name('requests.staff.store');
+        Route::middleware('admin.section:settings')->group(function () {
+            // --- School Settings ---
+            Route::get('settings/school', [\App\Http\Controllers\Admin\SchoolSettingsController::class, 'edit'])->name('settings.school');
+            Route::put('settings/school', [\App\Http\Controllers\Admin\SchoolSettingsController::class, 'update'])->name('settings.school.update');
+            Route::get('settings/exam-rules', [\App\Http\Controllers\Admin\ExamRulesController::class, 'edit'])->name('settings.exam_rules');
+            Route::put('settings/exam-rules', [\App\Http\Controllers\Admin\ExamRulesController::class, 'update'])->name('settings.exam_rules.update');
+            Route::get('settings/notifications', [\App\Http\Controllers\Admin\NotificationSettingsController::class, 'edit'])->name('settings.notifications');
+            Route::put('settings/notifications', [\App\Http\Controllers\Admin\NotificationSettingsController::class, 'update'])->name('settings.notifications.update');
+        });
 
-        // --- Student Management ---
-        Route::get('students/bulk-sample', [AdminStudentController::class, 'downloadSample'])->name('students.bulk_sample');
-        Route::get('students/bulk-create', [AdminStudentController::class, 'bulkCreate'])->name('students.bulk_create');
-        Route::post('students/bulk-store', [AdminStudentController::class, 'bulkStore'])->name('students.bulk_store');
-        Route::get('students/batch-assignment', [AdminStudentController::class, 'batchAssign'])->name('students.batch.assign');
-        Route::post('students/batch-assignment', [AdminStudentController::class, 'batchUpdate'])->name('students.batch.update');
-        Route::resource('students', AdminStudentController::class);
-
-        // --- Staff Management ---
-        Route::get('staff', [\App\Http\Controllers\Admin\StaffController::class, 'index'])->name('staff.index');
-
-        // --- School Settings ---
-        Route::get('settings/school', [\App\Http\Controllers\Admin\SchoolSettingsController::class, 'edit'])->name('settings.school');
-        Route::put('settings/school', [\App\Http\Controllers\Admin\SchoolSettingsController::class, 'update'])->name('settings.school.update');
-        Route::get('settings/exam-rules', [\App\Http\Controllers\Admin\ExamRulesController::class, 'edit'])->name('settings.exam_rules');
-        Route::put('settings/exam-rules', [\App\Http\Controllers\Admin\ExamRulesController::class, 'update'])->name('settings.exam_rules.update');
-        Route::get('settings/notifications', [\App\Http\Controllers\Admin\NotificationSettingsController::class, 'edit'])->name('settings.notifications');
-        Route::put('settings/notifications', [\App\Http\Controllers\Admin\NotificationSettingsController::class, 'update'])->name('settings.notifications.update');
+        Route::middleware('admin.section:admissions')->group(function () {
+            // --- Student Management ---
+            Route::get('students/bulk-sample', [AdminStudentController::class, 'downloadSample'])->name('students.bulk_sample');
+            Route::get('students/bulk-create', [AdminStudentController::class, 'bulkCreate'])->name('students.bulk_create');
+            Route::post('students/bulk-store', [AdminStudentController::class, 'bulkStore'])->name('students.bulk_store');
+            Route::get('students/batch-assignment', [AdminStudentController::class, 'batchAssign'])->name('students.batch.assign');
+            Route::post('students/batch-assignment', [AdminStudentController::class, 'batchUpdate'])->name('students.batch.update');
+            Route::resource('students', AdminStudentController::class);
+        });
         
     });
 
-    // -- Questions Management --
-    Route::get('questions/bulk-upload', [QuestionController::class, 'bulkForm'])->name('questions.bulk.form');
-    Route::get('questions/bulk-sample', [QuestionController::class, 'downloadSample'])->name('questions.bulk.sample');
-    Route::post('questions/bulk-upload', [QuestionController::class, 'bulkUpload'])->name('questions.bulk.upload');
-    Route::resource('questions', QuestionController::class)->except(['show']);
+    Route::middleware(['auth:admin', \App\Http\Middleware\CheckSchoolActive::class . ':admin'])->group(function () {
+        Route::middleware('admin.section:question_bank')->group(function () {
+            // -- Questions Management --
+            Route::get('questions/bulk-upload', [QuestionController::class, 'bulkForm'])->name('questions.bulk.form');
+            Route::get('questions/bulk-sample', [QuestionController::class, 'downloadSample'])->name('questions.bulk.sample');
+            Route::post('questions/bulk-upload', [QuestionController::class, 'bulkUpload'])->name('questions.bulk.upload');
+            Route::resource('questions', QuestionController::class)->except(['show']);
 
-    // -- Passages Management --
-    Route::get('passages', [PassageController::class, 'index'])->name('passages.index');
-    Route::get('passages/create', [PassageController::class, 'create'])->name('passages.create');
-    Route::post('passages', [PassageController::class, 'store'])->name('passages.store');
+            // -- Passages Management --
+            Route::get('passages', [PassageController::class, 'index'])->name('passages.index');
+            Route::get('passages/create', [PassageController::class, 'create'])->name('passages.create');
+            Route::post('passages', [PassageController::class, 'store'])->name('passages.store');
+        });
 
-    // -- Exams Management --
-    Route::get('exams', [AdminExamController::class, 'index'])->name('exams.index');
-    Route::get('exams/create', [AdminExamController::class, 'create'])->name('exams.create');
-    Route::post('exams', [AdminExamController::class, 'store'])->name('exams.store');
-    Route::get('exams/{id}/questions', [AdminExamController::class, 'questions'])->name('exams.questions');
-    Route::post('exams/{id}/questions', [AdminExamController::class, 'attachQuestions'])->name('exams.attach');
-    Route::get('exams/{id}/schedule', [AdminExamScheduleController::class, 'create'])->name('exams.schedule');
-    Route::post('exams/{id}/schedule', [AdminExamScheduleController::class, 'store'])->name('exams.schedule.store');
-    Route::post('exams/{id}/publish', [AdminExamController::class, 'publish'])->name('exams.publish');
-    Route::post('exams/{id}/close', [AdminExamController::class, 'close'])->name('exams.close');
-    Route::get('exams/{id}', [AdminExamController::class, 'show'])->name('exams.show');
-    Route::get('exams/{id}/edit', [AdminExamController::class, 'edit'])->name('exams.edit');
-    Route::put('exams/{id}', [AdminExamController::class, 'update'])->name('exams.update');
-    Route::delete('exams/{id}', [AdminExamController::class, 'destroy'])->name('exams.destroy');
-    Route::get('practice-exams', [AdminExamController::class, 'practice'])->name('exams.practice');
-    Route::get('practice-exams/{exam}/solution', [AdminExamController::class, 'solution'])->name('exams.solution');
-    Route::get('practice-solutions', [AdminExamController::class, 'practiceSolutions'])->name('exams.practice.solutions');
+        Route::middleware('admin.section:exams')->group(function () {
+            // -- Exams Management --
+            Route::get('exams', [AdminExamController::class, 'index'])->name('exams.index');
+            Route::get('exams/create', [AdminExamController::class, 'create'])->name('exams.create');
+            Route::post('exams', [AdminExamController::class, 'store'])->name('exams.store');
+            Route::get('exams/{id}/questions', [AdminExamController::class, 'questions'])->name('exams.questions');
+            Route::post('exams/{id}/questions', [AdminExamController::class, 'attachQuestions'])->name('exams.attach');
+            Route::get('exams/{id}/schedule', [AdminExamScheduleController::class, 'create'])->name('exams.schedule');
+            Route::post('exams/{id}/schedule', [AdminExamScheduleController::class, 'store'])->name('exams.schedule.store');
+            Route::post('exams/{id}/publish', [AdminExamController::class, 'publish'])->name('exams.publish');
+            Route::post('exams/{id}/close', [AdminExamController::class, 'close'])->name('exams.close');
+            Route::get('exams/{id}', [AdminExamController::class, 'show'])->name('exams.show');
+            Route::get('exams/{id}/edit', [AdminExamController::class, 'edit'])->name('exams.edit');
+            Route::put('exams/{id}', [AdminExamController::class, 'update'])->name('exams.update');
+            Route::delete('exams/{id}', [AdminExamController::class, 'destroy'])->name('exams.destroy');
+            Route::get('practice-exams', [AdminExamController::class, 'practice'])->name('exams.practice');
+            Route::get('practice-exams/{exam}/solution', [AdminExamController::class, 'solution'])->name('exams.solution');
+            Route::get('practice-solutions', [AdminExamController::class, 'practiceSolutions'])->name('exams.practice.solutions');
 
-    // -- Live Monitoring & Control Room --
-    Route::get('exams/{id}/monitor', [AdminLiveMonitorController::class, 'index'])->name('exams.monitor');
-    Route::get('exams/{id}/monitor/data', [AdminLiveMonitorController::class, 'data'])->name('exams.monitor.data');
+            Route::get('results/pending', [AdminResultController::class, 'pending'])->name('results.pending');
+            Route::post('results/{attempt}/approve', [AdminResultController::class, 'approve'])->name('results.approve');
+            Route::post('results/{attempt}/reject', [AdminResultController::class, 'reject'])->name('results.reject');
+            Route::get('results/list', [AdminResultController::class, 'list'])->name('results.list');
+        });
 
-    // -- WebRTC Signaling (Admin Side) --
-    Route::post('attempts/{attemptId}/request-stream', [AdminLiveMonitorController::class, 'requestStream'])->name('attempts.request_stream');
-    Route::prefix('stream')->name('stream.')->group(function () {
-        Route::get('{streamId}/poll', [AdminLiveMonitorController::class, 'pollViewer'])->name('poll');
-        Route::post('{streamId}/signal', [AdminLiveMonitorController::class, 'viewerSignal'])->name('signal');
-    });
+        Route::middleware('admin.section:reports')->group(function () {
+            // -- Reports --
+            Route::prefix('reports')->name('reports.')->group(function () {
+                Route::get('/', [ReportController::class, 'index'])->name('index');
+                Route::get('exams', [ReportController::class, 'exams'])->name('exams');
+                Route::get('exams/{id}', [ReportController::class, 'examDetail'])->name('exams.detail');
+                Route::get('exams/{id}/export', [ReportController::class, 'exportExamDetail'])->name('exams.detail.export');
+                Route::get('exams/{id}/violations', [ReportController::class, 'examViolations'])->name('exams.violations');
+                Route::get('exams/{id}/violations/export', [ReportController::class, 'exportExamViolations'])->name('exams.violations.export');
+                Route::get('analytics', [ReportController::class, 'analytics'])->name('analytics');
+            });
+        });
 
-    // Attempt Controls
-    Route::post('attempts/{attemptId}/terminate', [AttemptControlController::class, 'terminate'])->name('attempts.terminate');
-    Route::post('attempts/{attemptId}/extend', [AttemptControlController::class, 'extendTime'])->name('attempts.extend');
+        Route::middleware('admin.section:live_exams')->group(function () {
+            // -- Live Monitoring & Control Room --
+            Route::get('exams/{id}/monitor', [AdminLiveMonitorController::class, 'index'])->name('exams.monitor');
+            Route::get('exams/{id}/monitor/data', [AdminLiveMonitorController::class, 'data'])->name('exams.monitor.data');
 
-    Route::get('results/pending', [AdminResultController::class, 'pending'])
-        ->name('results.pending');
+            // -- WebRTC Signaling (Admin Side) --
+            Route::post('attempts/{attemptId}/request-stream', [AdminLiveMonitorController::class, 'requestStream'])->name('attempts.request_stream');
+            Route::prefix('stream')->name('stream.')->group(function () {
+                Route::get('{streamId}/poll', [AdminLiveMonitorController::class, 'pollViewer'])->name('poll');
+                Route::post('{streamId}/signal', [AdminLiveMonitorController::class, 'viewerSignal'])->name('signal');
+            });
 
-    Route::post('results/{attempt}/approve', [AdminResultController::class, 'approve'])
-        ->name('results.approve');
-
-    Route::post('results/{attempt}/reject', [AdminResultController::class, 'reject'])
-        ->name('results.reject');
-    Route::get('results/list', [AdminResultController::class, 'list'])
-        ->name('results.list');
-
-    // -- Attempt Controls --
-    Route::post('attempts/{attemptId}/terminate', [AdminAttemptControlController::class, 'terminate'])->name('attempts.terminate');
-    Route::post('attempts/{attemptId}/extend', [AdminAttemptControlController::class, 'extendTime'])->name('attempts.extend');
-
-    // -- Reports --
-    Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/', [ReportController::class, 'index'])->name('index');
-        Route::get('exams', [ReportController::class, 'exams'])->name('exams');
-        Route::get('exams/{id}', [ReportController::class, 'examDetail'])->name('exams.detail');
-        Route::get('exams/{id}/export', [ReportController::class, 'exportExamDetail'])->name('exams.detail.export');
-        Route::get('exams/{id}/violations', [ReportController::class, 'examViolations'])->name('exams.violations');
-        Route::get('exams/{id}/violations/export', [ReportController::class, 'exportExamViolations'])->name('exams.violations.export');
-        Route::get('analytics', [ReportController::class, 'analytics'])->name('analytics');
+            // -- Attempt Controls --
+            Route::post('attempts/{attemptId}/terminate', [AdminAttemptControlController::class, 'terminate'])->name('attempts.terminate');
+            Route::post('attempts/{attemptId}/extend', [AdminAttemptControlController::class, 'extendTime'])->name('attempts.extend');
+        });
     });
 });
 

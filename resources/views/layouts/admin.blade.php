@@ -66,20 +66,36 @@
         <div class="flex-1 overflow-y-auto sidebar-scroll py-2">
             <ul class="flex flex-col space-y-1">
                 @php
+                    $adminUser = auth('admin')->user();
                     $questionOpen = request()->is('admin/questions*');
                     $examOpen = request()->is('admin/exams*');
                     $usersOpen = request()->is('admin/staff*') || request()->is('admin/students*') || request()->is('admin/requests/staff*');
+                    $showDashboard = $adminUser?->canAccessSidebarSection('dashboard');
+                    $showUsersSection = $adminUser?->canAccessSidebarSection('users');
+                    $canManageStudents = $adminUser?->canAccessSidebarSection('admissions');
+                    $canManageStaffRequests = $showUsersSection && $adminUser?->canManageStaffRequests();
+                    $canManageQuestionBank = $adminUser?->canAccessSidebarSection('question_bank');
+                    $canManageExams = $adminUser?->canAccessSidebarSection('exams');
+                    $canMonitorExams = $adminUser?->canAccessSidebarSection('live_exams');
+                    $canViewPracticeDemo = $adminUser?->canAccessSidebarSection('practice_demo');
+                    $canViewEvaluation = $adminUser?->canAccessSidebarSection('evaluation');
+                    $canViewReports = $adminUser?->canAccessSidebarSection('reports');
+                    $canManageSettings = $adminUser?->canAccessSidebarSection('settings');
+                    $canViewLogs = $adminUser?->canAccessSidebarSection('logs');
                 @endphp
 
                 <!-- Dashboard -->
+                @if($showDashboard)
                 <li>
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.dashboard') ? 'nav-link-active' : '' }}"
                         href="{{ route('admin.dashboard') }}">
                         <div><i class="bi bi-speedometer2 mr-2"></i> Dashboard</div>
                     </a>
                 </li>
+                @endif
 
                 <!-- Admissions -->
+                @if($canManageStudents)
                 <li x-data="{ open: {{ request()->routeIs('admin.students.create') || request()->routeIs('admin.students.bulk_create') || request()->routeIs('admin.students.batch.assign') ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
@@ -100,8 +116,10 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!-- Users (School Only) -->
+                @if($showUsersSection && ($canManageStudents || $canManageStaffRequests))
                 <li x-data="{ open: {{ $usersOpen ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $usersOpen ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
@@ -111,6 +129,7 @@
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
+                            @if($canManageStaffRequests)
                             <li>
                                 <div class="px-5 py-2 text-gray-500 text-xs uppercase font-bold mt-2">Staff Management
                                 </div>
@@ -128,6 +147,8 @@
                                     href="{{ route('admin.requests.staff.create') }}">Request Reset /
                                     Block</a>
                             </li>
+                            @endif
+                            @if($canManageStudents)
                             <li>
                                 <div class="px-5 py-2 text-gray-500 text-xs uppercase font-bold mt-2">Students</div>
                             </li>
@@ -138,11 +159,14 @@
                                     href="#">Reset Attempt</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="#">Request Block Student</a></li>
+                            @endif
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!-- Question Bank -->
+                @if($canManageQuestionBank)
                 <li x-data="{ open: {{ $questionOpen ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3
                         {{ $questionOpen ? 'text-white bg-white/10 border-l-4 border-indigo-500' : 'text-gray-400 border-l-4 border-transparent' }}
@@ -178,8 +202,10 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!-- Exams -->
+                @if($canManageExams)
                 <li x-data="{ open: {{ $examOpen ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3
                             {{ $examOpen ? 'text-white bg-white/10 border-l-4 border-indigo-500' : 'text-gray-400 border-l-4 border-transparent' }}
@@ -217,9 +243,11 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
 
                 <!-- Live Exams -->
+                @if($canMonitorExams)
                 <li x-data="{ open: false }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
@@ -248,8 +276,10 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!-- Practice / Demo Exams -->
+                @if($canViewPracticeDemo)
                 <li x-data="{ open: false }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
@@ -277,8 +307,10 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!-- Evaluation & Results -->
+                @if($canViewEvaluation)
                 <li x-data="{ open: false }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
@@ -310,8 +342,10 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!-- Reports -->
+                @if($canViewReports)
                 <li x-data="{ open: {{ request()->routeIs('admin.reports.*') ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.reports.*') ? 'text-white bg-white/10 border-l-4 border-indigo-500' : '' }}"
                         href="#" @click.prevent="open = !open">
@@ -330,8 +364,10 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!-- School Settings -->
+                @if($canManageSettings)
                 <li x-data="{ open: {{ request()->routeIs('admin.settings.school') || request()->routeIs('admin.settings.exam_rules') || request()->routeIs('admin.settings.notifications') ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.settings.school') || request()->routeIs('admin.settings.exam_rules') || request()->routeIs('admin.settings.notifications') ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
@@ -350,8 +386,10 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!-- Logs -->
+                @if($canViewLogs)
                 <li x-data="{ open: false }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
@@ -374,6 +412,7 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
             </ul>
         </div>
