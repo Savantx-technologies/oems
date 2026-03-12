@@ -319,6 +319,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('exams/{id}/violations/export', [ReportController::class, 'exportExamViolations'])->name('exams.violations.export');
         Route::get('analytics', [ReportController::class, 'analytics'])->name('analytics');
     });
+
+    Route::get('exam-attempts',[AdminResultController::class,'attempts'])
+    ->name('results.attempts');
+
+Route::get('exam-attempt/{id}',[AdminResultController::class,'viewAttempt'])
+    ->name('results.viewAttempt');
 });
 
 // Student Routes

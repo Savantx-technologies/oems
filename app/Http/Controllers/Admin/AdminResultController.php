@@ -65,4 +65,28 @@ class AdminResultController extends Controller
 
         return view('admin.results.list', compact('students', 'class'));
     }
+
+    public function attempts()
+    {
+        $attempts = ExamAttempt::with(['user', 'exam'])
+            ->whereNotNull('submitted_at')
+            ->latest()
+            ->paginate(20);
+
+        return view('admin.results.attempts', compact('attempts'));
+    }
+
+    public function viewAttempt($id)
+    {
+        $attempt = ExamAttempt::with(['user', 'exam'])->findOrFail($id);
+
+        $questionIds = json_decode($attempt->question_order, true);
+
+        $questions = \App\Models\Question::whereIn('id', $questionIds)->get();
+
+        return view('admin.results.view-attempt', compact(
+            'attempt',
+            'questions'
+        ));
+    }
 }
