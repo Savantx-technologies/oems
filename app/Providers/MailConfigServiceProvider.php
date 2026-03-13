@@ -2,38 +2,57 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Schema;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
 
 class MailConfigServiceProvider extends ServiceProvider
 {
+    /**
+     * Register services.
+     */
+    public function register(): void
+    {
+        //
+    }
+
     /**
      * Bootstrap services.
      */
     public function boot(): void
     {
-        if (Schema::hasTable('settings')) {
-            $settings = Setting::all()->keyBy('key')->map(fn($setting) => $setting->value);
+        try {
+            if (!Schema::hasTable('settings')) {
+                return;
+            }
+        } catch (\Exception $e) {
+            return; // Likely no DB connection, e.g., during initial setup
+        }
 
-            if ($settings->isNotEmpty()) {
-                $config = [
-                    'mail.default' => $settings->get('mail_mailer', config('mail.default')),
-                    'mail.mailers.smtp.host' => $settings->get('mail_host', config('mail.mailers.smtp.host')),
-                    'mail.mailers.smtp.port' => $settings->get('mail_port', config('mail.mailers.smtp.port')),
-                    'mail.mailers.smtp.encryption' => $settings->get('mail_encryption', config('mail.mailers.smtp.encryption')),
-                    'mail.mailers.smtp.username' => $settings->get('mail_username', config('mail.mailers.smtp.username')),
-                    'mail.from.address' => $settings->get('mail_from_address', config('mail.from.address')),
-                    'mail.from.name' => $settings->get('mail_from_name', config('mail.from.name')),
+        try {
+            $settings = Setting::all()->keyBy('key');
+
+            if ($settings->isNotEmpty() && $settings->has('mail_mailer') && $settings->get('mail_mailer')->value) {
+                $driver = $settings->get('mail_mailer')->value;
+                $mailerConfig = config("mail.mailers.{$driver}", []);
+
+                $dbConfig = [
+                    'transport'  => $driver,
+                    'host'       => $settings->get('mail_host')?->value,
+                    'port'       => (int) $settings->get('mail_port')?->value,
+                    'encryption' => $settings->get('mail_encryption')?->value,
+                    'username'   => $settings->get('mail_username')?->value,
+                    'password'   => $settings->get('mail_password')?->value,
                 ];
 
-                if ($settings->has('mail_password') && !is_null($settings->get('mail_password'))) {
-                    $config['mail.mailers.smtp.password'] = $settings->get('mail_password');
-                }
-
-                Config::set($config);
+                Config::set('mail.default', $driver);
+                Config::set("mail.mailers.{$driver}", array_merge($mailerConfig, array_filter($dbConfig, fn($v) => !is_null($v))));
+                Config::set('mail.from.address', $settings->get('mail_from_address')?->value);
+                Config::set('mail.from.name', $settings->get('mail_from_name')?->value ?? config('app.name'));
             }
+        } catch (\Exception $e) {
+            // Fail silently if DB is not available. It will use .env settings.
         }
     }
 }

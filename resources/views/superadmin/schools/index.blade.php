@@ -83,8 +83,7 @@
                     <table class="min-w-full mt-4 rounded-xl bg-white text-[15px]">
                         <thead class="bg-blue-50">
                             <tr>
-                                <th class="font-bold text-slate-700 uppercase text-[15px] py-3 px-3 border-b-2 border-blue-100 w-12 text-left">#</th>
-                                <th class="font-bold text-slate-700 uppercase text-[15px] py-3 px-3 border-b-2 border-blue-100">School Name</th>
+                                <th class="font-bold text-slate-700 uppercase text-[15px] py-3 px-3 border-b-2 border-blue-100 text-left">School Name</th>
                                 <th class="font-bold text-slate-700 uppercase text-[15px] py-3 px-3 border-b-2 border-blue-100">School Code</th>
                                 <th class="font-bold text-slate-700 uppercase text-[15px] py-3 px-3 border-b-2 border-blue-100">City</th>
                                 <th class="font-bold text-slate-700 uppercase text-[15px] py-3 px-3 border-b-2 border-blue-100">Status</th>
@@ -95,10 +94,22 @@
                         <tbody>
                             @forelse ($schools as $school)
                                 <tr class="hover:bg-blue-50/60 transition-colors">
-                                    <td class="py-3 px-3 align-middle">{{ $loop->iteration + $schools->firstItem() - 1 }}</td>
                                     <td class="py-3 px-3 align-middle">
-                                        <div class="font-semibold text-blue-700 text-base">{{ $school->name }}</div>
-                                        <div class="text-xs text-slate-500">{{ $school->board ?? 'Board N/A' }}</div>
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-12 w-12">
+                                                @if($school->logo)
+                                                    <img class="h-12 w-12 rounded-lg object-contain border border-slate-200" src="{{ asset('storage/' . $school->logo) }}" alt="{{ $school->name }} logo">
+                                                @else
+                                                    <div class="h-12 w-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200 text-lg">
+                                                        {{ substr($school->name, 0, 1) }}
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="font-semibold text-blue-700 text-base">{{ $school->name }}</div>
+                                                <div class="text-xs text-slate-500">{{ $school->board ?? 'Board N/A' }}</div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="py-3 px-3 align-middle">
                                         <span class="bg-slate-100 text-blue-800 px-2.5 py-1 rounded-md font-semibold text-sm border border-slate-200 inline-block">
@@ -162,7 +173,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center py-16 text-slate-400">
+                                    <td colspan="6" class="text-center py-16 text-slate-400">
                                         <div class="flex flex-col items-center">
                                             <i class="bi bi-building-exclamation text-4xl mb-2"></i>
                                             <div class="font-semibold text-xl mb-1">No schools found</div>

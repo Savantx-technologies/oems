@@ -64,7 +64,8 @@
                                 <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.schools.suspension') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.schools.suspension') }}">Suspension Control</a>
                             </li>
                             <li>
-                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">School Analytics</a>
+                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.schools.analytics') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('superadmin.schools.analytics') }}">School Analytics</a>
                             </li>
                         </ul>
                     </div>
@@ -120,6 +121,12 @@
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.students.index') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.students.index') }}">View Students</a></li>
+                            <li>
+                                <span class="flex items-center justify-between px-5 py-2 pl-11 text-sm text-gray-500 cursor-not-allowed">
+                                    <span>Batch Assignment</span>
+                                    <span class="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300">Soon</span>
+                                </span>
+                            </li>
                         </ul>
                     </div>
                 </li>
@@ -206,10 +213,10 @@
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.settings.exam-rules') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.settings.exam-rules') }}">Exam Rules Engine</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Proctoring Settings</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Camera Rules</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Anti-Cheat Settings</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Notification Templates</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.settings.proctoring-settings') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.settings.proctoring-settings') }}">Proctoring Settings</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.settings.camera-rules') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.settings.camera-rules') }}">Camera Rules</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.settings.anti-cheat-settings') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.settings.anti-cheat-settings') }}">Anti-Cheat Settings</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.settings.notification-templates') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.settings.notification-templates') }}">Notification Templates</a></li>
                             <li>
                                 <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.settings.system') ? 'text-white bg-white/10' : '' }}" 
                                     href="{{ route('superadmin.settings.system') }}">General Settings</a>
@@ -240,15 +247,38 @@
                 <li x-data="{ open: false }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
-                        <div><i class="bi bi-cpu mr-2"></i> AI & Advanced</div>
+                        <div class="flex items-center gap-2">
+                            <span><i class="bi bi-cpu mr-2"></i> AI & Advanced</span>
+                            <span class="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300">Soon</span>
+                        </div>
                         <i class="bi bi-chevron-down text-xs transition-transform" :class="open ? 'rotate-180' : ''"></i>
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">AI Proctoring Settings</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Face Recognition Rules</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">Behavior Detection</a></li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10" href="#">AI Analytics</a></li>
+                            <li>
+                                <span class="flex items-center justify-between px-5 py-2 pl-11 text-sm text-gray-500 cursor-not-allowed">
+                                    <span>AI Proctoring Settings</span>
+                                    <span class="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300">Soon</span>
+                                </span>
+                            </li>
+                             <li>
+                                <span class="flex items-center justify-between px-5 py-2 pl-11 text-sm text-gray-500 cursor-not-allowed">
+                                    <span>Face Recognition Rules</span>
+                                    <span class="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300">Soon</span>
+                                </span>
+                            </li>
+                            <li>
+                                <span class="flex items-center justify-between px-5 py-2 pl-11 text-sm text-gray-500 cursor-not-allowed">
+                                    <span>Behavior Detection</span>
+                                    <span class="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300">Soon</span>
+                                </span>
+                            </li>
+                            <li>
+                                <span class="flex items-center justify-between px-5 py-2 pl-11 text-sm text-gray-500 cursor-not-allowed">
+                                    <span>AI Analytics</span>
+                                    <span class="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300">Soon</span>
+                                </span>
+                            </li>
                         </ul>
                     </div>
                 </li>

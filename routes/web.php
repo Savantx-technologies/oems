@@ -105,6 +105,7 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
         // ---- School Management ----
         Route::prefix('schools')->name('schools.')->group(function () {
             Route::get('/', [SchoolController::class, 'index'])->name('index');
+            Route::get('analytics', [SchoolController::class, 'analytics'])->name('analytics');
             Route::get('suspension', [SchoolController::class, 'suspension'])->name('suspension');
             Route::post('{school}/toggle-suspension', [SchoolController::class, 'toggleSuspension'])->name('toggle-suspension');
             Route::get('create', [SchoolController::class, 'create'])->name('create');
@@ -202,9 +203,50 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('exam-rules', [SuperAdminExamRulesController::class, 'edit'])->name('exam-rules');
             Route::put('exam-rules', [SuperAdminExamRulesController::class, 'update'])->name('exam-rules.update');
+            Route::get('proctoring-settings', [SystemSettingsController::class, 'editProctoring'])->name('proctoring-settings');
+            Route::put('proctoring-settings', [SystemSettingsController::class, 'updateProctoring'])->name('proctoring-settings.update');
+            Route::get('camera-rules', [SystemSettingsController::class, 'editCameraRules'])->name('camera-rules');
+            Route::put('camera-rules', [SystemSettingsController::class, 'updateCameraRules'])->name('camera-rules.update');
+            Route::get('anti-cheat-settings', [SystemSettingsController::class, 'editAntiCheat'])->name('anti-cheat-settings');
+            Route::put('anti-cheat-settings', [SystemSettingsController::class, 'updateAntiCheat'])->name('anti-cheat-settings.update');
+            Route::get('notification-templates', [SystemSettingsController::class, 'editNotificationTemplates'])->name('notification-templates');
+            Route::put('notification-templates', [SystemSettingsController::class, 'updateNotificationTemplates'])->name('notification-templates.update');
             Route::get('system', [SystemSettingsController::class, 'edit'])->name('system');
             Route::put('system', [SystemSettingsController::class, 'update'])->name('system.update');
             Route::post('system/test-mail', [SystemSettingsController::class, 'sendTestMail'])->name('system.test-mail');
+        });
+
+        // ---- AI & Advanced ----
+        Route::prefix('ai-advanced')->name('ai-advanced.')->group(function () {
+            Route::view('proctoring-settings', 'superadmin.coming-soon', [
+                'title' => 'AI Proctoring Settings',
+                'feature' => 'AI Proctoring Settings',
+                'description' => 'Configure automated invigilation rules, model thresholds, and escalation policies for monitored exams.',
+            ])->name('proctoring-settings');
+
+            Route::view('face-recognition-rules', 'superadmin.coming-soon', [
+                'title' => 'Face Recognition Rules',
+                'feature' => 'Face Recognition Rules',
+                'description' => 'Manage identity checks, face-match tolerances, and re-verification rules for exam sessions.',
+            ])->name('face-recognition-rules');
+
+            Route::view('behavior-detection', 'superadmin.coming-soon', [
+                'title' => 'Behavior Detection',
+                'feature' => 'Behavior Detection',
+                'description' => 'Review suspicious behavior detection settings such as gaze tracking, movement patterns, and anomaly alerts.',
+            ])->name('behavior-detection');
+
+            Route::view('analytics', 'superadmin.coming-soon', [
+                'title' => 'AI Analytics',
+                'feature' => 'AI Analytics',
+                'description' => 'Explore upcoming AI-driven analytics for violations, risk scoring, and exam monitoring insights.',
+            ])->name('analytics');
+
+            Route::view('make-batch', 'superadmin.coming-soon', [
+                'title' => 'Make Batch',
+                'feature' => 'Make Batch',
+                'description' => 'Batch creation and assignment tools for the superadmin area are planned and will be available soon.',
+            ])->name('make-batch');
         });
     });
 });
