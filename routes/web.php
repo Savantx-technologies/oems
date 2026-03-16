@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\LiveMonitorController as AdminLiveMonitorControll
 use App\Http\Controllers\Admin\AttemptControlController as AdminAttemptControlController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
+use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 
 // Student Controllers
 use App\Http\Controllers\Student\Auth\LoginController as StudentLoginController;
@@ -184,6 +185,8 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
 
         // ---- Profile & Access ----
         Route::get('profile', [SuperAdminProfileController::class, 'show'])->name('profile');
+        Route::post('profile/password-otp', [SuperAdminProfileController::class, 'sendPasswordOtp'])->name('password.otp.send');
+        Route::post('profile/password-otp/resend', [SuperAdminProfileController::class, 'resendPasswordOtp'])->name('password.otp.resend');
         Route::put('profile/password', [SuperAdminProfileController::class, 'updatePassword'])->name('password.update');
 
         // ---- Roles & Permissions ----
@@ -276,6 +279,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('notifications/{notification}/read', [AdminNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
         Route::post('notifications/mark-read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.markRead');
         Route::post('notifications/{notification}/mark-single-read', [AdminNotificationController::class, 'markSingleAsRead'])->name('notifications.markSingleRead');
+
+        // --- Profile & Security ---
+        Route::get('profile', [AdminProfileController::class, 'show'])->name('profile');
+        Route::post('profile/password-otp', [AdminProfileController::class, 'sendPasswordOtp'])->name('password.otp.send');
+        Route::post('profile/password-otp/resend', [AdminProfileController::class, 'resendPasswordOtp'])->name('password.otp.resend');
+        Route::put('profile/password', [AdminProfileController::class, 'updatePassword'])->name('password.update');
 
         Route::middleware('admin.section:users')->group(function () {
             // --- Staff Creation Wizard ---

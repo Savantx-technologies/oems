@@ -123,7 +123,7 @@ class LoginController extends Controller
             'admin',
             $admin->id,
             'otp_sent',
-            'OTP sent to super admin email'
+            'OTP sent to admin email'
         );
 
         session([

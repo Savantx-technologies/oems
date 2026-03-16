@@ -340,7 +340,7 @@
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="#">Certificates</a></li>
                         </ul>
-                    </div>
+                    </div>  
                 </li>
                 @endif
 
@@ -460,6 +460,12 @@
                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-100">
                         <li class="px-4 py-2 border-b border-gray-100">
                             <span class="font-bold text-gray-800">{{ auth()->user()->name ?? 'Admin' }}</span>
+                        </li>
+                        <li>
+                            <a href="{{ route('admin.profile') }}"
+                                class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
+                                <i class="bi bi-person-gear mr-2"></i> Profile
+                            </a>
                         </li>
                         <li>
                             <form id="logout-form" method="POST" action="{{ route('admin.logout') }}" class="m-0">
