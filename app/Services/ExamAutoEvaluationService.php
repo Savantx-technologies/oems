@@ -22,50 +22,52 @@ class ExamAutoEvaluationService
 
             $exam = Exam::findOrFail($attempt->exam_id);
 
-            $validQuestionIds = is_string($exam->selected_questions)
-                ? json_decode($exam->selected_questions, true)
-                : $exam->selected_questions;
+            $questionOrder = json_decode($attempt->question_order, true);
 
-            $questions = Question::whereIn('id', $validQuestionIds)
+            $questions = Question::whereIn('id', $questionOrder)
                 ->get()
                 ->keyBy('id');
 
-            $totalQuestions = $questions->count();
+            // IMPORTANT
+            $answers = array_values($answers);
+
+            $totalQuestions = count($questionOrder);
             $totalCorrect = 0;
             $totalScore = 0;
 
-            foreach ($questions as $question) {
+            foreach ($questionOrder as $index => $questionId) {
 
-                $selectedOption = $answers[$question->id] ?? null;
+                $question = $questions[$questionId] ?? null;
 
-                if (!in_array($selectedOption, ['A', 'B', 'C', 'D'])) {
-                    $selectedOption = null;
-                }
-
-                if ($selectedOption === null) {
+                if (!$question) {
                     continue;
                 }
 
+                // correct mapping
+                $selectedOption = $answers[$index] ?? null;
+
                 $isCorrect = $selectedOption === $question->correct_option;
+
                 $marksAwarded = 0;
 
-                if ($isCorrect) {
-                    $marksAwarded = $question->marks;
-                    $totalCorrect++;
-                } else {
-                    if ($exam->negative_marking) {
+                if ($selectedOption !== null) {
+
+                    if ($isCorrect) {
+                        $marksAwarded = $question->marks;
+                        $totalCorrect++;
+                    } elseif ($exam->negative_marking) {
                         $marksAwarded = -abs($exam->negative_marks);
                     }
-                }
 
-                $totalScore += $marksAwarded;
+                    $totalScore += $marksAwarded;
+                }
 
                 UserExamAnswer::create([
                     'school_id' => $attempt->school_id,
                     'attempt_id' => $attempt->id,
                     'user_id' => $attempt->user_id,
                     'exam_id' => $attempt->exam_id,
-                    'question_id' => $question->id,
+                    'question_id' => $questionId,
                     'selected_option' => $selectedOption,
                     'is_correct' => $isCorrect,
                     'marks_awarded' => $marksAwarded,

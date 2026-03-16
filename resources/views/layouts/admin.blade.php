@@ -453,5 +453,5 @@
     </div>
 
 </body>
-
+@stack('script')
 </html>

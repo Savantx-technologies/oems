@@ -247,7 +247,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('settings/exam-rules', [\App\Http\Controllers\Admin\ExamRulesController::class, 'update'])->name('settings.exam_rules.update');
         Route::get('settings/notifications', [\App\Http\Controllers\Admin\NotificationSettingsController::class, 'edit'])->name('settings.notifications');
         Route::put('settings/notifications', [\App\Http\Controllers\Admin\NotificationSettingsController::class, 'update'])->name('settings.notifications.update');
-        
+
     });
 
     // -- Questions Management --
@@ -320,11 +320,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('analytics', [ReportController::class, 'analytics'])->name('analytics');
     });
 
-    Route::get('exam-attempts',[AdminResultController::class,'attempts'])
-    ->name('results.attempts');
+    Route::get('exam-attempts', [AdminResultController::class, 'attempts'])
+        ->name('results.attempts');
 
-Route::get('exam-attempt/{id}',[AdminResultController::class,'viewAttempt'])
-    ->name('results.viewAttempt');
+    Route::get('exam-attempt/{id}', [AdminResultController::class, 'viewAttempt'])
+        ->name('results.viewAttempt');
+
+    Route::post('answer/{id}/correct', [AdminResultController::class, 'markCorrect'])->name('answer.correct');
+    Route::post('answer/{id}/wrong', [AdminResultController::class, 'markWrong'])->name('answer.wrong');
+
 });
 
 // Student Routes
@@ -380,5 +384,5 @@ Route::prefix('student')->name('student.')->group(function () {
         Route::put('profile/password', [StudentProfileController::class, 'updatePassword'])->name('password.update');
     });
 
-    Route::get( 'marksheet/download/{attemptId}', [StudentExamController::class,'downloadMarksheet'])->name('marksheet.download');
+    Route::get('marksheet/download/{attemptId}', [StudentExamController::class, 'downloadMarksheet'])->name('marksheet.download');
 });
