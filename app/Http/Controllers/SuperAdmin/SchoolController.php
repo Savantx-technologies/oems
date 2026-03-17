@@ -5,14 +5,69 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\School;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class SchoolController extends Controller
 {   
-    public function index()
+    public function index(Request $request)
     {
-        $schools = School::latest()->paginate(15);
+        $query = School::query();
+
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
+        if ($request->filled('code')) {
+            $query->where('code', 'like', '%' . $request->code . '%');
+        }
+
+        if ($request->filled('city')) {
+            $query->where('city', 'like', '%' . $request->city . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $schools = $query->latest()->paginate(15)->withQueryString();
         return view('superadmin.schools.index', compact('schools'));
+    }
+
+    public function analytics()
+    {
+        $stats = [
+            'total' => School::count(),
+            'active' => School::where('status', 'active')->count(),
+            'inactive' => School::where('status', 'inactive')->count(),
+            'draft' => School::where('status', 'draft')->count(),
+        ];
+
+        $schoolsByBoard = School::select('board', DB::raw('count(*) as total'))
+            ->whereNotNull('board')
+            ->groupBy('board')
+            ->orderBy('total', 'desc')
+            ->get();
+
+        $schoolsByType = School::select('type', DB::raw('count(*) as total'))
+            ->whereNotNull('type')
+            ->groupBy('type')
+            ->orderBy('total', 'desc')
+            ->get();
+
+        $topSchoolsByStudents = School::withCount('students')
+            ->orderBy('students_count', 'desc')
+            ->take(5)
+            ->get();
+            
+        $topSchoolsByExams = School::withCount('exams')
+            ->orderBy('exams_count', 'desc')
+            ->take(5)
+            ->get();
+
+        return view('superadmin.schools.analytics', compact(
+            'stats', 'schoolsByBoard', 'schoolsByType', 'topSchoolsByStudents', 'topSchoolsByExams'
+        ));
     }
 
     public function suspension(Request $request)

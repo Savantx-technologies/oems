@@ -98,8 +98,7 @@
                         <video x-ref="screen" autoplay playsinline class="w-full h-full object-contain"
                             x-show="showScreen"></video>
 
-                        <audio x-ref="audio" autoplay muted></audio>
-
+                        <audio x-ref="audio" autoplay playsinline></audio>
                         <div x-show="loading"
                             class="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-xs">
                             <i class="bi bi-arrow-repeat animate-spin mr-2"></i> Connecting...
@@ -277,45 +276,45 @@
                     };
                     this.pc = new RTCPeerConnection(config);
 
-                    // this.pc.ontrack = (event) => {
-                    //     // A more robust way to distinguish camera and screen
-                    //     const stream = event.streams[0] || new MediaStream([event.track]);
-                    //     (stream.getVideoTracks().length > 0 && stream.getAudioTracks().length > 0) ? (this.$refs
-                    //         .video.srcObject = stream) : (this.$refs.screen.srcObject = stream, this.hasScreen =
-                    //         true);
-                    //     this.loading = false;
-                    // };
-                    this.pc.ontrack = (event) => {
+                this.pc.ontrack = (event) => {
 
-                        const stream = event.streams[0] || new MediaStream([event.track]);
+    const track = event.track;
 
-                        // ORIGINAL working logic for camera vs screen
-                        if (stream.getVideoTracks().length > 0 && stream.getAudioTracks().length > 0) {
+    // VIDEO TRACK
+    if (track.kind === "video") {
 
-                        this.$refs.video.srcObject = stream;
+        const videoStream = new MediaStream([track]);
 
-                        // attach audio stream so browser processes audio
-                        this.$refs.audio.srcObject = stream;
+        if (!this.$refs.video.srcObject) {
+            this.$refs.video.srcObject = videoStream;
+        } else {
+            this.$refs.screen.srcObject = videoStream;
+            this.hasScreen = true;
+        }
 
-                        if (!this.audioStarted) {
-                            this.audioStarted = true;
-                            this.setupAudioDetection(stream);
-                        }
+    }
 
-                    } else {
+    // AUDIO TRACK
+    if (track.kind === "audio") {
 
-                            this.$refs.screen.srcObject = stream;
-                            this.hasScreen = true;
+        console.log("Audio track received");
 
-                        }
+        const audioStream = new MediaStream([track]);
 
-                        // detect audio track separately for debugging
-                        if (event.track.kind === "audio") {
-                            console.log("Audio track received");
-                        }
+        this.$refs.audio.srcObject = audioStream;
 
-                        this.loading = false;
-                    };
+        this.$refs.audio.muted = false;
+        this.$refs.audio.volume = 1.0;
+        this.$refs.audio.play().catch(e => console.log("Audio play blocked", e));
+
+        if (!this.audioStarted) {
+            this.audioStarted = true;
+            this.setupAudioDetection(audioStream);
+        }
+    }
+
+    this.loading = false;
+};
 
                     this.pc.onicecandidate = (event) => {
                         if (event.candidate) {
@@ -400,7 +399,7 @@
                         const source = this.audioContext.createMediaStreamSource(stream);
 
                         this.analyser = this.audioContext.createAnalyser();
-                        this.analyser.fftSize = 256;
+                        this.analyser.fftSize = 1024;
 
                         source.connect(this.analyser);
 
@@ -418,8 +417,7 @@
 
                             const average = sum / dataArray.length;
 
-                        this.audioActive = average > 6;
-
+                            this.audioActive = average > 10;
                             if (this.audioActive) {
                                 console.log("Student speaking detected. Level:", average);
                             }

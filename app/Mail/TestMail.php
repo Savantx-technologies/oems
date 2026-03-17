@@ -3,33 +3,32 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class SuperAdminOtpMail extends Mailable
+class TestMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $otp;
-
-    public function __construct($otp)
+    public function __construct()
     {
-        $this->otp = $otp;
+        //
     }
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your Super Admin Login OTP for ' . config('app.name'),
+            subject: 'Test Email from Exam Platform',
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'emails.superadmin-otp',
+            markdown: 'emails.system.test',
         );
     }
 

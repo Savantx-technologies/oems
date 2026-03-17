@@ -23,22 +23,18 @@
         .sidebar-scroll::-webkit-scrollbar {
             width: 5px;
         }
-
         .sidebar-scroll::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.2);
             border-radius: 3px;
         }
-
         .sidebar-scroll {
             scrollbar-width: thin;
             scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
         }
-
         .nav-link-active {
             color: #fff !important;
             background: rgba(255, 255, 255, 0.05);
-            border-left-color: #3b82f6 !important;
-            /* blue-500 */
+            border-left-color: #3b82f6 !important; /* blue-500 */
         }
     </style>
 </head>
@@ -70,23 +66,37 @@
         <div class="flex-1 overflow-y-auto sidebar-scroll py-2">
             <ul class="flex flex-col space-y-1">
                 @php
-                $questionOpen = request()->is('admin/questions*');
-                $examOpen = request()->is('admin/exams*');
-                $usersOpen = request()->is('admin/staff*') || request()->is('admin/students*') ||
-                request()->is('admin/requests/staff*');
+                    $adminUser = auth('admin')->user();
+                    $questionOpen = request()->is('admin/questions*');
+                    $examOpen = request()->is('admin/exams*');
+                    $usersOpen = request()->is('admin/staff*') || request()->is('admin/students*') || request()->is('admin/requests/staff*');
+                    $showDashboard = $adminUser?->canAccessSidebarSection('dashboard');
+                    $showUsersSection = $adminUser?->canAccessSidebarSection('users');
+                    $canManageStudents = $adminUser?->canAccessSidebarSection('admissions');
+                    $canManageStaffRequests = $showUsersSection && $adminUser?->canManageStaffRequests();
+                    $canManageQuestionBank = $adminUser?->canAccessSidebarSection('question_bank');
+                    $canManageExams = $adminUser?->canAccessSidebarSection('exams');
+                    $canMonitorExams = $adminUser?->canAccessSidebarSection('live_exams');
+                    $canViewPracticeDemo = $adminUser?->canAccessSidebarSection('practice_demo');
+                    $canViewEvaluation = $adminUser?->canAccessSidebarSection('evaluation');
+                    $canViewReports = $adminUser?->canAccessSidebarSection('reports');
+                    $canManageSettings = $adminUser?->canAccessSidebarSection('settings');
+                    $canViewLogs = $adminUser?->canAccessSidebarSection('logs');
                 @endphp
 
                 <!-- Dashboard -->
+                @if($showDashboard)
                 <li>
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.dashboard') ? 'nav-link-active' : '' }}"
                         href="{{ route('admin.dashboard') }}">
                         <div><i class="bi bi-speedometer2 mr-2"></i> Dashboard</div>
                     </a>
                 </li>
+                @endif
 
                 <!-- Admissions -->
-                <li
-                    x-data="{ open: {{ request()->routeIs('admin.students.create') || request()->routeIs('admin.students.bulk_create') || request()->routeIs('admin.students.batch.assign') ? 'true' : 'false' }} }">
+                @if($canManageStudents)
+                <li x-data="{ open: {{ request()->routeIs('admin.students.create') || request()->routeIs('admin.students.bulk_create') || request()->routeIs('admin.students.batch.assign') ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-person-plus mr-2"></i> Admissions</div>
@@ -106,8 +116,10 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!-- Users (School Only) -->
+                @if($showUsersSection && ($canManageStudents || $canManageStaffRequests))
                 <li x-data="{ open: {{ $usersOpen ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $usersOpen ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
@@ -117,6 +129,7 @@
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
+                            @if($canManageStaffRequests)
                             <li>
                                 <div class="px-5 py-2 text-gray-500 text-xs uppercase font-bold mt-2">Staff Management
                                 </div>
@@ -134,6 +147,8 @@
                                     href="{{ route('admin.requests.staff.create') }}">Request Reset /
                                     Block</a>
                             </li>
+                            @endif
+                            @if($canManageStudents)
                             <li>
                                 <div class="px-5 py-2 text-gray-500 text-xs uppercase font-bold mt-2">Students</div>
                             </li>
@@ -144,11 +159,14 @@
                                     href="#">Reset Attempt</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="#">Request Block Student</a></li>
+                            @endif
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!-- Question Bank -->
+                @if($canManageQuestionBank)
                 <li x-data="{ open: {{ $questionOpen ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3
                         {{ $questionOpen ? 'text-white bg-white/10 border-l-4 border-indigo-500' : 'text-gray-400 border-l-4 border-transparent' }}
@@ -184,8 +202,10 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!-- Exams -->
+                @if($canManageExams)
                 <li x-data="{ open: {{ $examOpen ? 'true' : 'false' }} }">
                     <a class="flex items-center justify-between px-5 py-3
                             {{ $examOpen ? 'text-white bg-white/10 border-l-4 border-indigo-500' : 'text-gray-400 border-l-4 border-transparent' }}
@@ -223,9 +243,11 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
 
                 <!-- Live Exams -->
+                @if($canMonitorExams)
                 <li x-data="{ open: false }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
@@ -254,8 +276,10 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!-- Practice / Demo Exams -->
+                @if($canViewPracticeDemo)
                 <li x-data="{ open: false }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
@@ -283,8 +307,10 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <!-- Evaluation & Results -->
+                @if($canViewEvaluation)
                 <li x-data="{ open: false }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
@@ -307,15 +333,85 @@
                                     Manual Checking
                                 </a>
                             </li>
-                            <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                href="{{ route('admin.results.list') }}">
-                                Result Approval
-                            </a>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
+                                    href="#">Scorecards</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
+                                    href="#">Certificates</a></li>
+                        </ul>
+                    </div>  
                 </li>
-                <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                        href="#">Scorecards</a></li>
-                <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                        href="#">Certificates</a></li>
+                @endif
+
+                <!-- Reports -->
+                @if($canViewReports)
+                <li x-data="{ open: {{ request()->routeIs('admin.reports.*') ? 'true' : 'false' }} }">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.reports.*') ? 'text-white bg-white/10 border-l-4 border-indigo-500' : '' }}"
+                        href="#" @click.prevent="open = !open">
+                        <div><i class="bi bi-bar-chart mr-2"></i> Reports</div>
+                        <i class="bi bi-chevron-down text-xs transition-transform"
+                            :class="open ? 'rotate-180' : ''"></i>
+                    </a>
+                    <div x-show="open" x-collapse class="bg-black/20">
+                        <ul class="flex flex-col py-1">
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.reports.index') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.reports.index') }}">Overview</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.reports.exams') || request()->routeIs('admin.reports.exams.detail') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.reports.exams') }}">Exam Reports</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.reports.analytics') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.reports.analytics') }}">Performance Analytics</a></li>
+                        </ul>
+                    </div>
+                </li>
+                @endif
+
+                <!-- School Settings -->
+                @if($canManageSettings)
+                <li x-data="{ open: {{ request()->routeIs('admin.settings.school') || request()->routeIs('admin.settings.exam_rules') || request()->routeIs('admin.settings.notifications') ? 'true' : 'false' }} }">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.settings.school') || request()->routeIs('admin.settings.exam_rules') || request()->routeIs('admin.settings.notifications') ? 'nav-link-active' : '' }}"
+                        href="#" @click.prevent="open = !open">
+                        <div><i class="bi bi-gear mr-2"></i> Settings</div>
+                        <i class="bi bi-chevron-down text-xs transition-transform"
+                            :class="open ? 'rotate-180' : ''"></i>
+                    </a>
+                    <div x-show="open" x-collapse class="bg-black/20">
+                        <ul class="flex flex-col py-1">
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.settings.school') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.settings.school') }}">School Profile</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.settings.exam_rules') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.settings.exam_rules') }}">Exam Rules</a></li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.settings.notifications') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.settings.notifications') }}">Notification Settings</a></li>
+                        </ul>
+                    </div>
+                </li>
+                @endif
+
+                <!-- Logs -->
+                @if($canViewLogs)
+                <li x-data="{ open: false }">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                        href="#" @click.prevent="open = !open">
+                        <div><i class="bi bi-journal-text mr-2"></i> Logs</div>
+                        <i class="bi bi-chevron-down text-xs transition-transform"
+                            :class="open ? 'rotate-180' : ''"></i>
+                    </a>
+                    <div x-show="open" x-collapse class="bg-black/20">
+                        <ul class="flex flex-col py-1">
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
+                                    href="#">Activity Logs</a></li>
+                            <li>
+                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.security.logs') ? 'text-white bg-white/10' : '' }}"
+                                    href="{{ route('admin.security.logs') }}">
+                                    Login History
+                                </a>
+                            </li>
+                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
+                                    href="#">Violation Logs</a></li>
+                        </ul>
+                    </div>
+                </li>
+                @endif
+
             </ul>
         </div>
         </li>
@@ -387,12 +483,12 @@
     </div>
 
     <!-- Main Content -->
-    <div class="min-h-screen flex flex-col transition-all duration-300" :class="sidebarOpen ? 'ml-64' : 'ml-0'">
+    <div class="min-h-screen flex flex-col transition-all duration-300"
+        :class="sidebarOpen ? 'ml-64' : 'ml-0'">
         <!-- Topbar -->
         <nav class="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <button @click="sidebarOpen = !sidebarOpen"
-                    class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 hover:text-gray-700 focus:outline-none">
                     <i class="bi bi-list text-2xl"></i>
                 </button>
                 <h5 class="mb-0 text-gray-600 font-medium text-lg">@yield('title')</h5>
@@ -412,11 +508,9 @@
                             .catch(err => console.error(err));
                     }
                 }" x-init="setInterval(() => checkNotifications(), 10000)">
-                    <a href="{{ route('admin.notifications') }}"
-                        class="text-gray-500 hover:text-gray-700 relative block">
+                    <a href="{{ route('admin.notifications') }}" class="text-gray-500 hover:text-gray-700 relative block">
                         <i class="bi bi-bell text-xl"></i>
-                        <span x-show="unreadCount > 0" x-text="unreadCount" x-cloak
-                            class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-red-500 text-white rounded-full text-[10px]"></span>
+                        <span x-show="unreadCount > 0" x-text="unreadCount" x-cloak class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-red-500 text-white rounded-full text-[10px]"></span>
                     </a>
                 </div>
                 <!-- Profile Dropdown -->
@@ -430,6 +524,12 @@
                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-100">
                         <li class="px-4 py-2 border-b border-gray-100">
                             <span class="font-bold text-gray-800">{{ auth()->user()->name ?? 'Admin' }}</span>
+                        </li>
+                        <li>
+                            <a href="{{ route('admin.profile') }}"
+                                class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
+                                <i class="bi bi-person-gear mr-2"></i> Profile
+                            </a>
                         </li>
                         <li>
                             <form id="logout-form" method="POST" action="{{ route('admin.logout') }}" class="m-0">

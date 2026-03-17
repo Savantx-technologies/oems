@@ -116,26 +116,26 @@
                     </select>
                 </div>
 
-                <div>
+                <!-- <div>
                     <label class="block mb-1 text-sm font-medium text-gray-700">Aadhaar Linked Mobile</label>
                     <select class="block w-full rounded-md border-gray-200 shadow-sm bg-gray-50 px-3 py-2 text-gray-900">
                         <option>Yes</option>
                         <option>No</option>
                     </select>
-                </div>
+                </div> -->
 
-                <div class="flex items-end">
+                <!-- <div class="flex items-end">
                     <button type="button" disabled
                         class="w-full bg-white border border-blue-400 text-blue-500 rounded-md px-4 py-2 font-semibold opacity-60 cursor-not-allowed transition">
                         Send OTP (Verification Placeholder)
                     </button>
-                </div>
+                </div> -->
 
-                <div class="flex items-end">
+                <!-- <div class="flex items-end">
                     <span class="inline-block w-full text-yellow-700 bg-yellow-100 text-center py-2 rounded font-semibold">
                         Verification Status: Pending
                     </span>
-                </div>
+                </div> -->
             </div>
         </div>
 

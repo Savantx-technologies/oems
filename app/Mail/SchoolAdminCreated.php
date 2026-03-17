@@ -2,34 +2,41 @@
 
 namespace App\Mail;
 
+use App\Models\Admin;
+use App\Models\School;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class SuperAdminOtpMail extends Mailable
+class SchoolAdminCreated extends Mailable 
 {
     use Queueable, SerializesModels;
 
-    public $otp;
+    public $admin;
+    public $school;
+    public $password;
 
-    public function __construct($otp)
+    public function __construct(Admin $admin, School $school, string $password)
     {
-        $this->otp = $otp;
+        $this->admin = $admin;
+        $this->school = $school;
+        $this->password = $password;
     }
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your Super Admin Login OTP for ' . config('app.name'),
+            subject: 'Welcome to ' . config('app.name') . ' - Your School Admin Account',
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'emails.superadmin-otp',
+            view: 'emails.school_admin_created',
         );
     }
 

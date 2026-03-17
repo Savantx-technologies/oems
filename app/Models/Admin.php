@@ -10,6 +10,11 @@ class Admin extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    public const ROLE_SCHOOL_ADMIN = 'school_admin';
+    public const ROLE_SUB_ADMIN = 'sub_admin';
+    public const ROLE_INVIGILATOR = 'invigilator';
+    public const ROLE_STAFF = 'staff';
+
     protected $guard = 'admin';
 
     protected $fillable = [
@@ -45,5 +50,74 @@ class Admin extends Authenticatable
     public function school()
     {
         return $this->belongsTo(School::class);
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
+
+    public function hasAnyRole(array $roles): bool
+    {
+        return in_array($this->role, $roles, true);
+    }
+
+    public function canManageStaffRequests(): bool
+    {
+        return $this->hasRole(self::ROLE_SCHOOL_ADMIN);
+    }
+
+    public function canManageStudents(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_SCHOOL_ADMIN,
+            self::ROLE_SUB_ADMIN,
+        ]);
+    }
+
+    public function canManageQuestionBank(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_SCHOOL_ADMIN,
+            self::ROLE_SUB_ADMIN,
+            self::ROLE_STAFF,
+        ]);
+    }
+
+    public function canManageExams(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_SCHOOL_ADMIN,
+            self::ROLE_SUB_ADMIN,
+        ]);
+    }
+
+    public function canMonitorExams(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_SCHOOL_ADMIN,
+            self::ROLE_SUB_ADMIN,
+            self::ROLE_INVIGILATOR,
+        ]);
+    }
+
+    public function canViewReports(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_SCHOOL_ADMIN,
+            self::ROLE_SUB_ADMIN,
+        ]);
+    }
+
+    public function canManageSettings(): bool
+    {
+        return $this->hasRole(self::ROLE_SCHOOL_ADMIN);
+    }
+
+    public function canAccessSidebarSection(string $section): bool
+    {
+        $permissions = Setting::getAdminSidebarPermissions();
+
+        return (bool) data_get($permissions, $this->role . '.' . $section, false);
     }
 }

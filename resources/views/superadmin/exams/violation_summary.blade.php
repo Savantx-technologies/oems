@@ -39,7 +39,6 @@
         <table class="min-w-full table-auto text-sm text-left">
             <thead class="bg-gray-50 border-b text-gray-700">
                 <tr>
-                    <th class="px-6 py-3">#</th>
                     <th class="px-6 py-3">Student</th>
                     <th class="px-6 py-3">Admission No</th>
                     <th class="px-6 py-3">Exam</th>
@@ -52,7 +51,6 @@
             <tbody class="divide-y divide-gray-100">
                 @forelse($violations as $index => $violation)
                 <tr>
-                    <td class="px-6 py-3">{{ ($violations->currentPage() - 1) * $violations->perPage() + $index + 1 }}</td>
                     <td class="px-6 py-3">{{ $violation->user->name ?? '—' }}</td>
                     <td class="px-6 py-3 text-gray-500">{{ $violation->user->admission_number ?? '—' }}</td>
                     <td class="px-6 py-3">
@@ -73,7 +71,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="px-6 py-10 text-center text-gray-400">No violations found for the selected criteria.</td>
+                    <td colspan="7" class="px-6 py-10 text-center text-gray-400">No violations found for the selected criteria.</td>
                 </tr>
                 @endforelse
             </tbody>

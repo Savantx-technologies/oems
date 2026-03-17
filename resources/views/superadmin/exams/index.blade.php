@@ -24,7 +24,7 @@
                 <option value="">All Schools</option>
                 @foreach($schools as $school)
                     <option value="{{ $school->id }}" {{ request('school_id') == $school->id ? 'selected' : '' }}>
-                        {{ $school->name }} (ID: {{ $school->id }})
+                        {{ $school->name }}
                     </option>
                 @endforeach
             </select>
@@ -36,7 +36,6 @@
             <table class="min-w-full text-sm text-left">
                 <thead class="bg-gray-50 text-gray-600 font-medium border-b">
                     <tr>
-                        <th class="px-6 py-3">ID</th>
                         <th class="px-6 py-3">School</th>
                         <th class="px-6 py-3">Title</th>
                         <th class="px-6 py-3">Class / Subject</th>
@@ -49,10 +48,25 @@
                 <tbody class="divide-y divide-gray-100">
                     @forelse($exams as $exam)
                         <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-3 font-mono text-xs text-gray-500">#{{ $exam->id }}</td>
                             <td class="px-6 py-3">
-                                <div class="font-medium text-gray-900">{{ $exam->school->name ?? 'Unknown School' }}</div>
-                                <div class="text-xs text-gray-500">ID: {{ $exam->school_id }}</div>
+                            @if($exam->school)
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        @if($exam->school->logo)
+                                            <img class="h-10 w-10 rounded-lg object-contain border border-gray-200" src="{{ asset('storage/' . $exam->school->logo) }}" alt="{{ $exam->school->name }} logo">
+                                        @else
+                                            <div class="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 font-bold border border-gray-200 text-base">
+                                                {{ substr($exam->school->name, 0, 1) }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="font-medium text-gray-900">{{ $exam->school->name }}</div>
+                                    </div>
+                                </div>
+                            @else
+                                <span class="text-gray-400">Unknown School</span>
+                            @endif
                             </td>
                             <td class="px-6 py-3 font-medium text-gray-800">{{ $exam->title }}</td>
                             <td class="px-6 py-3">
@@ -107,7 +121,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                            <td colspan="7" class="px-6 py-8 text-center text-gray-500">
                                 No exams found.
                             </td>
                         </tr>

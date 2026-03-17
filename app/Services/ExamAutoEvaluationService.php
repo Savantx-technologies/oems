@@ -12,80 +12,87 @@ class ExamAutoEvaluationService
     /**
      * Create a new class instance.
      */
-    public function evaluate(ExamAttempt $attempt, array $answers)
-    {
-        if ($attempt->submitted_at) {
-            return $attempt;
-        }
+  public function evaluate(ExamAttempt $attempt, array $answers)
+{
+    // If already submitted then skip
+    if ($attempt->submitted_at) {
+        return $attempt;
+    }
 
-        return DB::transaction(function () use ($attempt, $answers) {
+    return DB::transaction(function () use ($attempt, $answers) {
 
-            $exam = Exam::findOrFail($attempt->exam_id);
+        $exam = Exam::findOrFail($attempt->exam_id);
 
-            $questionOrder = json_decode($attempt->question_order, true);
+        // Decode question order
+        $questionOrder = json_decode($attempt->question_order, true);
 
-            $questions = Question::whereIn('id', $questionOrder)
-                ->get()
-                ->keyBy('id');
+        // Safety: convert to integer ids
+        $questionOrder = array_map('intval', $questionOrder);
 
-            // IMPORTANT
-            $answers = array_values($answers);
+        // Get questions
+        $questions = Question::whereIn('id', $questionOrder)
+            ->get()
+            ->keyBy('id');
 
-            $totalQuestions = count($questionOrder);
-            $totalCorrect = 0;
-            $totalScore = 0;
+        $totalQuestions = count($questionOrder);
+        $totalCorrect = 0;
+        $totalScore = 0;
 
-            foreach ($questionOrder as $index => $questionId) {
+        foreach ($questionOrder as $questionId) {
 
-                $question = $questions[$questionId] ?? null;
+            $question = $questions[$questionId] ?? null;
 
-                if (!$question) {
-                    continue;
-                }
-
-                // correct mapping
-                $selectedOption = $answers[$index] ?? null;
-
-                $isCorrect = $selectedOption === $question->correct_option;
-
-                $marksAwarded = 0;
-
-                if ($selectedOption !== null) {
-
-                    if ($isCorrect) {
-                        $marksAwarded = $question->marks;
-                        $totalCorrect++;
-                    } elseif ($exam->negative_marking) {
-                        $marksAwarded = -abs($exam->negative_marks);
-                    }
-
-                    $totalScore += $marksAwarded;
-                }
-
-                UserExamAnswer::create([
-                    'school_id' => $attempt->school_id,
-                    'attempt_id' => $attempt->id,
-                    'user_id' => $attempt->user_id,
-                    'exam_id' => $attempt->exam_id,
-                    'question_id' => $questionId,
-                    'selected_option' => $selectedOption,
-                    'is_correct' => $isCorrect,
-                    'marks_awarded' => $marksAwarded,
-                ]);
+            if (!$question) {
+                continue;
             }
 
-            $totalScore = max($totalScore, 0);
+            // Get selected option from answers
+            $selectedOption = $answers[$questionId] ?? null;
 
-            $attempt->update([
-                'total_questions' => $totalQuestions,
-                'total_correct' => $totalCorrect,
-                'score' => $totalScore,
-                'submitted_at' => now(),
-                'status' => 'evaluated',
-                'approval_status' => 'pending',
+            // Check correct
+            $isCorrect = $selectedOption && ($selectedOption == $question->correct_option);
+
+            $marksAwarded = 0;
+
+            if ($selectedOption !== null) {
+
+                if ($isCorrect) {
+                    $marksAwarded = $question->marks;
+                    $totalCorrect++;
+                } elseif ($exam->negative_marking) {
+                    $marksAwarded = -abs($exam->negative_marks);
+                }
+
+                $totalScore += $marksAwarded;
+            }
+
+            // Save student answer
+            UserExamAnswer::create([
+                'school_id' => $attempt->school_id,
+                'attempt_id' => $attempt->id,
+                'user_id' => $attempt->user_id,
+                'exam_id' => $attempt->exam_id,
+                'question_id' => $questionId,
+                'selected_option' => $selectedOption,
+                'is_correct' => $isCorrect ? 1 : 0,
+                'marks_awarded' => $marksAwarded,
             ]);
+        }
 
-            return $attempt;
-        });
-    }
+        // Score cannot be negative
+        $totalScore = max($totalScore, 0);
+
+        // Update attempt result
+        $attempt->update([
+            'total_questions' => $totalQuestions,
+            'total_correct' => $totalCorrect,
+            'score' => $totalScore,
+            'submitted_at' => now(),
+            'status' => 'evaluated',
+            'approval_status' => 'pending',
+        ]);
+
+        return $attempt;
+    });
+}
 }

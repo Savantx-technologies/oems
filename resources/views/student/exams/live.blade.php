@@ -218,7 +218,13 @@
                     this.permissionError = null;
                     try {
                         // Request Camera & Microphone
-                        this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                        this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: true,  audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                        channelCount: 1,
+                        sampleRate: 48000
+                    } });
                         
                         // Request Screen
                         this.screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
