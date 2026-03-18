@@ -26,7 +26,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
             <template x-for="student in students" :key="student.id">
-                <div x-data="studentCard()"
+                <div x-data="studentCard(student.id)"
                     class="bg-white rounded-xl shadow-sm border p-5 flex flex-col gap-4 transition-all duration-300"
                     :class="{
                         'border-red-500 ring-1 ring-red-200': student.violation_count > 2 || student.status === 'terminated',
@@ -142,7 +142,7 @@
                     </div>
 
                     <!-- Actions -->
-                    <div class="grid grid-cols-3 gap-3 mt-auto">
+                    <div class="grid grid-cols-4 gap-4 mt-auto">
                         <button @click="toggleCamera(student.id)"
                             class="col-span-1 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1"
                             :class="streaming ? 'bg-gray-800 text-white hover:bg-gray-900' :
@@ -158,6 +158,14 @@
                             class="col-span-1 py-2 bg-red-50 text-red-600 border border-red-200 rounded text-sm font-medium hover:bg-red-100">
                             Stop
                         </button>
+                        <button 
+                        @click="listenToStudent()"
+                        :class="Alpine.store('monitor').selectedAudioStudent === studentId 
+                            ? 'bg-green-600 text-white border-green-600' 
+                            : 'bg-green-50 text-green-600 border-green-200'"
+                        class="col-span-1 py-2 border rounded text-sm font-medium hover:bg-green-100">
+                        <i class="bi bi-headphones"></i> Listen
+                    </button>
                     </div>
                 </div>
             </template>
@@ -171,6 +179,7 @@
     function monitorApp() {
             return {
                 students: [],
+                selectedAudioStudent: null,
 
                 init() {
                     this.fetchData();
@@ -236,8 +245,9 @@
             }
         }
 
-        function studentCard() {
+        function studentCard(studentId) {
             return {
+                studentId: studentId,
                 streaming: false,
                 loading: false,
                 pc: null,
@@ -304,12 +314,13 @@
         this.$refs.audio.srcObject = audioStream;
 
         this.$refs.audio.muted = false;
-        this.$refs.audio.volume = 1.0;
+        const app = Alpine.store('monitor');
+        this.$refs.audio.volume = (app.selectedAudioStudent === studentId) ? 1 : 0;   
         this.$refs.audio.play().catch(e => console.log("Audio play blocked", e));
 
         if (!this.audioStarted) {
             this.audioStarted = true;
-            this.setupAudioDetection(audioStream);
+            this.setupAudioDetection(audioStream,studentId);
         }
     }
 
@@ -390,7 +401,7 @@
                         this.stopCamera();
                     }
                 },
-               setupAudioDetection(stream) {
+               setupAudioDetection(stream,studentId) {
 
                     try {
 
@@ -418,6 +429,10 @@
                             const average = sum / dataArray.length;
 
                             this.audioActive = average > 10;
+                            const app = Alpine.store('monitor');
+                            if (this.$refs.audio) {
+                                this.$refs.audio.volume = (app.selectedAudioStudent === studentId) ? 1 : 0;
+                            }
                             if (this.audioActive) {
                                 console.log("Student speaking detected. Level:", average);
                             }
@@ -449,9 +464,31 @@
                         this.pc.close();
                         this.pc = null;
                     }
-                }
+                     },
+
+                    listenToStudent() {
+
+                    const store = Alpine.store('monitor');
+
+                    if (store.selectedAudioStudent === studentId) {
+                        store.selectedAudioStudent = null;
+                        this.$refs.audio.volume = 0;
+                    } else {
+                        store.selectedAudioStudent = studentId;
+                        this.$refs.audio.volume = 1;
+                    }
+
             }
-            
+
         }
+            
+    }
+</script>
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.store('monitor', {
+        selectedAudioStudent: null
+    });
+});
 </script>
 @endsection

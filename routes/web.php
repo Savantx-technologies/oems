@@ -263,6 +263,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('send-otp', [AdminLoginController::class, 'sendOtp'])->name('send.otp');
     Route::get('verify-otp', [AdminLoginController::class, 'otpForm'])->name('otp.verify.form');
     Route::post('verify-otp', [AdminLoginController::class, 'verifyOtp'])->name('verify.otp');
+    Route::post('send-mobile-otp', [AdminLoginController::class, 'sendMobileOtp'])->name('send.mobile.otp');
+    Route::post('verify-mobile-otp', [AdminLoginController::class, 'verifyMobileOtp'])->name('verify.mobile.otp');
     Route::get('security-logs', [AdminSecurityLogController::class, 'index'])->name('security.logs');
     Route::get('security-logs/export', [AdminSecurityLogController::class, 'export'])->name('security.logs.export');
 
@@ -428,6 +430,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     Route::post('answer/{id}/correct', [AdminResultController::class, 'markCorrect'])->name('answer.correct');
     Route::post('answer/{id}/wrong', [AdminResultController::class, 'markWrong'])->name('answer.wrong');
+
 
 });
 });
