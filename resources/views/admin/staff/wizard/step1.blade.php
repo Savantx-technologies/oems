@@ -19,13 +19,13 @@
                         <div>
                             <label for="name" class="block text-gray-700 mb-1 font-medium">Full Name <span class="text-red-500">*</span></label>
                             <input type="text" name="name" id="name"
-                                class="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2"
+                                class="block w-full rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2"
                                 value="{{ old('name', $data['name'] ?? '') }}" required>
                         </div>
                         <div>
                             <label for="email" class="block text-gray-700 mb-1 font-medium">Email Address <span class="text-red-500">*</span></label>
                             <input type="email" name="email" id="email"
-                                class="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2"
+                                class="block w-full rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2"
                                 value="{{ old('email', $data['email'] ?? '') }}" required>
                         </div>
                     </div>
@@ -33,13 +33,13 @@
                         <div>
                             <label for="mobile" class="block text-gray-700 mb-1 font-medium">Mobile Number <span class="text-red-500">*</span></label>
                             <input type="text" name="mobile" id="mobile"
-                                class="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2"
+                                class="block w-full rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2"
                                 value="{{ old('mobile', $data['mobile'] ?? '') }}" required>
                         </div>
                         <div>
                             <label for="staff_type" class="block text-gray-700 mb-1 font-medium">Staff Type <span class="text-red-500">*</span></label>
                             <select name="staff_type" id="staff_type"
-                                class="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2 bg-white"
+                                class="block w-full rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2 bg-white"
                                 required>
                                 <option value="">-- Select Type --</option>
                                 @foreach(['teacher','admin_staff','librarian','lab_assistant'] as $type)
@@ -58,7 +58,7 @@
                             <div class="md:col-span-2">
                                 <label for="aadhaar_number" class="block text-gray-700 mb-1 font-medium">Aadhaar Number</label>
                                 <input type="text" name="aadhaar_number" id="aadhaar_number"
-                                    class="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2"
+                                    class="block w-full rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2"
                                     value="{{ old('aadhaar_number', $data['aadhaar_number'] ?? '') }}">
                             </div>
                         </div>
@@ -66,13 +66,13 @@
                             <div>
                                 <label for="aadhaar_dob" class="block text-gray-700 mb-1 font-medium">Date of Birth (Aadhaar)</label>
                                 <input type="date" name="aadhaar_dob" id="aadhaar_dob"
-                                    class="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2"
+                                    class="block w-full rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2"
                                     value="{{ old('aadhaar_dob', $data['aadhaar_dob'] ?? '') }}">
                             </div>
                             <div>
                                 <label for="aadhaar_gender" class="block text-gray-700 mb-1 font-medium">Gender (Aadhaar)</label>
                                 <select name="aadhaar_gender" id="aadhaar_gender"
-                                    class="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2 bg-white">
+                                    class="block w-full rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm p-2 bg-white">
                                     <option value="">-- Select Gender --</option>
                                     @foreach(['male', 'female', 'other'] as $gender)
                                     <option value="{{ $gender }}" {{ (old('aadhaar_gender', $data['aadhaar_gender'] ?? '') == $gender) ? 'selected' : '' }}>{{ ucfirst($gender) }}</option>
@@ -84,7 +84,7 @@
                     <div>
                         <label for="photo" class="block text-gray-700 mb-1 font-medium">Profile Photo</label>
                         <input type="file" name="photo" id="photo"
-                            class="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm text-gray-700 p-2">
+                            class="block w-full rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 shadow-sm text-gray-700 p-2">
                         @if(!empty($data['photo']))
                         <img src="{{ asset('storage/'.$data['photo']) }}" class="mt-3 h-16 w-16 object-cover rounded border border-gray-200 p-1 shadow-sm" alt="Profile photo preview">
                         @endif

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Support\SecurityLogger;
@@ -12,7 +13,13 @@ use App\Mail\AdminOtpMail;
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
-
+use OpenApi\Annotations as OA;
+/**
+ * @OA\Tag(
+ *     name="Admin Auth",
+ *     description="Admin authentication APIs"
+ * )
+ */
 
 class LoginController extends Controller
 {
@@ -123,7 +130,7 @@ class LoginController extends Controller
             'admin',
             $admin->id,
             'otp_sent',
-            'OTP sent to super admin email'
+            'OTP sent to admin email'
         );
 
         session([
@@ -179,5 +186,187 @@ class LoginController extends Controller
 
         return redirect()->route('admin.dashboard');
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/send-mobile-otp",
+     *     tags={"Admin Auth"},
+     *     summary="Send OTP to mobile",
+     *     operationId="sendMobileOtp",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"mobile"},
+     *             @OA\Property(
+     *                 property="mobile",
+     *                 type="string",
+     *                 description="Enter any registered mobile number"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP sent successfully"
+     *     )
+     * )
+     */
+    public function sendMobileOtp(Request $request)
+    {
+        $request->validate([
+            'mobile' => 'required|digits:10'
+        ]);
+
+        $admin = Admin::where('mobile', $request->mobile)
+            ->where('status', 'active')
+            ->first();
+
+        if (!$admin) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Mobile not found'
+            ], 404);
+        }
+
+        $otp = rand(100000, 999999);
+
+        AdminOtp::where('admin_id', $admin->id)->delete();
+
+        AdminOtp::create([
+            'admin_id' => $admin->id,
+            'otp' => bcrypt($otp),
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
+        $smsSent = SmsService::sendOtp($request->mobile, $otp);
+
+        if (!$smsSent) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to send OTP'
+            ], 500);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'OTP sent successfully'
+        ]);
+    }
+
+    //// DEBUG FUNCTION/////
+    //   public function sendMobileOtp(Request $request)
+    // {
+    //     $mobile = $request->mobile;
+
+    //         $otp = rand(100000, 999999);
+
+    //         // Save OTP (important for verify)
+    //     session([
+    //         'otp' => $otp,
+    //         'mobile' => $mobile
+    //     ]);
+
+    //         // 🔥 DEBUG ONLY (will stop execution and show OTP)
+    //     \Log::info('OTP DEBUG', [
+    //     'mobile' => $mobile,
+    //     'otp' => $otp
+    // ]);
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'OTP sent'
+    //     ]);
+    // }
+    /**
+     * @OA\Post(
+     *     path="/api/admin/verify-mobile-otp",
+     *     tags={"Admin Auth"},
+     *     summary="Verify OTP and login",
+     *     operationId="verifyMobileOtp",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"mobile","otp"},
+     *             @OA\Property(
+     *                 property="mobile",
+     *                 type="string",
+     *                 description="Enter mobile number"
+     *             ),
+     *             @OA\Property(
+     *                 property="otp",
+     *                 type="string",
+     *                 description="Enter OTP received on mobile"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Login success")
+     * )
+     */
+    public function verifyMobileOtp(Request $request)
+    {
+        $request->validate([
+            'mobile' => 'required|digits:10',
+            'otp' => 'required|digits:6'
+        ]);
+
+        $admin = Admin::where('mobile', $request->mobile)->first();
+
+        if (!$admin) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Admin not found'
+            ], 404);
+        }
+
+        $record = AdminOtp::where('admin_id', $admin->id)->latest()->first();
+
+        if (!$record) {
+            return response()->json([
+                'status' => false,
+                'message' => 'OTP not found'
+            ], 400);
+        }
+
+        if (now()->gt($record->expires_at)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'OTP expired'
+            ], 400);
+        }
+
+        if (!Hash::check($request->otp, $record->otp)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid OTP'
+            ], 400);
+        }
+
+        $token = $admin->createToken('admin_token')->plainTextToken;
+
+        $record->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Login success',
+            'token' => $token,
+            'admin' => $admin
+        ]);
+    }
+
+
+    //     public function verifyMobileOtp(Request $request)
+    // {
+    //     if(session('otp') == $request->otp){
+    //         return response()->json([
+    //             'status' => true,
+    //             'message' => 'OTP verified'
+    //         ]);
+    //     }
+
+        //     return response()->json([
+    //         'status' => false,
+    //         'message' => 'Invalid OTP'
+    //     ]);
+    // }
+
 
 }

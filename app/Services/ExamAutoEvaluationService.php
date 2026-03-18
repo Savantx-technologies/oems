@@ -12,78 +12,87 @@ class ExamAutoEvaluationService
     /**
      * Create a new class instance.
      */
-    public function evaluate(ExamAttempt $attempt, array $answers)
-    {
-        if ($attempt->submitted_at) {
-            return $attempt;
-        }
+  public function evaluate(ExamAttempt $attempt, array $answers)
+{
+    // If already submitted then skip
+    if ($attempt->submitted_at) {
+        return $attempt;
+    }
 
-        return DB::transaction(function () use ($attempt, $answers) {
+    return DB::transaction(function () use ($attempt, $answers) {
 
-            $exam = Exam::findOrFail($attempt->exam_id);
+        $exam = Exam::findOrFail($attempt->exam_id);
 
-            $validQuestionIds = is_string($exam->selected_questions)
-                ? json_decode($exam->selected_questions, true)
-                : $exam->selected_questions;
+        // Decode question order
+        $questionOrder = json_decode($attempt->question_order, true);
 
-            $questions = Question::whereIn('id', $validQuestionIds)
-                ->get()
-                ->keyBy('id');
+        // Safety: convert to integer ids
+        $questionOrder = array_map('intval', $questionOrder);
 
-            $totalQuestions = $questions->count();
-            $totalCorrect = 0;
-            $totalScore = 0;
+        // Get questions
+        $questions = Question::whereIn('id', $questionOrder)
+            ->get()
+            ->keyBy('id');
 
-            foreach ($questions as $question) {
+        $totalQuestions = count($questionOrder);
+        $totalCorrect = 0;
+        $totalScore = 0;
 
-                $selectedOption = $answers[$question->id] ?? null;
+        foreach ($questionOrder as $questionId) {
 
-                if (!in_array($selectedOption, ['A', 'B', 'C', 'D'])) {
-                    $selectedOption = null;
-                }
+            $question = $questions[$questionId] ?? null;
 
-                if ($selectedOption === null) {
-                    continue;
-                }
+            if (!$question) {
+                continue;
+            }
 
-                $isCorrect = $selectedOption === $question->correct_option;
-                $marksAwarded = 0;
+            // Get selected option from answers
+            $selectedOption = $answers[$questionId] ?? null;
+
+            // Check correct
+            $isCorrect = $selectedOption && ($selectedOption == $question->correct_option);
+
+            $marksAwarded = 0;
+
+            if ($selectedOption !== null) {
 
                 if ($isCorrect) {
                     $marksAwarded = $question->marks;
                     $totalCorrect++;
-                } else {
-                    if ($exam->negative_marking) {
-                        $marksAwarded = -abs($exam->negative_marks);
-                    }
+                } elseif ($exam->negative_marking) {
+                    $marksAwarded = -abs($exam->negative_marks);
                 }
 
                 $totalScore += $marksAwarded;
-
-                UserExamAnswer::create([
-                    'school_id' => $attempt->school_id,
-                    'attempt_id' => $attempt->id,
-                    'user_id' => $attempt->user_id,
-                    'exam_id' => $attempt->exam_id,
-                    'question_id' => $question->id,
-                    'selected_option' => $selectedOption,
-                    'is_correct' => $isCorrect,
-                    'marks_awarded' => $marksAwarded,
-                ]);
             }
 
-            $totalScore = max($totalScore, 0);
-
-            $attempt->update([
-                'total_questions' => $totalQuestions,
-                'total_correct' => $totalCorrect,
-                'score' => $totalScore,
-                'submitted_at' => now(),
-                'status' => 'evaluated',
-                'approval_status' => 'pending',
+            // Save student answer
+            UserExamAnswer::create([
+                'school_id' => $attempt->school_id,
+                'attempt_id' => $attempt->id,
+                'user_id' => $attempt->user_id,
+                'exam_id' => $attempt->exam_id,
+                'question_id' => $questionId,
+                'selected_option' => $selectedOption,
+                'is_correct' => $isCorrect ? 1 : 0,
+                'marks_awarded' => $marksAwarded,
             ]);
+        }
 
-            return $attempt;
-        });
-    }
+        // Score cannot be negative
+        $totalScore = max($totalScore, 0);
+
+        // Update attempt result
+        $attempt->update([
+            'total_questions' => $totalQuestions,
+            'total_correct' => $totalCorrect,
+            'score' => $totalScore,
+            'submitted_at' => now(),
+            'status' => 'evaluated',
+            'approval_status' => 'pending',
+        ]);
+
+        return $attempt;
+    });
+}
 }

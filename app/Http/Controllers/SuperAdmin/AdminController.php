@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Admin;
 use App\Models\School;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SchoolAdminCreated;
 
 class AdminController extends Controller
 {
@@ -37,11 +39,17 @@ class AdminController extends Controller
             'two_factor' => 'boolean',
         ]);
 
+        $rawPassword = $validated['password'];
         $validated['password'] = Hash::make($validated['password']);
         $validated['two_factor'] = $request->has('two_factor');
 
-        Admin::create($validated);
+        $admin = Admin::create($validated);
 
+        if ($request->filled('school_id')) {
+            $school = School::find($request->school_id);
+            Mail::to($admin->email)->send(new SchoolAdminCreated($admin, $school, $rawPassword));
+        }
+        
         return redirect()->route('superadmin.admins.index')->with('success', 'Admin created successfully');
     }
 
@@ -98,10 +106,14 @@ class AdminController extends Controller
             'login_method' => 'required|in:password,otp',
         ]);
 
+        $rawPassword = $validated['password'];
         $validated['password'] = Hash::make($validated['password']);
         $validated['school_id'] = $school->id;
 
         $admin = Admin::create($validated);
+
+        // Send Welcome Email
+        Mail::to($admin->email)->send(new SchoolAdminCreated($admin, $school, $rawPassword));
 
         return redirect()->route('superadmin.schools.index')->with('success','School Admin Created Successfully');
     }

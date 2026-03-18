@@ -22,7 +22,7 @@ class SuperAdminOtpMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your Super Admin Login OTP',
+            subject: 'Your Super Admin Login OTP for ' . config('app.name'),
         );
     }
 

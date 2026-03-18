@@ -27,7 +27,7 @@ public $otp;
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Admin Otp Mail',
+            subject: 'Your Admin Login OTP for ' . config('app.name'),
         );
     }
 

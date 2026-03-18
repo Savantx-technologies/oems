@@ -1,0 +1,93 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Admin API",
+        "description": "Admin Authentication APIs with Mobile OTP",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://103.153.58.130",
+            "description": "Live Server"
+        }
+    ],
+    "paths": {
+        "/api/admin/send-mobile-otp": {
+            "post": {
+                "tags": [
+                    "Admin Auth"
+                ],
+                "summary": "Send OTP to mobile",
+                "operationId": "sendMobileOtp",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "mobile"
+                                ],
+                                "properties": {
+                                    "mobile": {
+                                        "description": "Enter any registered mobile number",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP sent successfully"
+                    }
+                }
+            }
+        },
+        "/api/admin/verify-mobile-otp": {
+            "post": {
+                "tags": [
+                    "Admin Auth"
+                ],
+                "summary": "Verify OTP and login",
+                "operationId": "verifyMobileOtp",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "mobile",
+                                    "otp"
+                                ],
+                                "properties": {
+                                    "mobile": {
+                                        "description": "Enter mobile number",
+                                        "type": "string"
+                                    },
+                                    "otp": {
+                                        "description": "Enter OTP received on mobile",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login success"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Admin Auth",
+            "description": "Admin authentication APIs"
+        }
+    ]
+}

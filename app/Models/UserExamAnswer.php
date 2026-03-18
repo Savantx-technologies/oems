@@ -12,8 +12,9 @@ class UserExamAnswer extends Model
         'user_id',
         'exam_id',
         'question_id',
-        'selected_option_id',
+        'selected_option',
         'is_correct',
+        'admin_checked',
         'marks_awarded',
 
     ];
@@ -23,8 +24,10 @@ class UserExamAnswer extends Model
         return $this->belongsTo(Question::class);
     }
 
-    public function selectedOption()
+    public function attempt()
     {
-        return $this->belongsTo(QuestionOption::class, 'selected_option_id');
+        return $this->belongsTo(ExamAttempt::class, 'attempt_id');
     }
+
+
 }
