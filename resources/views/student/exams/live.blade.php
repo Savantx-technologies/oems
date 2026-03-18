@@ -15,7 +15,7 @@
     </style>
 </head>
 <body class="bg-gray-50 h-screen flex flex-col overflow-hidden select-none" x-data="examApp()" x-init="init()">
-
+    
     <!-- Permissions Setup Screen -->
     <div x-show="!isSetupComplete" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center p-4 text-center" x-cloak>
         <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
@@ -54,6 +54,30 @@
                     class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors">
                 <span x-text="!isFullScreen ? 'Enter Full Screen' : 'I Understand, Return to Exam'"></span>
             </button>
+        </div>
+    </div>
+
+    <!-- Submit Confirmation Overlay -->
+    <div x-show="showSubmitConfirmation"
+         class="fixed inset-0 z-[75] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+         x-transition.opacity
+         x-cloak>
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full text-center">
+            <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900 mb-2">Submit Exam?</h2>
+            <p class="text-gray-600 mb-6 text-sm">Are you sure you want to submit your exam?</p>
+            <div class="flex gap-3">
+                <button @click="showSubmitConfirmation = false"
+                        class="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition text-sm">
+                    Cancel
+                </button>
+                <button @click="submitExam"
+                        class="flex-1 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition text-sm">
+                    Yes, Submit
+                </button>
+            </div>
         </div>
     </div>
 
@@ -142,12 +166,12 @@
                     Next <i class="bi bi-arrow-right"></i>
                 </button>
 
-                <form id="autoSubmitForm" x-show="currentIndex === questions.length - 1" method="POST" action="{{ route('student.exams.submit', $exam->id) }}" x-cloak>
+                <form id="autoSubmitForm" x-show="currentIndex === questions.length - 1" method="POST" action="{{ route('student.exams.submit', $exam->id) }}" x-cloak @submit.prevent="openSubmitConfirm">
                     @csrf
                     <input type="hidden" name="set_code" value="A">
                     <input type="hidden" name="answers" :value="JSON.stringify(answers)">
                     <input type="hidden" name="session_token" :value="sessionToken">
-                    <button type="submit" onclick="return confirm('Are you sure you want to submit the exam?')"
+                    <button type="submit"
                             class="px-6 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 flex items-center gap-2">
                         Submit Exam <i class="bi bi-check-lg"></i>
                     </button>
@@ -197,6 +221,8 @@
                 maxViolations: 3,
                 screenStopCount: 0,
                 isHandlingViolation: false,
+                isSubmitting: false,
+                showSubmitConfirmation: false,
                 isSetupComplete: false,
                 permissionError: null,
                 mediaStream: null,
@@ -317,6 +343,7 @@
                     // 4. Detect Tab Switching
                     document.addEventListener('visibilitychange', () => {
                         // When tab is hidden and we are not already handling a violation
+                        if (this.isSubmitting) return;
                         if (document.visibilityState === 'hidden' && !this.isHandlingViolation) {
                             this.handleViolation('tab_switch');
                         }
@@ -324,6 +351,7 @@
                 },
 
                 checkFullScreen() {
+                    if (this.isSubmitting) return;
                     const isNowFullScreen = !!document.fullscreenElement;
                     
                     // If we were full screen, setup is done, and now we are not -> Violation
@@ -346,6 +374,7 @@
                 },
 
                 handleScreenStop() {
+                    if (this.isSubmitting) return;
                     this.screenStopCount++;
                     if (this.screenStopCount >= 2) {
                         this.handleViolation('screen_stop', true);
@@ -357,6 +386,7 @@
                 },
 
                 handleViolation(type = 'unknown', forceSubmit = false) {
+                    if (this.isSubmitting) return;
                     if (this.isHandlingViolation) return;
                     this.isHandlingViolation = true;
 
@@ -446,7 +476,17 @@
                     }, 100);
                 },
 
+                openSubmitConfirm() {
+                    if (this.isSubmitting) return;
+                    this.showSubmitConfirmation = true;
+                },
+
                 submitExam() {
+                    if (this.isSubmitting) return;
+                    this.isSubmitting = true;
+                    this.showViolationWarning = false;
+                    this.showSubmitConfirmation = false;
+                    this.isHandlingViolation = false;
                     document.getElementById('autoSubmitForm').submit();
                 },
 

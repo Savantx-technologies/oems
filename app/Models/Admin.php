@@ -121,4 +121,9 @@ class Admin extends Authenticatable
 
         return (bool) data_get($permissions, $this->role . '.' . $section, false);
     }
+
+    public function notificationSoundPreference()
+    {
+        return $this->morphOne(NotificationSoundPreference::class, 'notifiable');
+    }
 }

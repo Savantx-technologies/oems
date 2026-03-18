@@ -36,4 +36,9 @@ class Notification extends Model
     {
         $this->update(['is_read' => 1]);
     }
+
+    public function markAsUnread()
+    {
+        $this->update(['is_read' => 0]);
+    }
 }

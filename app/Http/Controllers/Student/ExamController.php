@@ -365,7 +365,7 @@ class ExamController extends Controller
         app(ExamAutoEvaluationService::class)
             ->evaluate($attempt, $answers);
 
-        return redirect()->route('student.result', $attempt->id)
+        return redirect()->route('student.exams.history')
             ->with('success', 'Exam submitted successfully.');
     }
     public function logViolation(Request $request, $id)
@@ -553,6 +553,10 @@ class ExamController extends Controller
             })
             ->where('approval_status', 'approved')
             ->get();
+
+        if ($allAttempts->isEmpty()) {
+            $allAttempts = collect([$firstAttempt]);
+        }
 
         // Fetch school dynamically
         $school = School::find($student->school_id);

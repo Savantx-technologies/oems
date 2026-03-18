@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\School;
 use App\Models\Exam;
+use App\Models\ExamAttempt;
+use App\Models\ExamStream;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StudentController extends Controller
 {
@@ -51,8 +54,33 @@ class StudentController extends Controller
     public function toggleStatus($id)
     {
         $student = User::where('role', 'student')->findOrFail($id);
-        $student->status = $student->status === 'active' ? 'inactive' : 'active';
-        $student->save();
+        $isBlocking = $student->status === 'active';
+        $newStatus = $isBlocking ? 'inactive' : 'active';
+
+        $updated = DB::table('users')
+            ->where('id', $student->id)
+            ->where('role', 'student')
+            ->update([
+                'status' => $newStatus,
+                'updated_at' => now(),
+            ]);
+
+        $student->refresh();
+        $actualStatus = DB::table('users')->where('id', $student->id)->value('status');
+
+        if ($isBlocking) {
+            ExamAttempt::where('user_id', $student->id)
+                ->where('status', 'in_progress')
+                ->update([
+                    'status' => 'terminated',
+                    'submitted_at' => now(),
+                    'terminated_reason' => 'Blocked by SuperAdmin',
+                ]);
+        }
+
+        if (!$updated) {
+            return back()->with('error', 'Student status update failed.');
+        }
 
         return back()->with('success', 'Student status updated successfully.');
     }
@@ -76,9 +104,20 @@ class StudentController extends Controller
             'exam_id' => 'required|exists:exams,id',
         ]);
 
-        // Logic to delete exam attempt would go here.
-        // Assuming an ExamAttempt model or table exists.
-        // DB::table('exam_attempts')->where('user_id', $id)->where('exam_id', $request->exam_id)->delete();
+        $student = User::where('role', 'student')->findOrFail($id);
+
+        DB::transaction(function () use ($student, $request) {
+            $attempts = ExamAttempt::where('user_id', $student->id)
+                ->where('exam_id', $request->exam_id)
+                ->get();
+
+            foreach ($attempts as $attempt) {
+                $attempt->answers()->delete();
+                $attempt->violations()->delete();
+                ExamStream::where('attempt_id', $attempt->id)->delete();
+                $attempt->delete();
+            }
+        });
 
         return back()->with('success', 'Exam attempt reset successfully.');
     }
