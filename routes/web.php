@@ -302,6 +302,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             });
 
             // --- Staff Requests ---
+            Route::get('requests/staff', [AdminRequestController::class, 'index'])->name('requests.staff.index');
             Route::get('requests/staff/create', [AdminRequestController::class, 'createStaffRequest'])->name('requests.staff.create');
             Route::post('requests/staff', [AdminRequestController::class, 'storeStaffRequest'])->name('requests.staff.store');
 

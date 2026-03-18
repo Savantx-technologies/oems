@@ -3,22 +3,41 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\School;
+use App\Models\SchoolSetting;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 
 class RolePermissionController extends Controller
 {
-    public function edit()
+    public function edit(Request $request)
     {
         $roles = Setting::defaultAdminSidebarPermissions();
         $sections = Setting::adminSidebarSections();
-        $permissions = Setting::getAdminSidebarPermissions();
+        $schools = School::orderBy('name')->get(['id', 'name']);
+        $selectedSchoolId = $request->integer('school_id');
 
-        return view('superadmin.roles-permissions.index', compact('roles', 'sections', 'permissions'));
+        if (!$selectedSchoolId && $schools->isNotEmpty()) {
+            $selectedSchoolId = $schools->first()->id;
+        }
+
+        $permissions = SchoolSetting::getAdminSidebarPermissionsForSchool($selectedSchoolId);
+
+        return view('superadmin.roles-permissions.index', compact(
+            'roles',
+            'sections',
+            'permissions',
+            'schools',
+            'selectedSchoolId'
+        ));
     }
-
+    
     public function update(Request $request)
     {
+        $request->validate([
+            'school_id' => 'required|exists:schools,id',
+        ]);
+
         $roles = array_keys(Setting::defaultAdminSidebarPermissions());
         $sections = array_keys(Setting::adminSidebarSections());
         $defaults = Setting::defaultAdminSidebarPermissions();
@@ -40,11 +59,16 @@ class RolePermissionController extends Controller
             }
         }
 
-        Setting::updateOrCreate(
-            ['key' => Setting::ADMIN_SIDEBAR_PERMISSIONS_KEY],
+        SchoolSetting::updateOrCreate(
+            [
+                'school_id' => $request->integer('school_id'),
+                'key' => SchoolSetting::ADMIN_SIDEBAR_PERMISSIONS_KEY,
+            ],
             ['value' => $permissions]
         );
 
-        return back()->with('success', 'Role permissions updated successfully.');
+        return back()
+            ->with('success', 'Role permissions updated successfully.')
+            ->withInput();
     }
 }

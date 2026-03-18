@@ -80,11 +80,11 @@
                 <div class="hidden md:block"></div>
             </div>
         </div>
-
+ 
         <!-- Aadhaar Details -->
         <div class="bg-white shadow rounded-lg mb-8 border-l-4 border-yellow-400">
             <div class="border-b px-6 py-4 text-yellow-700 font-semibold flex items-center gap-2">
-                <span>🪪</span> <span>Aadhaar Details (Government Required)</span>
+                <span>🪪</span> <span>Aadhaar Details </span>
             </div>
             <div class="p-6 grid md:grid-cols-4 sm:grid-cols-2 gap-6">
 

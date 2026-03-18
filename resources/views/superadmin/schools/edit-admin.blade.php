@@ -82,7 +82,7 @@
         <section class="bg-yellow-50 border-l-4 border-yellow-400 rounded-xl shadow p-6">
             <div class="flex items-center gap-2 mb-6">
                 <span class="text-lg">🪪</span>
-                <h3 class="text-lg font-semibold text-yellow-700">Aadhaar Details <span class="font-normal text-yellow-600 text-sm">(Government Required)</span></h3>
+                <h3 class="text-lg font-semibold text-yellow-700">Aadhaar Details <span class="font-normal text-yellow-600 text-sm"></span></h3>
             </div>
             <div class="grid md:grid-cols-4 sm:grid-cols-2 gap-6">
                 <div>

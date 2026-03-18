@@ -6,6 +6,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\SchoolSetting;
+
 class Admin extends Authenticatable
 {
     use HasFactory, Notifiable;
@@ -116,7 +118,7 @@ class Admin extends Authenticatable
 
     public function canAccessSidebarSection(string $section): bool
     {
-        $permissions = Setting::getAdminSidebarPermissions();
+        $permissions = SchoolSetting::getAdminSidebarPermissionsForSchool($this->school_id);
 
         return (bool) data_get($permissions, $this->role . '.' . $section, false);
     }

@@ -20,9 +20,38 @@
         </div>
     @endif
 
+    <div class="mb-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        <form action="{{ route('superadmin.roles-permissions.index') }}" method="GET" class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+                <label for="school_id" class="block text-sm font-semibold text-gray-700">Select School</label>
+                <p class="text-xs text-gray-500">Permissions below will apply only to the selected school.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <select
+                    id="school_id"
+                    name="school_id"
+                    class="min-w-[220px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    {{ empty($schools) || $schools->isEmpty() ? 'disabled' : '' }}
+                >
+                    @forelse($schools as $school)
+                        <option value="{{ $school->id }}" {{ (int) $selectedSchoolId === (int) $school->id ? 'selected' : '' }}>
+                            {{ $school->name }}
+                        </option>
+                    @empty
+                        <option value="">No schools available</option>
+                    @endforelse
+                </select>
+                <button type="submit" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+                    Load
+                </button>
+            </div>
+        </form>
+    </div>
+
     <form action="{{ route('superadmin.roles-permissions.update') }}" method="POST" class="space-y-8">
         @csrf
         @method('PUT')
+        <input type="hidden" name="school_id" value="{{ $selectedSchoolId }}">
 
         <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
             <div class="border-b border-gray-100 px-6 py-4">
