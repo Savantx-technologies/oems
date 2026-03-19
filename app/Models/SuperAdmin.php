@@ -11,7 +11,7 @@ class SuperAdmin extends Authenticatable
     use Notifiable;
 
      protected $fillable = [
-        'name','email','password','is_active'
+        'name','email','password','is_active','mobile'
     ];
 
     protected $hidden = [

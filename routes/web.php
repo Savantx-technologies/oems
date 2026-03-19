@@ -90,6 +90,8 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
         Route::post('login-otp', [SuperAdminLoginController::class, 'sendOtp'])->name('otp.send');
         Route::get('verify-otp', [SuperAdminLoginController::class, 'showVerifyOtpForm'])->name('otp.verify.form');
         Route::post('verify-otp', [SuperAdminLoginController::class, 'verifyOtp'])->name('otp.verify');
+         Route::post('send-mobile-otp', [SuperAdminLoginController::class, 'sendMobileOtp']);
+    Route::post('verify-mobile-otp', [SuperAdminLoginController::class, 'verifyMobileOtp']);
     });
 
     // -- Authenticated SuperAdmin Area --
@@ -262,6 +264,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('login', [AdminLoginController::class, 'login'])->name('login.submit');
     Route::post('send-otp', [AdminLoginController::class, 'sendOtp'])->name('send.otp');
     Route::get('verify-otp', [AdminLoginController::class, 'otpForm'])->name('otp.verify.form');
+
     Route::post('verify-otp', [AdminLoginController::class, 'verifyOtp'])->name('verify.otp');
     Route::post('send-mobile-otp', [AdminLoginController::class, 'sendMobileOtp'])->name('send.mobile.otp');
     Route::post('verify-mobile-otp', [AdminLoginController::class, 'verifyMobileOtp'])->name('verify.mobile.otp');
