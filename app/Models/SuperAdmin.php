@@ -38,4 +38,9 @@ class SuperAdmin extends Authenticatable
     {
         return $this->notifications()->where('is_read', 0);
     }
+
+    public function notificationSoundPreference()
+    {
+        return $this->morphOne(NotificationSoundPreference::class, 'notifiable');
+    }
 }
