@@ -319,20 +319,15 @@
                     <small class="block text-gray-500 leading-tight">Welcome,</small>
                     <span class="font-bold text-gray-800">{{ auth('superadmin')->user()?->name ?? 'Super Admin' }}</span>
                 </div>
-                <div class="mr-4 relative" x-data="{
-                    unreadCount: {{ $unreadNotificationsCount ?? 0 }},
-                    checkNotifications() {
-                        fetch('{{ route('superadmin.notifications.unreadCount') }}')
-                            .then(res => res.json())
-                            .then(data => { this.unreadCount = data.count; })
-                            .catch(err => console.error(err));
-                    }
-                }" x-init="setInterval(() => checkNotifications(), 15000)">
-                    <a href="{{ route('superadmin.notifications.index') }}" class="text-gray-500 hover:text-gray-700 relative block">
-                        <i class="bi bi-bell text-xl"></i>
-                        <span x-show="unreadCount > 0" x-text="unreadCount" x-cloak class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-red-500 text-white rounded-full text-[10px]"></span>
-                    </a>
-                </div>
+                @include('partials.notification-dropdown', [
+                    'notifications' => $notificationPreviewItems ?? collect(),
+                    'unreadCount' => $unreadNotificationsCount ?? 0,
+                    'unreadCountRoute' => route('superadmin.notifications.unreadCount'),
+                    'allNotificationsUrl' => route('superadmin.notifications.index'),
+                    'refreshInterval' => 15000,
+                    'soundPreference' => $notificationSoundPreference ?? ['tone' => 'chime', 'custom_sound_name' => null, 'custom_sound_url' => null],
+                    'soundPreferenceUpdateUrl' => route('superadmin.notifications.soundPreference.update'),
+                ])
                 <!-- Profile Dropdown -->
                 <div class="relative" x-data="{ open: false }">
                     <button
@@ -371,3 +366,8 @@
 </body>
 
 </html>
+
+
+
+
+

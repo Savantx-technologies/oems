@@ -207,6 +207,14 @@
                     </a>
                 </li>
 
+                <!-- Instructions -->
+                <li>
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('student.instructions') ? 'nav-link-active' : '' }}"
+                        href="{{ Route::has('student.instructions') ? route('student.instructions') : '#' }}">
+                        <div><i class="bi bi-info-circle mr-2"></i> Instructions</div>
+                    </a>
+                </li>
+
                 <!-- Notifications -->
                 <li>
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('student.notifications') ? 'nav-link-active' : '' }}"
@@ -254,20 +262,15 @@
                     <small class="block text-gray-500 leading-tight">Welcome,</small>
                     <span class="font-bold text-gray-800">{{ auth()->user()?->name ?? 'Student' }}</span>
                 </div>
-                <div class="mr-4 relative" x-data="{
-                    unreadCount: {{ $unreadNotificationsCount ?? 0 }},
-                    checkNotifications() {
-                        fetch('{{ route('student.notifications.unreadCount') }}')
-                            .then(res => res.json())
-                            .then(data => { this.unreadCount = data.count; })
-                            .catch(err => console.error(err));
-                    }
-                }" x-init="setInterval(() => checkNotifications(), 10000)">
-                    <a href="{{ route('student.notifications') }}" class="text-gray-500 hover:text-gray-700 relative block">
-                        <i class="bi bi-bell text-xl"></i>
-                        <span x-show="unreadCount > 0" x-text="unreadCount" x-cloak class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-red-500 text-white rounded-full text-[10px]"></span>
-                    </a>
-                </div>
+                @include('partials.notification-dropdown', [
+                    'notifications' => $notificationPreviewItems ?? collect(),
+                    'unreadCount' => $unreadNotificationsCount ?? 0,
+                    'unreadCountRoute' => route('student.notifications.unreadCount'),
+                    'allNotificationsUrl' => route('student.notifications'),
+                    'refreshInterval' => 10000,
+                    'soundPreference' => $notificationSoundPreference ?? ['tone' => 'chime', 'custom_sound_name' => null, 'custom_sound_url' => null],
+                    'soundPreferenceUpdateUrl' => route('student.notifications.soundPreference.update'),
+                ])
                 <!-- Profile Dropdown -->
                 <div class="relative" x-data="{ open: false }">
                     <button
@@ -311,3 +314,8 @@
 </body>
 
 </html>
+
+
+
+
+

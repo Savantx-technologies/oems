@@ -184,6 +184,9 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
         Route::get('notifications/{notification}/read', [SuperAdminNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
         Route::post('notifications/mark-read', [SuperAdminNotificationController::class, 'markAsRead'])->name('notifications.markRead');
         Route::post('notifications/{notification}/mark-single-read', [SuperAdminNotificationController::class, 'markSingleAsRead'])->name('notifications.markSingleRead');
+        Route::post('notifications/{notification}/mark-single-unread', [SuperAdminNotificationController::class, 'markSingleAsUnread'])->name('notifications.markSingleUnread');
+        Route::delete('notifications/{notification}', [SuperAdminNotificationController::class, 'destroy'])->name('notifications.destroy');
+        Route::post('notifications/sound-preference', [SuperAdminNotificationController::class, 'updateSoundPreference'])->name('notifications.soundPreference.update');
 
         // ---- Profile & Access ----
         Route::get('profile', [SuperAdminProfileController::class, 'show'])->name('profile');
@@ -284,6 +287,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('notifications/{notification}/read', [AdminNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
         Route::post('notifications/mark-read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.markRead');
         Route::post('notifications/{notification}/mark-single-read', [AdminNotificationController::class, 'markSingleAsRead'])->name('notifications.markSingleRead');
+        Route::post('notifications/{notification}/mark-single-unread', [AdminNotificationController::class, 'markSingleAsUnread'])->name('notifications.markSingleUnread');
+        Route::delete('notifications/{notification}', [AdminNotificationController::class, 'destroy'])->name('notifications.destroy');
+        Route::post('notifications/sound-preference', [AdminNotificationController::class, 'updateSoundPreference'])->name('notifications.soundPreference.update');
 
         // --- Profile & Security ---
         Route::get('profile', [AdminProfileController::class, 'show'])->name('profile');
@@ -451,6 +457,40 @@ Route::prefix('student')->name('student.')->group(function () {
     Route::middleware(['auth', \App\Http\Middleware\CheckSchoolActive::class . ':web'])->group(function () {
         Route::get('dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
         Route::view('elearning', 'student.elearning')->name('elearning');
+        Route::get('instructions', function () {
+            // 1. General Instructions: Try 'student_instructions' first, then fallback to 'default_exam_rules' JSON
+            $generalInstructions = \Illuminate\Support\Facades\DB::table('settings')->where('key', 'student_instructions')->value('value');
+            if (empty($generalInstructions)) {
+                $defaultRulesJson = \Illuminate\Support\Facades\DB::table('settings')->where('key', 'default_exam_rules')->value('value');
+                if ($defaultRulesJson) {
+                    $decoded = json_decode($defaultRulesJson, true);
+                    $generalInstructions = $decoded['default_instructions'] ?? null;
+                }
+            }
+
+            $school = auth()->user()->school;
+            $schoolInstructions = null;
+            
+            if ($school && $school->exam_rules) {
+                // Decode if string (likely), otherwise use as array
+                $rules = is_string($school->exam_rules) ? json_decode($school->exam_rules, true) : $school->exam_rules;
+                $schoolInstructions = $rules['default_instructions'] ?? null;
+            }
+
+            // Format newlines if content appears to be plain text
+            if ($generalInstructions && $generalInstructions === strip_tags($generalInstructions)) {
+                $generalInstructions = nl2br(e($generalInstructions));
+            }
+            if ($schoolInstructions && $schoolInstructions === strip_tags($schoolInstructions)) {
+                $schoolInstructions = nl2br(e($schoolInstructions));
+            }
+            
+            return view('student.instructions', [
+                'generalInstructions' => $generalInstructions,
+                'schoolInstructions' => $schoolInstructions,
+                'school' => $school
+            ]);
+        })->name('instructions');
         Route::get('result/{attempt}', [StudentExamController::class, 'result'])
             ->name('result');
         Route::get('results', [StudentExamController::class, 'results'])
@@ -484,6 +524,9 @@ Route::prefix('student')->name('student.')->group(function () {
         Route::get('notifications/{notification}/read', [StudentNotificationController::class, 'readAndRedirect'])->name('notifications.readAndRedirect');
         Route::post('notifications/mark-read', [StudentNotificationController::class, 'markAsRead'])->name('notifications.markRead');
         Route::post('notifications/{notification}/mark-single-read', [StudentNotificationController::class, 'markSingleAsRead'])->name('notifications.markSingleRead');
+        Route::post('notifications/{notification}/mark-single-unread', [StudentNotificationController::class, 'markSingleAsUnread'])->name('notifications.markSingleUnread');
+        Route::delete('notifications/{notification}', [StudentNotificationController::class, 'destroy'])->name('notifications.destroy');
+        Route::post('notifications/sound-preference', [StudentNotificationController::class, 'updateSoundPreference'])->name('notifications.soundPreference.update');
 
         // --- Session/Logout/Profile ---
         Route::post('logout', [StudentLoginController::class, 'logout'])->name('logout');

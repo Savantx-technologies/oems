@@ -64,4 +64,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(ExamAttempt::class);
     }
+
+    public function notificationSoundPreference()
+    {
+        return $this->morphOne(NotificationSoundPreference::class, 'notifiable');
+    }
 }
