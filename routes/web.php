@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\Auth\LoginController as AdminLoginController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AdminSecurityLogController;
 use App\Http\Controllers\Admin\ExamController as AdminExamController;
+use App\Http\Controllers\Admin\ExamMonitorBlockController as AdminExamMonitorBlockController;
 use App\Http\Controllers\Admin\ExamScheduleController as AdminExamScheduleController;
 use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\RequestController as AdminRequestController;
@@ -44,12 +45,14 @@ use App\Http\Controllers\SuperAdmin\SecurityLogController;
 use App\Http\Controllers\SuperAdmin\StaffRequestController as SuperAdminStaffRequestController;
 use App\Http\Controllers\SuperAdmin\StudentController as SuperAdminStudentController;
 use App\Http\Controllers\SuperAdmin\ExamController as SuperAdminExamController;
+use App\Http\Controllers\SuperAdmin\ExamMonitorBlockController as SuperAdminExamMonitorBlockController;
 use App\Http\Controllers\SuperAdmin\LiveMonitorController as SuperAdminLiveMonitorController;
 use App\Http\Controllers\SuperAdmin\AttemptControlController as SuperAdminAttemptControlController;
 use App\Http\Controllers\SuperAdmin\NotificationController as SuperAdminNotificationController;
 use App\Http\Controllers\SuperAdmin\ExamRulesController as SuperAdminExamRulesController;
 use App\Http\Controllers\SuperAdmin\ProfileController as SuperAdminProfileController;
 use App\Http\Controllers\SuperAdmin\ReportController as SuperAdminReportController;
+use App\Http\Controllers\SuperAdmin\SubSuperAdminController;
 use App\Http\Controllers\SuperAdmin\SystemSettingsController;
 
 // =========================
@@ -97,14 +100,18 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
 
         // ---- SuperAdmin Session & Dashboard ----
         Route::post('logout', [SuperAdminLoginController::class, 'logout'])->name('logout');
-        Route::get('dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
+        Route::middleware('superadmin.section:dashboard')->group(function () {
+            Route::get('dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
+        });
 
         // ---- Security Logs ----
-        Route::get('security-logs', [SecurityLogController::class, 'index'])->name('security.logs');
-        Route::get('security-logs/export', [SecurityLogController::class, 'export'])->name('security.logs.export');
+        Route::middleware('superadmin.section:logs')->group(function () {
+            Route::get('security-logs', [SecurityLogController::class, 'index'])->name('security.logs');
+            Route::get('security-logs/export', [SecurityLogController::class, 'export'])->name('security.logs.export');
+        });
 
         // ---- School Management ----
-        Route::prefix('schools')->name('schools.')->group(function () {
+        Route::middleware('superadmin.section:schools')->prefix('schools')->name('schools.')->group(function () {
             Route::get('/', [SchoolController::class, 'index'])->name('index');
             Route::get('analytics', [SchoolController::class, 'analytics'])->name('analytics');
             Route::get('suspension', [SchoolController::class, 'suspension'])->name('suspension');
@@ -120,7 +127,7 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
         });
 
         // ---- Admin Management ----
-        Route::prefix('admins')->name('admins.')->group(function () {
+        Route::middleware('superadmin.section:admins')->prefix('admins')->name('admins.')->group(function () {
             Route::get('/', [AdminController::class, 'index'])->name('index');
             Route::get('create', [AdminController::class, 'create'])->name('create');
             Route::post('/', [AdminController::class, 'store'])->name('store');
@@ -128,8 +135,17 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
             Route::put('{admin}', [AdminController::class, 'update'])->name('update');
         });
 
+        // ---- Sub Super Admin Management ----
+        Route::middleware('superadmin.section:sub_superadmins')->prefix('sub-superadmins')->name('sub-superadmins.')->group(function () {
+            Route::get('/', [SubSuperAdminController::class, 'index'])->name('index');
+            Route::get('create', [SubSuperAdminController::class, 'create'])->name('create');
+            Route::post('/', [SubSuperAdminController::class, 'store'])->name('store');
+            Route::get('{subSuperAdmin}/edit', [SubSuperAdminController::class, 'edit'])->name('edit');
+            Route::put('{subSuperAdmin}', [SubSuperAdminController::class, 'update'])->name('update');
+        });
+
         // ---- Staff Requests Management ----
-        Route::prefix('staff-requests')->name('staff-requests.')->group(function () {
+        Route::middleware('superadmin.section:admins')->prefix('staff-requests')->name('staff-requests.')->group(function () {
             Route::get('/', [SuperAdminStaffRequestController::class, 'index'])->name('index');
             Route::get('{staffRequest}', [SuperAdminStaffRequestController::class, 'show'])->name('show');
             Route::post('{staffRequest}/approve', [SuperAdminStaffRequestController::class, 'approve'])->name('approve');
@@ -137,13 +153,13 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
         });
 
         // ---- Admin Requests ----
-        Route::prefix('admin-requests')->name('admin-requests.')->group(function () {
+        Route::middleware('superadmin.section:admins')->prefix('admin-requests')->name('admin-requests.')->group(function () {
             Route::get('/', [SuperAdminAdminRequestController::class, 'index'])->name('index');
             Route::post('{adminRequest}/action', [SuperAdminAdminRequestController::class, 'action'])->name('action');
         });
 
         // ---- Student Management ----
-        Route::prefix('students')->name('students.')->group(function () {
+        Route::middleware('superadmin.section:students')->prefix('students')->name('students.')->group(function () {
             Route::get('/', [SuperAdminStudentController::class, 'index'])->name('index');
             Route::get('{id}', [SuperAdminStudentController::class, 'show'])->name('show');
             Route::post('{id}/status', [SuperAdminStudentController::class, 'toggleStatus'])->name('toggle-status');
@@ -154,24 +170,39 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
 
         // ---- Exam Management ----
         Route::prefix('exams')->name('exams.')->group(function () {
-            Route::get('/', [SuperAdminExamController::class, 'index'])->name('index');
-            Route::get('/violation-summary', [SuperAdminExamController::class, 'violationSummary'])->name('violation-summary');
-            // Live Monitor
-            Route::get('/{id}/monitor', [SuperAdminLiveMonitorController::class, 'index'])->name('monitor');
-            Route::get('/{id}/monitor/data', [SuperAdminLiveMonitorController::class, 'data'])->name('monitor.data');
-            Route::get('/{id}', [SuperAdminExamController::class, 'show'])->name('show');
-            Route::post('{id}/force-close', [SuperAdminExamController::class, 'forceClose'])->name('force-close');
+            Route::middleware('superadmin.section:exams,live_monitoring')->group(function () {
+                Route::get('/', [SuperAdminExamController::class, 'index'])->name('index');
+            });
+
+            Route::middleware('superadmin.section:exams')->group(function () {
+                Route::get('/violation-summary', [SuperAdminExamController::class, 'violationSummary'])->name('violation-summary');
+                Route::get('/{id}', [SuperAdminExamController::class, 'show'])->name('show');
+                Route::post('{id}/force-close', [SuperAdminExamController::class, 'forceClose'])->name('force-close');
+                Route::get('{id}/monitor-blocks', [SuperAdminExamMonitorBlockController::class, 'index'])->name('monitor-blocks.index');
+                Route::post('{id}/monitor-blocks', [SuperAdminExamMonitorBlockController::class, 'store'])->name('monitor-blocks.store');
+                Route::post('{id}/monitor-blocks/auto-assign', [SuperAdminExamMonitorBlockController::class, 'autoAssign'])->name('monitor-blocks.auto-assign');
+                Route::put('{id}/monitor-blocks/{block}', [SuperAdminExamMonitorBlockController::class, 'update'])->name('monitor-blocks.update');
+                Route::delete('{id}/monitor-blocks/{block}', [SuperAdminExamMonitorBlockController::class, 'destroy'])->name('monitor-blocks.destroy');
+                Route::put('{id}/monitor-attempts/{attempt}/block', [SuperAdminExamMonitorBlockController::class, 'moveAttempt'])->name('monitor-attempts.move');
+                Route::put('{id}/monitor-students/{student}/block', [SuperAdminExamMonitorBlockController::class, 'moveStudent'])->name('monitor-students.move');
+                Route::post('{id}/monitor-students/bulk-move', [SuperAdminExamMonitorBlockController::class, 'bulkMoveStudents'])->name('monitor-students.bulk-move');
+            });
+
+            Route::middleware('superadmin.section:live_monitoring')->group(function () {
+                Route::get('/{id}/monitor', [SuperAdminLiveMonitorController::class, 'index'])->name('monitor');
+                Route::get('/{id}/monitor/data', [SuperAdminLiveMonitorController::class, 'data'])->name('monitor.data');
+            });
         });
 
         // ---- WebRTC & Controls (Attempts) ----
-        Route::prefix('attempts')->name('attempts.')->group(function () {
+        Route::middleware('superadmin.section:live_monitoring')->prefix('attempts')->name('attempts.')->group(function () {
             Route::post('{attemptId}/request-stream', [SuperAdminLiveMonitorController::class, 'requestStream'])->name('request_stream');
             Route::post('{attemptId}/terminate', [SuperAdminAttemptControlController::class, 'terminate'])->name('terminate');
             Route::post('{attemptId}/extend', [SuperAdminAttemptControlController::class, 'extendTime'])->name('extend');
         });
 
         // ---- WebRTC Signaling Streams ----
-        Route::prefix('stream')->name('stream.')->group(function () {
+        Route::middleware('superadmin.section:live_monitoring')->prefix('stream')->name('stream.')->group(function () {
             Route::get('{streamId}/poll', [SuperAdminLiveMonitorController::class, 'pollViewer'])->name('poll');
             Route::post('{streamId}/signal', [SuperAdminLiveMonitorController::class, 'viewerSignal'])->name('signal');
         });
@@ -193,11 +224,13 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
         Route::put('profile/password', [SuperAdminProfileController::class, 'updatePassword'])->name('password.update');
 
         // ---- Roles & Permissions ----
-        Route::get('roles-permissions', [SuperAdminRolePermissionController::class, 'edit'])->name('roles-permissions.index');
-        Route::put('roles-permissions', [SuperAdminRolePermissionController::class, 'update'])->name('roles-permissions.update');
+        Route::middleware('superadmin.section:roles_permissions')->group(function () {
+            Route::get('roles-permissions', [SuperAdminRolePermissionController::class, 'edit'])->name('roles-permissions.index');
+            Route::put('roles-permissions', [SuperAdminRolePermissionController::class, 'update'])->name('roles-permissions.update');
+        });
 
         // ---- Reports ----
-        Route::prefix('reports')->name('reports.')->group(function () {
+        Route::middleware('superadmin.section:reports')->prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [SuperAdminReportController::class, 'index'])->name('index');
             Route::get('exams', [SuperAdminReportController::class, 'exams'])->name('exams');
             Route::get('analytics', [SuperAdminReportController::class, 'analytics'])->name('analytics');
@@ -206,7 +239,7 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
         });
 
         // ---- System Configuration ----
-        Route::prefix('settings')->name('settings.')->group(function () {
+        Route::middleware('superadmin.section:settings')->prefix('settings')->name('settings.')->group(function () {
             Route::get('exam-rules', [SuperAdminExamRulesController::class, 'edit'])->name('exam-rules');
             Route::put('exam-rules', [SuperAdminExamRulesController::class, 'update'])->name('exam-rules.update');
             Route::get('proctoring-settings', [SystemSettingsController::class, 'editProctoring'])->name('proctoring-settings');
@@ -363,6 +396,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('exams/{id}/schedule', [AdminExamScheduleController::class, 'store'])->name('exams.schedule.store');
             Route::post('exams/{id}/publish', [AdminExamController::class, 'publish'])->name('exams.publish');
             Route::post('exams/{id}/close', [AdminExamController::class, 'close'])->name('exams.close');
+            Route::get('exams/{id}/monitor-blocks', [AdminExamMonitorBlockController::class, 'index'])->name('exams.monitor-blocks.index');
+            Route::post('exams/{id}/monitor-blocks', [AdminExamMonitorBlockController::class, 'store'])->name('exams.monitor-blocks.store');
+            Route::post('exams/{id}/monitor-blocks/auto-assign', [AdminExamMonitorBlockController::class, 'autoAssign'])->name('exams.monitor-blocks.auto-assign');
+            Route::put('exams/{id}/monitor-blocks/{block}', [AdminExamMonitorBlockController::class, 'update'])->name('exams.monitor-blocks.update');
+            Route::delete('exams/{id}/monitor-blocks/{block}', [AdminExamMonitorBlockController::class, 'destroy'])->name('exams.monitor-blocks.destroy');
+            Route::put('exams/{id}/monitor-attempts/{attempt}/block', [AdminExamMonitorBlockController::class, 'moveAttempt'])->name('exams.monitor-attempts.move');
+            Route::put('exams/{id}/monitor-students/{student}/block', [AdminExamMonitorBlockController::class, 'moveStudent'])->name('exams.monitor-students.move');
+            Route::post('exams/{id}/monitor-students/bulk-move', [AdminExamMonitorBlockController::class, 'bulkMoveStudents'])->name('exams.monitor-students.bulk-move');
             Route::get('exams/{id}', [AdminExamController::class, 'show'])->name('exams.show');
             Route::get('exams/{id}/edit', [AdminExamController::class, 'edit'])->name('exams.edit');
             Route::put('exams/{id}', [AdminExamController::class, 'update'])->name('exams.update');
@@ -392,6 +433,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::middleware('admin.section:live_exams')->group(function () {
             // -- Live Monitoring & Control Room --
+            Route::get('live-exams', [AdminExamController::class, 'index'])->name('live-exams.index');
             Route::get('exams/{id}/monitor', [AdminLiveMonitorController::class, 'index'])->name('exams.monitor');
             Route::get('exams/{id}/monitor/data', [AdminLiveMonitorController::class, 'data'])->name('exams.monitor.data');
 

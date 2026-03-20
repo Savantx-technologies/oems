@@ -8,12 +8,21 @@ use App\Models\Exam;
 use App\Models\School;
 use App\Models\Question;
 use App\Models\ExamViolation;
+use App\Models\SuperAdmin;
 
 class ExamController extends Controller
 {
     public function index(Request $request)
     {
+        $superAdmin = auth('superadmin')->user();
         $query = Exam::query();
+
+        if ($superAdmin && $superAdmin->isSubSuperAdmin()) {
+            $query->whereHas('monitorBlocks', function ($blockQuery) use ($superAdmin) {
+                $blockQuery->where('assignee_type', SuperAdmin::class)
+                    ->where('assignee_id', $superAdmin->id);
+            });
+        }
 
         if ($request->filled('school_id')) {
             $query->where('school_id', $request->school_id);
@@ -53,7 +62,7 @@ class ExamController extends Controller
 
     public function show($id)
     {
-        $exam = Exam::with(['school', 'schedule'])->findOrFail($id);
+        $exam = Exam::with(['school', 'schedule', 'monitorBlocks.assignee', 'monitorBlocks.attempts.user'])->findOrFail($id);
 
         $questionIds = $exam->selected_questions ?? [];
         $questions = collect();
@@ -65,9 +74,16 @@ class ExamController extends Controller
                 ->get();
         }
 
-        $attempts = $exam->attempts()->with('user')->latest()->paginate(20);
+        $attempts = $exam->attempts()->with(['user', 'monitorBlock'])->latest()->paginate(20);
+        $attemptOptions = $exam->attempts()->with(['user', 'monitorBlock'])->latest()->get();
+        $assignableSubSuperAdmins = SuperAdmin::where('role', SuperAdmin::ROLE_SUB_SUPERADMIN)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get()
+            ->filter(fn (SuperAdmin $user) => $user->canAccessSection('live_monitoring'))
+            ->values();
 
-        return view('superadmin.exams.show', compact('exam', 'questions', 'attempts'));
+        return view('superadmin.exams.show', compact('exam', 'questions', 'attempts', 'attemptOptions', 'assignableSubSuperAdmins'));
     }
 
     public function forceClose($id)

@@ -4,21 +4,54 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\SuperAdmin;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\ExamStream;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use App\Support\ExamMonitorAccess;
 
 class LiveMonitorController extends Controller
 {
     public function index($id)
     {
         $exam = Exam::with('school')->findOrFail($id);
+        $superadmin = auth('superadmin')->user();
+
+        // Super admins (main role) can always access.
+        if ($superadmin->role === SuperAdmin::ROLE_SUPERADMIN) {
+            return view('superadmin.exams.monitor', compact('exam'));
+        }
+
+        // For sub-superadmins, check assignments.
+        $anyBlocksAssigned = \App\Models\ExamMonitorBlock::where('exam_id', $exam->id)
+            ->where('assignee_type', SuperAdmin::class)
+            ->whereNotNull('assignee_id')
+            ->exists();
+
+        // If no blocks are assigned to anyone, allow access to match existing behavior.
+        if (!$anyBlocksAssigned) {
+            return view('superadmin.exams.monitor', compact('exam'));
+        }
+
+        // If blocks ARE assigned, check if the current user is an assignee.
+        $isCurrentUserAssigned = \App\Models\ExamMonitorBlock::where('exam_id', $exam->id)
+            ->where('assignee_type', SuperAdmin::class)
+            ->where('assignee_id', $superadmin->id)
+            ->exists();
+
+        if (!$isCurrentUserAssigned) {
+            abort(403, 'You are not assigned to any monitoring block for this exam.');
+        }
         return view('superadmin.exams.monitor', compact('exam'));
     }
 
     public function data($id)
     {
+        $superadmin = auth('superadmin')->user();
+        $exam = Exam::findOrFail($id);
+        $allowedStudentIds = ExamMonitorAccess::superAdminStudentScope($superadmin, $exam->id);
         $attempts = ExamAttempt::where('exam_id', $id)
             ->with(['user' => function ($q) {
                 $q->withTrashed();
@@ -34,36 +67,59 @@ class LiveMonitorController extends Controller
                 'terminated_reason'
             ])
             ->get()
-            ->map(function ($attempt) {
-                $violationCount = DB::table('exam_violations')->where('attempt_id', $attempt->id)->count();
-                $remaining = 0;
-                if ($attempt->expires_at) {
-                    $expiresAt = $attempt->expires_at->copy()->addSeconds($attempt->extra_time_seconds ?? 0);
-                    $remaining = (int) now()->diffInSeconds($expiresAt, false);
-                }
-                $isIdle = $attempt->last_activity_at && now()->diffInSeconds($attempt->last_activity_at) > 30;
-                if ($attempt->status !== 'in_progress') $isIdle = false;
-                $user = $attempt->user;
-                return [
-                    'id' => $attempt->id,
-                    'student_name' => $user ? $user->name : 'Unknown',
-                    'admission_number' => $user ? $user->admission_number : null,
-                    'photo_url' => ($user && $user->photo) ? asset('storage/' . $user->photo) : null,
-                    'status' => $attempt->status,
-                    'remaining_seconds' => max(0, $remaining),
-                    'is_idle' => $isIdle,
-                    'violation_count' => $violationCount,
-                    'terminated_reason' => $attempt->terminated_reason
-                ];
-            });
+            ->keyBy('user_id');
 
-        return response()->json(['attempts' => $attempts]);
+        if ($allowedStudentIds === null) {
+            $students = User::where('role', 'student')
+                ->where('school_id', $exam->school_id)
+                ->where('grade', $exam->class)
+                ->orderBy('name')
+                ->get();
+        } else {
+            $students = User::whereIn('id', $allowedStudentIds)
+                ->orderBy('name')
+                ->get();
+        }
+
+        $roster = $students->map(function ($user) use ($attempts) {
+            $attempt = $attempts->get($user->id);
+            $violationCount = $attempt ? DB::table('exam_violations')->where('attempt_id', $attempt->id)->count() : 0;
+            $remaining = 0;
+
+            if ($attempt && $attempt->expires_at) {
+                $expiresAt = $attempt->expires_at->copy()->addSeconds($attempt->extra_time_seconds ?? 0);
+                $remaining = (int) now()->diffInSeconds($expiresAt, false);
+            }
+
+            $isIdle = $attempt && $attempt->last_activity_at && now()->diffInSeconds($attempt->last_activity_at) > 30;
+            if (!$attempt || $attempt->status !== 'in_progress') {
+                $isIdle = false;
+            }
+
+            return [
+                'id' => $user->id,
+                'attempt_id' => $attempt?->id,
+                'student_name' => $user->name,
+                'admission_number' => $user->admission_number,
+                'photo_url' => $user->photo ? asset('storage/' . $user->photo) : null,
+                'status' => $attempt?->status ?? 'not_started',
+                'remaining_seconds' => max(0, $remaining),
+                'is_idle' => $isIdle,
+                'violation_count' => $violationCount,
+                'terminated_reason' => $attempt?->terminated_reason,
+                'has_started' => (bool) $attempt,
+            ];
+        })->values();
+
+        return response()->json(['attempts' => $roster]);
     }
 
     public function requestStream(Request $request, $attemptId)
     {
         $superadmin = auth('superadmin')->user();
         $attempt = ExamAttempt::findOrFail($attemptId);
+
+        abort_unless(ExamMonitorAccess::canSuperAdminAccessAttempt($superadmin, $attempt), 403, 'You are not assigned to this student.');
 
         $stream = ExamStream::create([
             'attempt_id' => $attempt->id,
@@ -80,6 +136,8 @@ class LiveMonitorController extends Controller
     {
         $superadmin = auth('superadmin')->user();
         $stream = ExamStream::where('viewer_id', $superadmin->id)->where('viewer_type', get_class($superadmin))->findOrFail($streamId);
+
+        abort_unless(ExamMonitorAccess::canSuperAdminAccessAttempt($superadmin, $stream->attempt), 403, 'You are not assigned to this student.');
 
         if ($request->type === 'answer') {
             $stream->update(['answer' => $request->payload]);
@@ -99,6 +157,8 @@ class LiveMonitorController extends Controller
     {
         $superadmin = auth('superadmin')->user();
         $stream = ExamStream::where('viewer_id', $superadmin->id)->where('viewer_type', get_class($superadmin))->findOrFail($streamId);
+
+        abort_unless(ExamMonitorAccess::canSuperAdminAccessAttempt($superadmin, $stream->attempt), 403, 'You are not assigned to this student.');
 
         $offer = $stream->offer;
         $ice = $stream->student_ice_candidates;

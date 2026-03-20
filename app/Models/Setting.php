@@ -10,6 +10,7 @@ class Setting extends Model
     use HasFactory;
 
     public const ADMIN_SIDEBAR_PERMISSIONS_KEY = 'admin_sidebar_permissions';
+    public const SUPERADMIN_SIDEBAR_PERMISSIONS_KEY = 'superadmin_sidebar_permissions';
 
     protected $primaryKey = 'key';
     public $incrementing = false;
@@ -117,5 +118,42 @@ class Setting extends Model
         }
 
         return $saved;
+    }
+
+    public static function defaultSuperAdminSidebarPermissions(): array
+    {
+        return [
+            'superadmin' => array_fill_keys(array_keys(static::superAdminSidebarSections()), true),
+            'sub_superadmin' => [
+                'dashboard' => true,
+                'schools' => false,
+                'admins' => false,
+                'sub_superadmins' => false,
+                'roles_permissions' => false,
+                'students' => false,
+                'exams' => false,
+                'live_monitoring' => true,
+                'reports' => false,
+                'logs' => false,
+                'settings' => false,
+            ],
+        ];
+    }
+
+    public static function superAdminSidebarSections(): array
+    {
+        return [
+            'dashboard' => 'Dashboard',
+            'schools' => 'School Management',
+            'admins' => 'Admin & Staff',
+            'sub_superadmins' => 'Sub Super Admins',
+            'roles_permissions' => 'Roles & Permissions',
+            'students' => 'Student Control',
+            'exams' => 'Exam Control',
+            'live_monitoring' => 'Live Monitoring',
+            'reports' => 'Reports & Analytics',
+            'logs' => 'Logs & Security',
+            'settings' => 'System Configuration',
+        ];
     }
 }

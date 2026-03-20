@@ -12,11 +12,30 @@ use App\Mail\SchoolAdminCreated;
 
 class AdminController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $admins = Admin::with('school')->latest()->paginate(10);
+        $query = Admin::with('school');
 
-        return view('superadmin.admin.index', compact('admins'));
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        if ($request->filled('school_id')) {
+            $query->where('school_id', $request->school_id);
+        }
+
+        $admins = $query->latest()->paginate(10)->withQueryString();
+        $schools = School::orderBy('name')->get();
+
+        return view('superadmin.admin.index', compact('admins', 'schools'));
     }
 
     public function create()

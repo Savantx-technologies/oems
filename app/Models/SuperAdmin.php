@@ -4,19 +4,70 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-use Illuminate\Database\Eloquent\Model;
-
 class SuperAdmin extends Authenticatable
 {
     use Notifiable;
 
+    public const ROLE_SUPERADMIN = 'superadmin';
+    public const ROLE_SUB_SUPERADMIN = 'sub_superadmin';
+
      protected $fillable = [
-        'name','email','password','is_active'
+        'name',
+        'email',
+        'password',
+        'is_active',
+        'role',
+        'permissions',
     ];
 
     protected $hidden = [
         'password',
     ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'permissions' => 'array',
+    ];
+
+    public function isMainSuperAdmin(): bool
+    {
+        return $this->role === self::ROLE_SUPERADMIN;
+    }
+
+    public function isSubSuperAdmin(): bool
+    {
+        return $this->role === self::ROLE_SUB_SUPERADMIN;
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
+
+    public function canAccessSection(string $section): bool
+    {
+        if ($this->isMainSuperAdmin()) {
+            return true;
+        }
+
+        $defaultPermissions = Setting::defaultSuperAdminSidebarPermissions();
+        $rolePermissions = $defaultPermissions[$this->role] ?? [];
+        $customPermissions = is_array($this->permissions) ? $this->permissions : [];
+
+        return (bool) ($customPermissions[$section] ?? $rolePermissions[$section] ?? false);
+    }
+
+    public function assignSectionPermissions(array $permissions): void
+    {
+        $allowedSections = array_keys(Setting::superAdminSidebarSections());
+        $normalized = [];
+
+        foreach ($allowedSections as $section) {
+            $normalized[$section] = (bool) ($permissions[$section] ?? false);
+        }
+
+        $this->permissions = $normalized;
+    }
 
     /**
      * Get the entity's notifications.

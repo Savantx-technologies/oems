@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ExamAttempt;
+use App\Support\ExamMonitorAccess;
 
 class AttemptControlController extends Controller
 {
@@ -12,6 +13,7 @@ class AttemptControlController extends Controller
     {
         $admin = auth('admin')->user();
         $attempt = ExamAttempt::where('school_id', $admin->school_id)->findOrFail($attemptId);
+        abort_unless(ExamMonitorAccess::canAdminAccessAttempt($admin, $attempt), 403, 'You are not assigned to this student.');
 
         if ($attempt->status !== 'in_progress') {
             return response()->json(['error' => 'Exam not in progress'], 400);
@@ -30,6 +32,7 @@ class AttemptControlController extends Controller
     {
         $admin = auth('admin')->user();
         $attempt = ExamAttempt::where('school_id', $admin->school_id)->findOrFail($attemptId);
+        abort_unless(ExamMonitorAccess::canAdminAccessAttempt($admin, $attempt), 403, 'You are not assigned to this student.');
 
         $minutes = $request->input('minutes', 5);
         $seconds = $minutes * 60;

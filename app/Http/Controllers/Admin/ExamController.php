@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Admin;
 use App\Models\Exam;
 use App\Models\Question;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +27,13 @@ class ExamController extends Controller
         // Now fetch paginated exams
         $query = Exam::with('schedule')
             ->where('school_id', $admin->school_id);
+
+        if ($admin->role === Admin::ROLE_INVIGILATOR) {
+            $query->whereHas('monitorBlocks', function ($blockQuery) use ($admin) {
+                $blockQuery->where('assignee_type', Admin::class)
+                    ->where('assignee_id', $admin->id);
+            });
+        }
 
         if ($request->filled('filter')) {
             $now = now();
@@ -225,7 +233,7 @@ class ExamController extends Controller
     {
         $admin = auth('admin')->user();
 
-        $exam = Exam::with('schedule')
+        $exam = Exam::with(['schedule', 'monitorBlocks.assignee', 'monitorBlocks.attempts.user'])
             ->where('school_id', $admin->school_id)
             ->findOrFail($id);
 
@@ -248,11 +256,27 @@ class ExamController extends Controller
         $set = 'A';
         $sets = collect(['A']);
 
+        $attemptOptions = $exam->attempts()
+            ->with(['user', 'monitorBlock'])
+            ->latest()
+            ->get();
+
+        $assignableMonitors = Admin::where('school_id', $admin->school_id)
+            ->whereIn('role', [
+                Admin::ROLE_SCHOOL_ADMIN,
+                Admin::ROLE_SUB_ADMIN,
+                Admin::ROLE_INVIGILATOR,
+            ])
+            ->orderBy('name')
+            ->get();
+
         return view('admin.exams.show', compact(
             'exam',
             'questions',
             'set',
-            'sets'
+            'sets',
+            'attemptOptions',
+            'assignableMonitors'
         ));
     }
 

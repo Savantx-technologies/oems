@@ -15,6 +15,52 @@
         </a>
     </div>
 
+    <!-- Filter Section -->
+    <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <form method="GET" action="{{ route('superadmin.admins.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="md:col-span-2">
+                <label for="search" class="sr-only">Search</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <input type="text" name="search" id="search" value="{{ request('search') }}" 
+                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                        placeholder="Search by name, email...">
+                </div>
+            </div>
+            <div>
+                <select name="school_id" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                    <option value="">All Schools</option>
+                    @foreach($schools as $school)
+                        <option value="{{ $school->id }}" {{ request('school_id') == $school->id ? 'selected' : '' }}>{{ $school->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <select name="role" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                    <option value="">All Roles</option>
+                    <option value="school_admin" {{ request('role') == 'school_admin' ? 'selected' : '' }}>School Admin</option>
+                    <option value="sub_admin" {{ request('role') == 'sub_admin' ? 'selected' : '' }}>Sub Admin</option>
+                    <option value="staff" {{ request('role') == 'staff' ? 'selected' : '' }}>Staff</option>
+                    <option value="invigilator" {{ request('role') == 'invigilator' ? 'selected' : '' }}>Invigilator</option>
+                </select>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="inline-flex justify-center items-center w-full px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Filter
+                </button>
+                @if(request()->anyFilled(['search', 'role', 'school_id']))
+                    <a href="{{ route('superadmin.admins.index') }}" class="inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Clear
+                    </a>
+                @endif
+            </div>
+        </form>
+    </div>
+
     <div class="{{ $admins->count() === 1 ? '' : 'overflow-x-auto' }}">
         <table class="min-w-full divide-y divide-gray-200 text-sm {{ $admins->count() === 1 ? '' : '' }}">
             <thead class="bg-gray-50">

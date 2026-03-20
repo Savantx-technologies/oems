@@ -13,6 +13,8 @@
                         class="font-semibold">{{ $exam->school->name }}</span></p>
             </div>
             <div class="flex gap-3">
+                <a href="{{ route('superadmin.exams.monitor-blocks.index', $exam->id) }}"
+                    class="px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50">Manage Blocks</a>
                 <div class="px-4 py-2 bg-white rounded-lg shadow-sm border flex items-center gap-2">
                     <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
                     <span class="text-sm font-medium">Live</span>
@@ -27,7 +29,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
                 <template x-for="student in students" :key="student.id">
-                    <div x-data="studentCard()"
+                    <div x-data="studentCard(student.attempt_id)"
                         class="bg-white rounded-xl shadow-sm border p-5 flex flex-col gap-4 transition-all"
                         :class="{
                             'border-red-500 ring-1 ring-red-200': student.violation_count > 2 || student
@@ -65,7 +67,7 @@
                                         x-text="student.student_name"></div>
                                     <div class="text-sm text-gray-500" x-text="student.admission_number"></div>
                                     <div class="text-xs font-mono mt-1 text-gray-400">
-                                        ID: <span x-text="student.id"></span>
+                                        Attempt: <span x-text="student.attempt_id ?? 'Not started'"></span>
                                     </div>
                                 </div>
                             </div>
@@ -74,7 +76,8 @@
                                     'bg-green-100 text-green-700': student.status === 'in_progress',
                                     'bg-blue-100 text-blue-700': student.status === 'submitted',
                                     'bg-red-100 text-red-700': student.status === 'terminated' || student
-                                        .status === 'expired'
+                                        .status === 'expired',
+                                    'bg-gray-100 text-gray-700': student.status === 'not_started'
                                 }"
                                 x-text="student.status.replace('_', ' ')"></span>
                         </div>
@@ -92,7 +95,7 @@
                                 <i class="bi bi-arrow-repeat animate-spin mr-2"></i> Connecting...
                             </div>
 
-                            <button @click="toggleCamera(student.id)"
+                            <button @click="toggleCamera(student.attempt_id)"
                                 class="absolute top-2 right-2 bg-red-600/80 hover:bg-red-600 text-white p-1 rounded text-xs">
                                 <i class="bi bi-x-lg"></i>
                             </button>
@@ -130,19 +133,24 @@
 
                         <!-- Actions -->
                         <div class="grid grid-cols-3 gap-3 mt-auto">
-                            <button @click="toggleCamera(student.id)"
+                            <button @click="toggleCamera(student.attempt_id)"
                                 class="col-span-1 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1"
+                                :disabled="!student.attempt_id"
                                 :class="streaming ? 'bg-gray-800 text-white hover:bg-gray-900' :
-                                    'bg-indigo-600 text-white hover:bg-indigo-700'">
+                                    (student.attempt_id ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed')">
                                 <i class="bi" :class="streaming ? 'bi-eye-slash' : 'bi-camera-video'"></i>
-                                <span x-text="streaming ? 'Close' : 'Watch'"></span>
+                                <span x-text="streaming ? 'Close' : (student.attempt_id ? 'Watch' : 'Awaiting')"></span>
                             </button>
-                            <button @click="extendTime(student.id)"
-                                class="col-span-1 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded text-sm font-medium hover:bg-blue-100">
+                            <button @click="extendTime(student.attempt_id)"
+                                :disabled="!student.attempt_id"
+                                :class="student.attempt_id ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100' : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'"
+                                class="col-span-1 py-2 border rounded text-sm font-medium">
                                 +5 Min
                             </button>
-                            <button @click="terminate(student.id)"
-                                class="col-span-1 py-2 bg-red-50 text-red-600 border border-red-200 rounded text-sm font-medium hover:bg-red-100">
+                            <button @click="terminate(student.attempt_id)"
+                                :disabled="!student.attempt_id"
+                                :class="student.attempt_id ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'"
+                                class="col-span-1 py-2 border rounded text-sm font-medium">
                                 Stop
                             </button>
                         </div>
@@ -180,6 +188,7 @@
                 },
 
                 terminate(id) {
+                    if (!id) return;
                     if (!confirm('Are you sure you want to force terminate this exam?')) return;
 
                     fetch(`/superadmin/attempts/${id}/terminate`, {
@@ -204,6 +213,7 @@
                 },
 
                 extendTime(id) {
+                    if (!id) return;
                     fetch(`/superadmin/attempts/${id}/extend`, {
                             method: 'POST',
                             headers: {
@@ -223,8 +233,9 @@
             }
         }
 
-        function studentCard() {
+        function studentCard(studentId) {
             return {
+                studentId: studentId,
                 streaming: false,
                 loading: false,
                 pc: null,
@@ -235,6 +246,7 @@
                 hasScreen: false,
 
                 async toggleCamera(studentId) {
+                    if (!studentId) return;
                     if (this.streaming) {
                         this.stopCamera();
                     } else {

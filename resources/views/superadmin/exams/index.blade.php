@@ -99,6 +99,9 @@
                                     <a href="{{ route('superadmin.exams.show', $exam->id) }}" class="text-indigo-600 hover:text-indigo-900 text-xs font-medium">
                                         View
                                     </a>
+                                    <a href="{{ route('superadmin.exams.monitor-blocks.index', $exam->id) }}" class="text-violet-600 hover:text-violet-900 text-xs font-medium">
+                                        Blocks
+                                    </a>
                                     @if($exam->status === 'published' && $isLive)
                                         <a href="{{ route('superadmin.exams.monitor', $exam->id) }}" class="text-blue-600 hover:text-blue-900 text-xs font-medium">
                                             <i class="bi bi-camera-video"></i> Monitor

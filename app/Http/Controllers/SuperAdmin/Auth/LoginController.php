@@ -45,7 +45,7 @@ class LoginController extends Controller
                 'Super admin logged in using password'
             );
 
-            return redirect()->route('superadmin.dashboard');
+            return redirect()->to($this->redirectPathFor($admin));
         }
 
         SecurityLogger::log(
@@ -174,8 +174,51 @@ class LoginController extends Controller
         session()->forget('superadmin_otp_id');
         $record->delete();
 
-        return redirect()->route('superadmin.dashboard');
+        return redirect()->to($this->redirectPathFor($admin));
     }
 
+    private function redirectPathFor(SuperAdmin $admin): string
+    {
+        if ($admin->canAccessSection('dashboard')) {
+            return route('superadmin.dashboard');
+        }
 
+        if ($admin->canAccessSection('live_monitoring') || $admin->canAccessSection('exams')) {
+            return route('superadmin.exams.index');
+        }
+
+        if ($admin->canAccessSection('schools')) {
+            return route('superadmin.schools.index');
+        }
+
+        if ($admin->canAccessSection('admins')) {
+            return route('superadmin.admins.index');
+        }
+
+        if ($admin->canAccessSection('sub_superadmins')) {
+            return route('superadmin.sub-superadmins.index');
+        }
+
+        if ($admin->canAccessSection('roles_permissions')) {
+            return route('superadmin.roles-permissions.index');
+        }
+
+        if ($admin->canAccessSection('students')) {
+            return route('superadmin.students.index');
+        }
+
+        if ($admin->canAccessSection('reports')) {
+            return route('superadmin.reports.analytics');
+        }
+
+        if ($admin->canAccessSection('logs')) {
+            return route('superadmin.security.logs');
+        }
+
+        if ($admin->canAccessSection('settings')) {
+            return route('superadmin.settings.system');
+        }
+
+        return route('superadmin.profile');
+    }
 }

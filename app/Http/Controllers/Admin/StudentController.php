@@ -12,14 +12,39 @@ use Illuminate\Support\Facades\DB;
 
 class StudentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $students = User::where('role', 'student')
-            ->where('school_id', auth('admin')->user()->school_id)
+        $admin = auth('admin')->user();
+
+        $query = User::where('role', 'student')
+            ->where('school_id', $admin->school_id);
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('admission_number', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('grade')) {
+            $query->where('grade', $request->grade);
+        }
+
+        $students = $query
             ->latest()
             ->paginate(10);
 
-        return view('admin.students.index', compact('students'));
+        $grades = User::where('role', 'student')
+            ->where('school_id', $admin->school_id)
+            ->whereNotNull('grade')
+            ->where('grade', '!=', '')
+            ->distinct()
+            ->orderBy('grade')
+            ->pluck('grade');
+
+        return view('admin.students.index', compact('students', 'grades'));
     }
     public function create()
     {

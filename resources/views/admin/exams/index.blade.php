@@ -178,6 +178,18 @@
                                 @endif
                                 @endif
 
+                                <a href="{{ route('admin.exams.show',$exam->id) }}"
+                                    class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">
+                                    View
+                                </a>
+
+                                @if(auth('admin')->user()->role === 'school_admin')
+                                <a href="{{ route('admin.exams.monitor-blocks.index', $exam->id) }}"
+                                    class="px-3 py-1.5 text-xs font-medium rounded-lg bg-violet-50 text-violet-700 hover:bg-violet-100">
+                                    Blocks
+                                </a>
+                                @endif
+
                                 @if($exam->status !== 'closed')
                                 <a href="{{ route('admin.exams.edit',$exam->id) }}"
                                     class="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100">

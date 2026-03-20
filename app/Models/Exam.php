@@ -54,6 +54,11 @@ class Exam extends Model
         return $this->hasMany(ExamAttempt::class);
     }
 
+    public function monitorBlocks()
+    {
+        return $this->hasMany(ExamMonitorBlock::class);
+    }
+
    public function isExpired()
 {
     if (!$this->schedule) {

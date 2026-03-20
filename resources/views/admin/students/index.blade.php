@@ -52,10 +52,19 @@
                         <label for="search" class="block mb-1 text-xs font-medium text-gray-500">Search by Name/Email</label>
                         <input type="text" name="search" id="search" value="{{ request('search') }}" class="block w-full rounded-md border border-gray-300 text-gray-900 py-1.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-400" placeholder="Search student">
                     </div>
+                    <div class="w-full sm:w-52">
+                        <label for="grade" class="block mb-1 text-xs font-medium text-gray-500">Filter by Class</label>
+                        <select name="grade" id="grade" class="block w-full rounded-md border border-gray-300 text-gray-900 py-1.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-400">
+                            <option value="">All Classes</option>
+                            @foreach($grades as $grade)
+                                <option value="{{ $grade }}" {{ request('grade') == $grade ? 'selected' : '' }}>{{ $grade }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="flex gap-2">
                         <button type="submit" class="inline-flex items-center px-3 py-1.5 rounded-md bg-white border border-blue-600 text-blue-700 hover:bg-blue-50 transition text-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                            Search
+                            Apply
                         </button>
                         <a href="{{ route('admin.students.index') }}" class="inline-flex items-center px-2 py-1.5 text-blue-500 rounded-md hover:bg-blue-50 text-sm transition">Reset</a>
                     </div>
@@ -151,7 +160,7 @@
                         Showing {{ $students->firstItem() }} to {{ $students->lastItem() }} of {{ $students->total() }} students
                     </div>
                     <div>
-                        {{ $students->links() }}
+                        {{ $students->appends(request()->query())->links() }}
                     </div>
                 </div>
             </div>

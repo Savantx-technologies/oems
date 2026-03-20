@@ -30,6 +30,8 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap([
             'admin' => \App\Models\Admin::class,
             'superadmin' => \App\Models\SuperAdmin::class,
+            'student' => \App\Models\User::class,
+            'web' => \App\Models\User::class,
         ]);
 
         // Register the observer to create notifications on exam publish

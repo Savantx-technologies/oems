@@ -258,8 +258,8 @@
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
                             <li>
-                                <a href="{{ route('admin.exams.index') }}" class="block px-5 py-2 pl-11 text-sm 
-                                        {{ request()->routeIs('admin.exams.monitor')
+                                <a href="{{ route('admin.live-exams.index', ['filter' => 'live']) }}" class="block px-5 py-2 pl-11 text-sm 
+                                        {{ request()->routeIs('admin.exams.monitor') || request()->routeIs('admin.live-exams.index')
                                     ? 'text-white bg-white/10'
                                     : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
                                     Live Exam Monitor
@@ -414,70 +414,6 @@
 
             </ul>
         </div>
-        </li>
-
-        <!-- Reports -->
-        <li x-data="{ open: {{ request()->routeIs('admin.reports.*') ? 'true' : 'false' }} }">
-            <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.reports.*') ? 'text-white bg-white/10 border-l-4 border-indigo-500' : '' }}"
-                href="#" @click.prevent="open = !open">
-                <div><i class="bi bi-bar-chart mr-2"></i> Reports</div>
-                <i class="bi bi-chevron-down text-xs transition-transform" :class="open ? 'rotate-180' : ''"></i>
-            </a>
-            <div x-show="open" x-collapse class="bg-black/20">
-                <ul class="flex flex-col py-1">
-                    <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.reports.index') ? 'text-white bg-white/10' : '' }}"
-                            href="{{ route('admin.reports.index') }}">Overview</a></li>
-                    <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.reports.exams') || request()->routeIs('admin.reports.exams.detail') ? 'text-white bg-white/10' : '' }}"
-                            href="{{ route('admin.reports.exams') }}">Exam Reports</a></li>
-                    <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.reports.analytics') ? 'text-white bg-white/10' : '' }}"
-                            href="{{ route('admin.reports.analytics') }}">Performance Analytics</a></li>
-                </ul>
-            </div>
-        </li>
-
-        <!-- School Settings -->
-        <li
-            x-data="{ open: {{ request()->routeIs('admin.settings.school') || request()->routeIs('admin.settings.exam_rules') || request()->routeIs('admin.settings.notifications') ? 'true' : 'false' }} }">
-            <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.settings.school') || request()->routeIs('admin.settings.exam_rules') || request()->routeIs('admin.settings.notifications') ? 'nav-link-active' : '' }}"
-                href="#" @click.prevent="open = !open">
-                <div><i class="bi bi-gear mr-2"></i> Settings</div>
-                <i class="bi bi-chevron-down text-xs transition-transform" :class="open ? 'rotate-180' : ''"></i>
-            </a>
-            <div x-show="open" x-collapse class="bg-black/20">
-                <ul class="flex flex-col py-1">
-                    <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.settings.school') ? 'text-white bg-white/10' : '' }}"
-                            href="{{ route('admin.settings.school') }}">School Profile</a></li>
-                    <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.settings.exam_rules') ? 'text-white bg-white/10' : '' }}"
-                            href="{{ route('admin.settings.exam_rules') }}">Exam Rules</a></li>
-                    <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.settings.notifications') ? 'text-white bg-white/10' : '' }}"
-                            href="{{ route('admin.settings.notifications') }}">Notification Settings</a></li>
-                </ul>
-            </div>
-        </li>
-
-        <!-- Logs -->
-        <li x-data="{ open: false }">
-            <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
-                href="#" @click.prevent="open = !open">
-                <div><i class="bi bi-journal-text mr-2"></i> Logs</div>
-                <i class="bi bi-chevron-down text-xs transition-transform" :class="open ? 'rotate-180' : ''"></i>
-            </a>
-            <div x-show="open" x-collapse class="bg-black/20">
-                <ul class="flex flex-col py-1">
-                    <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                            href="#">Activity Logs</a></li>
-                    <li>
-                        <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.security.logs') ? 'text-white bg-white/10' : '' }}"
-                            href="{{ route('admin.security.logs') }}">
-                            Login History
-                        </a>
-                    </li>
-                    <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                            href="#">Violation Logs</a></li>
-                </ul>
-            </div>
-        </li>
-
         </ul>
     </div>
     </div>
@@ -550,8 +486,6 @@
 </body>
 @stack('script')
 </html>
-
-
 
 
 

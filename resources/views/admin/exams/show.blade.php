@@ -24,6 +24,12 @@
         </div>
 
         <div class="flex gap-3">
+            @if(auth('admin')->user()->role === 'school_admin')
+            <a href="{{ route('admin.exams.monitor-blocks.index',$exam->id) }}"
+               class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition shadow-sm">
+                Blocks
+            </a>
+            @endif
             <a href="{{ route('admin.exams.edit',$exam->id) }}"
                class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition shadow-sm">
                 Edit
@@ -147,6 +153,103 @@
     </div>
 
     @endif
+
+    <!-- ================= Monitoring Blocks ================= -->
+    <!-- <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b bg-gray-50 rounded-t-xl flex items-center justify-between">
+            <div>
+                <h2 class="text-base font-semibold text-gray-800">Monitoring Blocks</h2>
+                <p class="text-xs text-gray-500 mt-1">Assign students to blocks so invigilators only monitor their own group.</p>
+            </div>
+            <span class="text-sm text-gray-500">{{ $exam->monitorBlocks->count() }} blocks</span>
+        </div>
+
+        <div class="p-6 space-y-6">
+            @if($exam->monitorBlocks->isNotEmpty())
+            <div class="grid gap-4 md:grid-cols-2">
+                @foreach($exam->monitorBlocks as $block)
+                <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <h3 class="font-semibold text-gray-900">{{ $block->name }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">
+                                Assigned to:
+                                <span class="font-medium text-gray-700">{{ $block->assignee?->name ?? 'Unassigned' }}</span>
+                            </p>
+                        </div>
+                        <form method="POST" action="{{ route('admin.exams.monitor-blocks.destroy', ['id' => $exam->id, 'block' => $block->id]) }}">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-xs font-medium text-red-600 hover:text-red-800">Delete</button>
+                        </form>
+                    </div>
+
+                    <div class="mt-3">
+                        <p class="text-xs font-medium uppercase tracking-wide text-gray-500 mb-2">Students</p>
+                        <div class="space-y-2">
+                            @forelse($block->attempts as $attempt)
+                            <div class="flex items-center justify-between rounded-lg border border-white bg-white px-3 py-2 text-sm">
+                                <span class="font-medium text-gray-800">{{ $attempt->user->name ?? 'Unknown Student' }}</span>
+                                <span class="text-xs text-gray-500">{{ $attempt->user->admission_number ?? 'N/A' }}</span>
+                            </div>
+                            @empty
+                            <p class="text-sm text-gray-500">No students assigned yet.</p>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @endif
+
+            <form method="POST" action="{{ route('admin.exams.monitor-blocks.store', $exam->id) }}" class="grid gap-6 lg:grid-cols-3">
+                @csrf
+                <div class="lg:col-span-1 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Block Name</label>
+                        <input type="text" name="name" required placeholder="Block A / Room 1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Assign Invigilator / Monitor</label>
+                        <select name="assignee_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Unassigned</option>
+                            @foreach($assignableMonitors as $monitor)
+                            <option value="{{ $monitor->id }}">{{ $monitor->name }} ({{ str_replace('_', ' ', $monitor->role) }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                        Create Block
+                    </button>
+                </div>
+
+                <div class="lg:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Assign Students To This Block</label>
+                    <div class="max-h-72 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-2">
+                        @forelse($attemptOptions as $attempt)
+                        <label class="flex items-center justify-between gap-3 rounded-lg border border-white bg-white px-3 py-2">
+                            <span class="flex items-center gap-3">
+                                <input type="checkbox" name="attempt_ids[]" value="{{ $attempt->id }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span>
+                                    <span class="block text-sm font-medium text-gray-800">{{ $attempt->user->name ?? 'Unknown Student' }}</span>
+                                    <span class="block text-xs text-gray-500">
+                                        {{ $attempt->user->admission_number ?? 'N/A' }}
+                                        @if($attempt->monitorBlock)
+                                        | Current: {{ $attempt->monitorBlock->name }}
+                                        @endif
+                                    </span>
+                                </span>
+                            </span>
+                            <span class="text-xs uppercase text-gray-400">{{ str_replace('_', ' ', $attempt->status) }}</span>
+                        </label>
+                        @empty
+                        <p class="text-sm text-gray-500">No attempts found for this exam yet.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div> -->
 
 
     <!-- ================= Questions ================= -->

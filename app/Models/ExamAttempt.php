@@ -10,6 +10,7 @@ class ExamAttempt extends Model
         'school_id',
         'user_id',
         'exam_id',
+        'monitor_block_id',
         'total_questions',
         'total_correct',
         'score',
@@ -49,6 +50,11 @@ class ExamAttempt extends Model
     public function answers()
     {
         return $this->hasMany(UserExamAnswer::class, 'attempt_id');
+    }
+
+    public function monitorBlock()
+    {
+        return $this->belongsTo(ExamMonitorBlock::class, 'monitor_block_id');
     }
 
     public function violations()
