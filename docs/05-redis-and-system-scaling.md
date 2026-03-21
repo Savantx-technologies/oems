@@ -7,7 +7,7 @@ This document explains the Redis-related setup and system-handling optimizations
 This is a project-specific implementation note, not a generic Redis tutorial.
 
 ## What Was Added
-s
+
 The following areas were improved:
 
 - Redis-backed cache, session, and queue config alignment
@@ -130,7 +130,13 @@ Data source:
 - `exam_attempts.started_at`
 - fallback `exam_attempts.created_at`
 
+## SuperAdmin Sidebar Infrastructure Update
 
+The Infrastructure section in the superadmin sidebar was updated to point to real operational destinations.
+
+Location:
+
+- `resources/views/layouts/superadmin.blade.php`
 
 Current infrastructure items:
 
