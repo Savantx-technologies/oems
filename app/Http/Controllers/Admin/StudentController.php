@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\School;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -23,7 +24,15 @@ class StudentController extends Controller
     }
     public function create()
     {
-        return view('admin.students.create');
+        $schoolId = auth('admin')->user()->school_id;
+        $grades = User::whereNotNull('grade')
+            ->where('school_id', auth('admin')->user()->school_id)
+            ->distinct()
+            ->pluck('grade');
+
+        $nextAdmissionNumber = $this->generateAdmissionNumber($schoolId);
+
+        return view('admin.students.create', compact('grades', 'nextAdmissionNumber'));
     }
 
     /**
@@ -31,6 +40,8 @@ class StudentController extends Controller
      */
     public function store(Request $request)
     {
+        $schoolId = auth('admin')->user()->school_id;
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -40,7 +51,7 @@ class StudentController extends Controller
             'phone_number' => ['required', 'string', 'max:20'],
             'aadhar_number' => ['nullable', 'string', 'max:20'],
             'address' => ['required', 'string', 'max:1000'],
-            'photo' => ['nullable', 'image', 'max:2048'], // Max 2MB
+            'photo' => ['nullable', 'image', 'max:2048'],
         ]);
 
         $photoPath = null;
@@ -48,7 +59,16 @@ class StudentController extends Controller
             $photoPath = $request->file('photo')->store('students/photos', 'public');
         }
 
-        // Create the User account with student details
+        // Important logic
+        if ($validated['admission_number']) {
+            $admissionNumber = $validated['admission_number'];
+        } else {
+            $admissionNumber = $this->generateAdmissionNumber(
+                $schoolId,
+                $validated['admission_number'] ?? null
+            );
+        }
+
         User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -58,13 +78,14 @@ class StudentController extends Controller
             'aadhar_number' => $validated['aadhar_number'],
             'address' => $validated['address'],
             'role' => 'student',
-            'school_id' => auth('admin')->user()->school_id,
+            'school_id' => $schoolId,
             'status' => 'active',
-            'admission_number' => $validated['admission_number'],
+            'admission_number' => $admissionNumber,
             'grade' => $validated['grade'],
         ]);
 
-        return redirect()->route('admin.students.create')->with('success', 'Student added successfully.');
+        return redirect()->route('admin.students.create')
+            ->with('success', 'Student added successfully.');
     }
 
     /**
@@ -131,6 +152,7 @@ class StudentController extends Controller
     /**
      * Show the form for bulk creating students.
      */
+
     public function bulkCreate()
     {
         return view('admin.students.bulk_create');
@@ -145,28 +167,62 @@ class StudentController extends Controller
             'file' => 'required|file|mimes:csv,txt|max:2048',
         ]);
 
+        $schoolId = auth('admin')->user()->school_id;
         $file = $request->file('file');
 
         if (($handle = fopen($file->getPathname(), 'r')) !== false) {
+
             DB::beginTransaction();
+
             try {
                 $header = fgetcsv($handle);
+
                 $imported = 0;
                 $skipped = 0;
                 $failed = 0;
 
+                // Find last admission number for this school
+                $lastAdmission = User::where('school_id', $schoolId)
+                    ->whereNotNull('admission_number')
+                    ->orderByDesc('id')
+                    ->value('admission_number');
+                    $prefix = '';
+                    $number = 1;
+                    $padding = 0;
+                if ($lastAdmission) {
+                    preg_match('/(\D*)(\d+)$/', $lastAdmission, $matches);
+
+                    if ($matches) {
+                        $prefix = $matches[1];
+                        $number = (int) $matches[2] + 1;
+                        $padding = strlen($matches[2]);
+                    }
+                }
+
                 while (($data = fgetcsv($handle, 1000, ",")) !== false) {
-                    // Basic check for required columns (Name, Email, Password, Phone, Address)
-                    if (count($data) < 5 || empty(trim($data[0])) || empty(trim($data[1])) || empty(trim($data[2])) || empty(trim($data[3])) || empty(trim($data[4]))) {
+
+                    if (
+                        count($data) < 5 ||
+                        empty(trim($data[0])) ||
+                        empty(trim($data[1])) ||
+                        empty(trim($data[2])) ||
+                        empty(trim($data[3])) ||
+                        empty(trim($data[4]))
+                    ) {
                         $failed++;
                         continue;
                     }
 
-                    // Skip if email already exists
                     if (User::where('email', trim($data[1]))->exists()) {
                         $skipped++;
                         continue;
                     }
+
+                    // CSV admission
+                    $csvAdmission = isset($data[5]) ? trim($data[5]) : null;
+
+                    // Generate admission properly
+                    $admissionNumber = $this->generateAdmissionNumber($schoolId, $csvAdmission);
 
                     User::create([
                         'name' => trim($data[0]),
@@ -174,22 +230,28 @@ class StudentController extends Controller
                         'password' => Hash::make(trim($data[2])),
                         'phone_number' => trim($data[3]),
                         'address' => trim($data[4]),
-                        'admission_number' => isset($data[5]) ? trim($data[5]) : null,
+                        'admission_number' => $admissionNumber,
                         'grade' => isset($data[6]) ? trim($data[6]) : null,
                         'aadhar_number' => isset($data[7]) ? trim($data[7]) : null,
                         'role' => 'student',
-                        'school_id' => auth('admin')->user()->school_id,
+                        'school_id' => $schoolId,
                         'status' => 'active',
                     ]);
+
                     $imported++;
                 }
 
                 DB::commit();
-                $report = ['imported' => $imported, 'skipped' => $skipped, 'failed' => $failed];
-                return redirect()->route('admin.students.index')->with('bulk_report', $report);
+
+                return redirect()->route('admin.students.index')->with('bulk_report', [
+                    'imported' => $imported,
+                    'skipped' => $skipped,
+                    'failed' => $failed
+                ]);
+
             } catch (\Exception $e) {
                 DB::rollBack();
-                return back()->with('error', 'An error occurred during the import process: ' . $e->getMessage());
+                return back()->with('error', 'Import error: ' . $e->getMessage());
             } finally {
                 fclose($handle);
             }
@@ -257,5 +319,44 @@ class StudentController extends Controller
         User::whereIn('id', $request->student_ids)->update(['grade' => $request->grade]);
 
         return back()->with('success', 'Batch/Grade assigned successfully to selected students.');
+    }
+
+
+    private function generateAdmissionNumber($schoolId, $manualInput = null)
+    {
+        $school = School::find($schoolId);
+        $schoolCode = $school->code ?? 'SCH';
+
+        // If admin enters manual admission
+        if (!empty($manualInput)) {
+            if (str_starts_with($manualInput, $schoolCode . '-')) {
+                return $manualInput;
+            }
+
+            return $schoolCode . '-' . $manualInput;
+        }
+
+        $prefix = $schoolCode . '-';
+
+        $lastStudent = User::where('school_id', $schoolId)
+            ->where('admission_number', 'like', $prefix . '%')
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$lastStudent) {
+            return $prefix . '0001';
+        }
+
+        // Extract TEXT + NUMBER
+        preg_match('/-([A-Za-z]*)(\d+)$/', $lastStudent->admission_number, $matches);
+
+        if ($matches) {
+            $text = $matches[1];   // AMD
+            $number = (int) $matches[2] + 1; // 0021 -> 22
+
+            return $prefix . $text . str_pad($number, strlen($matches[2]), '0', STR_PAD_LEFT);
+        }
+
+        return $prefix . '0001';
     }
 }
