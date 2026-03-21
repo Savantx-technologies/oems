@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Admin\AdminResultController;
 use App\Http\Controllers\Admin\AttemptControlController;
+use App\Http\Controllers\Admin\ElearningController;
 use App\Http\Controllers\Admin\PassageController;
+use App\Http\Controllers\Student\StudentElearningController;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
@@ -117,6 +119,8 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
         Route::post('login-otp', [SuperAdminLoginController::class, 'sendOtp'])->name('otp.send');
         Route::get('verify-otp', [SuperAdminLoginController::class, 'showVerifyOtpForm'])->name('otp.verify.form');
         Route::post('verify-otp', [SuperAdminLoginController::class, 'verifyOtp'])->name('otp.verify');
+        Route::post('send-mobile-otp', [SuperAdminLoginController::class, 'sendMobileOtp']);
+        Route::post('verify-mobile-otp', [SuperAdminLoginController::class, 'verifyMobileOtp']);
     });
 
     // -- Authenticated SuperAdmin Area --
@@ -322,6 +326,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('login', [AdminLoginController::class, 'login'])->name('login.submit');
     Route::post('send-otp', [AdminLoginController::class, 'sendOtp'])->name('send.otp');
     Route::get('verify-otp', [AdminLoginController::class, 'otpForm'])->name('otp.verify.form');
+
     Route::post('verify-otp', [AdminLoginController::class, 'verifyOtp'])->name('verify.otp');
     Route::post('send-mobile-otp', [AdminLoginController::class, 'sendMobileOtp'])->name('send.mobile.otp');
     Route::post('verify-mobile-otp', [AdminLoginController::class, 'verifyMobileOtp'])->name('verify.mobile.otp');
@@ -392,7 +397,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('students/batch-assignment', [AdminStudentController::class, 'batchUpdate'])->name('students.batch.update');
             Route::resource('students', AdminStudentController::class);
         });
-        
+
     });
 
     Route::middleware(['auth:admin', \App\Http\Middleware\CheckSchoolActive::class . ':admin'])->group(function () {
@@ -468,44 +473,55 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 Route::post('{streamId}/signal', [AdminLiveMonitorController::class, 'viewerSignal'])->name('signal');
             });
 
-    Route::post('results/{attempt}/approve', [AdminResultController::class, 'approve'])
-        ->name('results.approve');
+            Route::post('results/{attempt}/approve', [AdminResultController::class, 'approve'])
+                ->name('results.approve');
 
-    Route::post('results/{attempt}/reject', [AdminResultController::class, 'reject'])
-        ->name('results.reject');
-    Route::get('results/list', [AdminResultController::class, 'list'])
-        ->name('results.list');
+            Route::post('results/{attempt}/reject', [AdminResultController::class, 'reject'])
+                ->name('results.reject');
+            Route::get('results/list', [AdminResultController::class, 'list'])
+                ->name('results.list');
 
-    // -- Attempt Controls --
-    Route::post('attempts/{attemptId}/terminate', [AdminAttemptControlController::class, 'terminate'])->name('attempts.terminate');
-    Route::post('attempts/{attemptId}/extend', [AdminAttemptControlController::class, 'extendTime'])->name('attempts.extend');
-
-    // -- Reports --
-    Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/', [ReportController::class, 'index'])->name('index');
-        Route::get('exams', [ReportController::class, 'exams'])->name('exams');
-        Route::get('exams/{id}', [ReportController::class, 'examDetail'])->name('exams.detail');
-        Route::get('exams/{id}/export', [ReportController::class, 'exportExamDetail'])->name('exams.detail.export');
-        Route::get('exams/{id}/violations', [ReportController::class, 'examViolations'])->name('exams.violations');
-        Route::get('exams/{id}/violations/export', [ReportController::class, 'exportExamViolations'])->name('exams.violations.export');
-        Route::get('analytics', [ReportController::class, 'analytics'])->name('analytics');
             // -- Attempt Controls --
             Route::post('attempts/{attemptId}/terminate', [AdminAttemptControlController::class, 'terminate'])->name('attempts.terminate');
             Route::post('attempts/{attemptId}/extend', [AdminAttemptControlController::class, 'extendTime'])->name('attempts.extend');
+
+            // -- Reports --
+            Route::prefix('reports')->name('reports.')->group(function () {
+                Route::get('/', [ReportController::class, 'index'])->name('index');
+                Route::get('exams', [ReportController::class, 'exams'])->name('exams');
+                Route::get('exams/{id}', [ReportController::class, 'examDetail'])->name('exams.detail');
+                Route::get('exams/{id}/export', [ReportController::class, 'exportExamDetail'])->name('exams.detail.export');
+                Route::get('exams/{id}/violations', [ReportController::class, 'examViolations'])->name('exams.violations');
+                Route::get('exams/{id}/violations/export', [ReportController::class, 'exportExamViolations'])->name('exams.violations.export');
+                Route::get('analytics', [ReportController::class, 'analytics'])->name('analytics');
+                // -- Attempt Controls --
+                Route::post('attempts/{attemptId}/terminate', [AdminAttemptControlController::class, 'terminate'])->name('attempts.terminate');
+                Route::post('attempts/{attemptId}/extend', [AdminAttemptControlController::class, 'extendTime'])->name('attempts.extend');
+            });
         });
+
+        Route::get('exam-attempts', [AdminResultController::class, 'attempts'])
+            ->name('results.attempts');
+
+        Route::get('exam-attempt/{id}', [AdminResultController::class, 'viewAttempt'])
+            ->name('results.viewAttempt');
+
+        Route::post('answer/{id}/correct', [AdminResultController::class, 'markCorrect'])->name('answer.correct');
+        Route::post('answer/{id}/wrong', [AdminResultController::class, 'markWrong'])->name('answer.wrong');
+
+        Route::get('elearning', [ElearningController::class, 'index'])->name('elearning.index');
+
+        Route::get('elearning/create', [ElearningController::class, 'create'])->name('elearning.create');
+
+        Route::post('elearning/store', [ElearningController::class, 'store'])->name('elearning.store');
+
+        Route::get('/elearning/{id}/edit', [ElearningController::class, 'edit'])->name('elearning.edit');
+
+        Route::put('/elearning/{id}', [ElearningController::class, 'update'])->name('elearning.update');
+
+        Route::delete('/elearning/{id}', [ElearningController::class, 'destroy'])->name('elearning.destroy');
+
     });
-
-    Route::get('exam-attempts', [AdminResultController::class, 'attempts'])
-        ->name('results.attempts');
-
-    Route::get('exam-attempt/{id}', [AdminResultController::class, 'viewAttempt'])
-        ->name('results.viewAttempt');
-
-    Route::post('answer/{id}/correct', [AdminResultController::class, 'markCorrect'])->name('answer.correct');
-    Route::post('answer/{id}/wrong', [AdminResultController::class, 'markWrong'])->name('answer.wrong');
-
-
-});
 });
 // Student Routes
 Route::prefix('student')->name('student.')->group(function () {
@@ -533,7 +549,7 @@ Route::prefix('student')->name('student.')->group(function () {
 
             $school = auth()->user()->school;
             $schoolInstructions = null;
-            
+
             if ($school && $school->exam_rules) {
                 // Decode if string (likely), otherwise use as array
                 $rules = is_string($school->exam_rules) ? json_decode($school->exam_rules, true) : $school->exam_rules;
@@ -547,7 +563,7 @@ Route::prefix('student')->name('student.')->group(function () {
             if ($schoolInstructions && $schoolInstructions === strip_tags($schoolInstructions)) {
                 $schoolInstructions = nl2br(e($schoolInstructions));
             }
-            
+
             return view('student.instructions', [
                 'generalInstructions' => $generalInstructions,
                 'schoolInstructions' => $schoolInstructions,
@@ -598,4 +614,7 @@ Route::prefix('student')->name('student.')->group(function () {
     });
 
     Route::get('marksheet/download/{attemptId}', [StudentExamController::class, 'downloadMarksheet'])->name('marksheet.download');
+
+    Route::get('elearning', [StudentElearningController::class, 'index'])->name('elearning');
+    Route::get('elearning/class/{class}', [StudentElearningController::class, 'classLessons'])->name('elearning.class');
 });

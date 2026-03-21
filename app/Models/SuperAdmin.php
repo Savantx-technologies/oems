@@ -12,12 +12,7 @@ class SuperAdmin extends Authenticatable
     public const ROLE_SUB_SUPERADMIN = 'sub_superadmin';
 
      protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'is_active',
-        'role',
-        'permissions',
+        'name','email','password','is_active','mobile'
     ];
 
     protected $hidden = [

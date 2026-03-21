@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use OpenApi\Annotations as OA;
+use Illuminate\Support\Facades\DB;
+
 /**
  * @OA\Tag(
  *     name="Admin Auth",
@@ -41,18 +43,37 @@ class LoginController extends Controller
             'password' => 'required',
         ]);
 
-        // Use the 'admin' guard
-        if (Auth::guard('admin')->attempt($request->only('email', 'password'))) {
-            $request->session()->regenerate();
+        if (Auth::guard('admin')->validate($request->only('email', 'password'))) {
+
+            $admin = Admin::where('email', $request->email)->first();
+
+            $otp = rand(100000, 999999);
+
+            DB::table('admin_otps')->where('admin_id', $admin->id)->delete();
+
+            DB::table('admin_otps')->insert([
+                'admin_id' => $admin->id,
+                'otp' => Hash::make($otp), 
+                'expires_at' => now()->addMinutes(5),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            Mail::to($admin->email)->send(new AdminOtpMail($otp));
+
+            // FIXED SESSION KEY
+            session(['admin_otp_id' => $admin->id]);
+
             SecurityLogger::log(
                 'admin',
-                auth()->guard('admin')->id(),
-                'login_success',
-                'Admin logged in'
+                $admin->id,
+                'otp_sent',
+                'Admin OTP sent'
             );
 
-            return redirect()->route('admin.dashboard');
+            return redirect()->route('admin.otp.verify.form');
         }
+
         SecurityLogger::log(
             'admin',
             null,
@@ -61,10 +82,9 @@ class LoginController extends Controller
             ['email' => $request->email]
         );
 
-
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
-        ])->withInput($request->only('email'));
+        ]);
     }
 
     /**
@@ -97,6 +117,7 @@ class LoginController extends Controller
 
         return view('admin.auth.otp-verify');
     }
+
 
     public function sendOtp(Request $request)
     {
@@ -150,19 +171,20 @@ class LoginController extends Controller
         ]);
 
         $adminId = session('admin_otp_id');
+
         if (!$adminId) {
             return redirect()->route('admin.login');
         }
 
         $record = AdminOtp::where('admin_id', $adminId)
-            ->orderBy('id', 'desc')
+            ->latest()
             ->first();
 
         if (!$record) {
             return back()->withErrors(['otp' => 'OTP not found.']);
         }
 
-        if (Carbon::now()->greaterThan($record->expires_at)) {
+        if (now()->greaterThan($record->expires_at)) {
             return back()->withErrors(['otp' => 'OTP expired.']);
         }
 
@@ -172,7 +194,11 @@ class LoginController extends Controller
 
         $admin = Admin::findOrFail($adminId);
 
-        auth()->guard('admin')->login($admin);
+        Auth::guard('admin')->login($admin);
+
+        session()->forget('admin_otp_id');
+
+        $record->delete();
 
         SecurityLogger::log(
             'admin',
@@ -180,9 +206,6 @@ class LoginController extends Controller
             'otp_login_success',
             'Admin logged in using OTP'
         );
-
-        session()->forget('admin_otp_id');
-        $record->delete();
 
         return redirect()->route('admin.dashboard');
     }
@@ -252,30 +275,6 @@ class LoginController extends Controller
         ]);
     }
 
-    //// DEBUG FUNCTION/////
-    //   public function sendMobileOtp(Request $request)
-    // {
-    //     $mobile = $request->mobile;
-
-    //         $otp = rand(100000, 999999);
-
-    //         // Save OTP (important for verify)
-    //     session([
-    //         'otp' => $otp,
-    //         'mobile' => $mobile
-    //     ]);
-
-    //         // 🔥 DEBUG ONLY (will stop execution and show OTP)
-    //     \Log::info('OTP DEBUG', [
-    //     'mobile' => $mobile,
-    //     'otp' => $otp
-    // ]);
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'OTP sent'
-    //     ]);
-    // }
     /**
      * @OA\Post(
      *     path="/api/admin/verify-mobile-otp",
@@ -353,20 +352,7 @@ class LoginController extends Controller
     }
 
 
-    //     public function verifyMobileOtp(Request $request)
-    // {
-    //     if(session('otp') == $request->otp){
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => 'OTP verified'
-    //         ]);
-    //     }
 
-        //     return response()->json([
-    //         'status' => false,
-    //         'message' => 'Invalid OTP'
-    //     ]);
-    // }
 
 
 }

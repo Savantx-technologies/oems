@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\SuperAdmin\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SuperAdmin;
 use App\Models\SuperAdminOtp;
 use App\Mail\SuperAdminOtpMail;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use App\Support\SecurityLogger;
@@ -32,20 +34,37 @@ class LoginController extends Controller
             'is_active' => 1
         ];
 
-        if (Auth::guard('superadmin')->attempt($credentials)) {
+        // Validate credentials without login
+        if (Auth::guard('superadmin')->validate($credentials)) {
 
-            $request->session()->regenerate();
+            $admin = SuperAdmin::where('email', $request->email)->first();
 
-            $admin = Auth::guard('superadmin')->user();
+            $otp = rand(100000, 999999);
+
+            // delete old OTP
+            SuperAdminOtp::where('super_admin_id', $admin->id)->delete();
+
+            // save OTP
+            SuperAdminOtp::create([
+                'super_admin_id' => $admin->id,
+                'otp' => Hash::make($otp),
+                'expires_at' => now()->addMinutes(5)
+            ]);
+
+            // send email
+            Mail::to($admin->email)->send(new SuperAdminOtpMail($otp));
+
+            // store session
+            session(['superadmin_otp_id' => $admin->id]);
 
             SecurityLogger::log(
                 'superadmin',
                 $admin->id,
-                'login_success',
-                'Super admin logged in using password'
+                'otp_sent',
+                'Super admin OTP sent'
             );
 
-            return redirect()->to($this->redirectPathFor($admin));
+            return redirect()->route('superadmin.otp.verify.form');
         }
 
         SecurityLogger::log(
@@ -130,11 +149,12 @@ class LoginController extends Controller
     public function showVerifyOtpForm()
     {
         if (!session()->has('superadmin_otp_id')) {
-            return redirect()->route('superadmin.otp.form');
+            return redirect()->route('superadmin.login');
         }
 
         return view('superadmin.auth.otp-verify');
     }
+
     public function verifyOtp(Request $request)
     {
         $request->validate([
@@ -183,42 +203,203 @@ class LoginController extends Controller
             return route('superadmin.dashboard');
         }
 
-        if ($admin->canAccessSection('live_monitoring') || $admin->canAccessSection('exams')) {
-            return route('superadmin.exams.index');
+    /**
+     * @OA\Post(
+     *     path="/api/superadmin/send-mobile-otp",
+     *     tags={"Admin Auth"},
+     *     summary="Send OTP to mobile",
+     *     operationId="sendMobileOtp",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"mobile"},
+     *             @OA\Property(
+     *                 property="mobile",
+     *                 type="string",
+     *                 description="Enter any registered mobile number"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OTP sent successfully"
+     *     )
+     * )
+     */
+    public function sendMobileOtp(Request $request)
+    {
+        $request->validate([
+            'mobile' => 'required|digits:10'
+        ]);
+
+        $admin = SuperAdmin::where('mobile', $request->mobile)
+            ->where('is_active', '1')
+            ->first();
+
+        if (!$admin) {
+            return response()->json([
+                'is_active' => false,
+                'message' => 'Mobile not found'
+            ], 404);
         }
 
-        if ($admin->canAccessSection('schools')) {
-            return route('superadmin.schools.index');
+        $otp = rand(100000, 999999);
+
+        SuperAdminOtp::where('super_admin_id', $admin->id)->delete();
+
+        SuperAdminOtp::create([
+            'super_admin_id' => $admin->id,
+            'otp' => bcrypt($otp),
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
+        $smsSent = SmsService::sendOtp($request->mobile, $otp);
+
+        if (!$smsSent) {
+            return response()->json([
+                'is_active' => false,
+                'message' => 'Failed to send OTP'
+            ], 500);
         }
 
-        if ($admin->canAccessSection('admins')) {
-            return route('superadmin.admins.index');
-        }
-
-        if ($admin->canAccessSection('sub_superadmins')) {
-            return route('superadmin.sub-superadmins.index');
-        }
-
-        if ($admin->canAccessSection('roles_permissions')) {
-            return route('superadmin.roles-permissions.index');
-        }
-
-        if ($admin->canAccessSection('students')) {
-            return route('superadmin.students.index');
-        }
-
-        if ($admin->canAccessSection('reports')) {
-            return route('superadmin.reports.analytics');
-        }
-
-        if ($admin->canAccessSection('logs')) {
-            return route('superadmin.security.logs');
-        }
-
-        if ($admin->canAccessSection('settings')) {
-            return route('superadmin.settings.system');
-        }
-
-        return route('superadmin.profile');
+        return response()->json([
+            'is_active' => true,
+            'message' => 'OTP sent successfully'
+        ]);
     }
+
+    //// DEBUG FUNCTION/////
+    //   public function sendMobileOtp(Request $request)
+    // {
+    //     $mobile = $request->mobile;
+
+    //         $otp = rand(100000, 999999);
+
+    //         // Save OTP (important for verify)
+    //     session([
+    //         'otp' => $otp,
+    //         'mobile' => $mobile
+    //     ]);
+
+    //         // 🔥 DEBUG ONLY (will stop execution and show OTP)
+    //     \Log::info('OTP DEBUGg', [
+    //     'mobile' => $mobile,
+    //     'otp' => $otp
+    // ]);
+
+
+    // }
+    /**
+     * @OA\Post(
+     *     path="/api/superadmin/verify-mobile-otp",
+     *     tags={"Admin Auth"},
+     *     summary="Verify OTP and login",
+     *     operationId="verifyMobileOtp",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"mobile","otp"},
+     *             @OA\Property(
+     *                 property="mobile",
+     *                 type="string",
+     *                 description="Enter mobile number"
+     *             ),
+     *             @OA\Property(
+     *                 property="otp",
+     *                 type="string",
+     *                 description="Enter OTP received on mobile"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Login success")
+     * )
+     */
+    public function verifyMobileOtp(Request $request)
+    {
+        $request->validate([
+            'mobile' => 'required|digits:10',
+            'otp' => 'required|digits:6'
+        ]);
+
+        $admin = SuperAdmin::where('mobile', $request->mobile)->first();
+
+        if (!$admin) {
+            return response()->json([
+                'is_active' => false,
+                'message' => 'Admin not found'
+            ], 404);
+        }
+
+        $record = SuperAdmin::where('super_admin_id', $admin->id)->latest()->first();
+
+        if (!$record) {
+            return response()->json([
+                'is_active' => false,
+                'message' => 'OTP not found'
+            ], 400);
+        }
+
+        if (now()->gt($record->expires_at)) {
+            return response()->json([
+                'is_active' => false,
+                'message' => 'OTP expired'
+            ], 400);
+        }
+
+        if (!\Hash::check($request->otp, $record->otp)) {
+            return response()->json([
+                'is_active' => false,
+                'message' => 'Invalid OTP'
+            ], 400);
+        }
+
+        $token = $admin->createToken('admin_token')->plainTextToken;
+
+        $record->delete();
+
+        return response()->json([
+            'is_active' => true,
+            'message' => 'Login success',
+            'token' => $token,
+            'admin' => $admin
+        ]);
+    }
+
+    ///   DBUG FUNCTION ///
+//      public function verifyMobileOtp(Request $request)
+// {
+//     $sessionOtp = session('otp');
+//     $sessionMobile = session('mobile');
+
+    //     \Log::info('VERIFY DEBUG', [
+//         'entered_otp' => $request->otp,
+//         'session_otp' => $sessionOtp,
+//         'entered_mobile' => $request->mobile,
+//         'session_mobile' => $sessionMobile
+//     ]);
+
+    //     if(!$sessionOtp){
+//         return response()->json([
+//             'status' => false,
+//             'message' => 'Session expired'
+//         ]);
+//     }
+
+    //     if($request->otp == $sessionOtp && $request->mobile == $sessionMobile){
+
+    //         session()->forget(['otp','mobile']);
+
+    //         return response()->json([
+//             'status' => true,
+//             'message' => 'OTP verified'
+//         ]);
+//     }
+
+    //     return response()->json([
+//         'status' => false,
+//         'message' => 'Invalid OTP'
+//     ]);
+// }
+
+
 }
