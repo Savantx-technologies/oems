@@ -168,7 +168,18 @@ Cached data includes:
 - options
 - correct option
 
-Student live exam uses cache-first retrieval and removes `correct_option` for non-mock exams before rendering.
+Student live exam uses cache-first retrieval and removes `correct_option` for non-mock exams before  
+......
+.
+
+
+
+
+
+
+
+..
+..rendering.
 
 ### 2. Cache Warm on Publish / Forget on Update
 

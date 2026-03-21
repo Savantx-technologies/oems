@@ -509,17 +509,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('answer/{id}/correct', [AdminResultController::class, 'markCorrect'])->name('answer.correct');
         Route::post('answer/{id}/wrong', [AdminResultController::class, 'markWrong'])->name('answer.wrong');
 
-        Route::get('elearning', [ElearningController::class, 'index'])->name('elearning.index');
-
-        Route::get('elearning/create', [ElearningController::class, 'create'])->name('elearning.create');
-
-        Route::post('elearning/store', [ElearningController::class, 'store'])->name('elearning.store');
-
-        Route::get('/elearning/{id}/edit', [ElearningController::class, 'edit'])->name('elearning.edit');
-
-        Route::put('/elearning/{id}', [ElearningController::class, 'update'])->name('elearning.update');
-
-        Route::delete('/elearning/{id}', [ElearningController::class, 'destroy'])->name('elearning.destroy');
+        Route::middleware('admin.section:elearning')->group(function () {
+            Route::get('elearning', [ElearningController::class, 'index'])->name('elearning.index');
+            Route::get('elearning/create', [ElearningController::class, 'create'])->name('elearning.create');
+            Route::post('elearning/store', [ElearningController::class, 'store'])->name('elearning.store');
+            Route::get('/elearning/{id}/edit', [ElearningController::class, 'edit'])->name('elearning.edit');
+            Route::put('/elearning/{id}', [ElearningController::class, 'update'])->name('elearning.update');
+            Route::delete('/elearning/{id}', [ElearningController::class, 'destroy'])->name('elearning.destroy');
+        });
 
     });
 });

@@ -126,24 +126,24 @@
                             <li>
                                 <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('student.elearning') ? 'text-white bg-white/10' : '' }}"
                                     href="{{ Route::has('student.elearning') ? route('student.elearning') : '#' }}">
-                                    E-Learning videos
+                                    Study Materials
                                 </a>
                             </li>
-                            <li>
+                            <!-- <li>
                                 <a href="https://www.oems.saneoverseas.in/e-leaning" target="_blank" rel="noopener"
                                     class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     style="white-space: nowrap;">
                                     E-Learning Content
                                     <i class="bi bi-box-arrow-up-right ml-1"></i>
                                 </a>
-                            </li>
+                            </li> -->
 
-                            <li>
+                            <!-- <li>
                                 <a href="{{ route('student.elearning') }}"
     class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10">
     E-Learning Content
 </a>
-                            </li>
+                            </li> -->
                         </ul>
                     </div>
                 </li>
