@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\PassageController;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
 
 // System, Utility, General
 use App\Http\Controllers\DemoRequestController;
@@ -68,6 +70,28 @@ Route::get('/clear-cache', function () {
     Artisan::call('view:clear');
     return "All caches cleared successfully!";
 })->name('clear.cache');
+
+Route::get('/redis-health', function () {
+    abort_unless(app()->environment(['local', 'staging']), 403, 'Unauthorized.');
+
+    $cacheKey = 'redis_health_check';
+    $cacheValue = 'ok_' . now()->timestamp;
+
+    Cache::put($cacheKey, $cacheValue, now()->addMinute());
+
+    return response()->json([
+        'status' => 'ok',
+        'redis_ping' => Redis::connection('default')->ping(),
+        'cache_store' => config('cache.default'),
+        'session_driver' => config('session.driver'),
+        'queue_connection' => config('queue.default'),
+        'cache_connection' => config('cache.stores.redis.connection'),
+        'session_connection' => config('session.connection'),
+        'queue_redis_connection' => config('queue.connections.redis.connection'),
+        'cache_roundtrip' => Cache::get($cacheKey),
+        'timestamp' => now()->toDateTimeString(),
+    ]);
+})->name('redis.health');
 
 // for storage link
 Route::get('/storage-link', function () {

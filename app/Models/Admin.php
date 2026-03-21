@@ -100,6 +100,7 @@ class Admin extends Authenticatable
             self::ROLE_SCHOOL_ADMIN,
             self::ROLE_SUB_ADMIN,
             self::ROLE_INVIGILATOR,
+            self::ROLE_STAFF,
         ]);
     }
 

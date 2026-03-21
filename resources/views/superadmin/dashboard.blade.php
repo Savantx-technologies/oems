@@ -100,10 +100,45 @@
             <div class="px-6 py-3 border-b border-gray-200 bg-white">
                 <h6 class="text-lg font-bold">Exam Participation Trends</h6>
             </div>
-            <div class="p-6 flex items-center justify-center bg-gray-50" style="min-height: 300px;">
-                <div class="text-center text-gray-500">
-                    <i class="bi bi-bar-chart-line text-5xl"></i>
-                    <p class="mt-2">Analytics Chart Placeholder</p>
+            <div class="p-6 bg-gray-50" style="min-height: 300px;">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-blue-600">Peak Attempts</p>
+                        <p class="mt-2 text-2xl font-bold text-gray-900">{{ $peakParticipation }}</p>
+                        <p class="mt-1 text-sm text-gray-500">Highest participation day in the last 7 days.</p>
+                    </div>
+                    <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-emerald-600">7 Day Attempts</p>
+                        <p class="mt-2 text-2xl font-bold text-gray-900">{{ collect($participationTrend)->sum('attempts') }}</p>
+                        <p class="mt-1 text-sm text-gray-500">Total exam attempts captured across schools.</p>
+                    </div>
+                    <div class="rounded-2xl border border-violet-100 bg-violet-50 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-violet-600">Today</p>
+                        <p class="mt-2 text-2xl font-bold text-gray-900">{{ collect($participationTrend)->last()['attempts'] ?? 0 }}</p>
+                        <p class="mt-1 text-sm text-gray-500">Attempts started today.</p>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-gray-200 bg-white p-5">
+                    <div class="flex items-end justify-between gap-3 h-48">
+                        @foreach($participationTrend as $point)
+                            <div class="flex-1 flex flex-col items-center justify-end gap-3">
+                                <span class="text-xs font-semibold text-gray-500">{{ $point['attempts'] }}</span>
+                                <div class="w-full max-w-[44px] rounded-t-xl bg-gradient-to-t from-blue-600 to-cyan-400 transition-all duration-300"
+                                    style="height: {{ $point['height'] }}%; min-height: 12px;"
+                                    title="{{ $point['full_date'] }}: {{ $point['attempts'] }} attempts"></div>
+                                <div class="text-center">
+                                    <p class="text-xs font-semibold text-gray-700">{{ $point['label'] }}</p>
+                                    <p class="text-[11px] text-gray-400">{{ $point['full_date'] }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between text-xs text-gray-500">
+                        <span>Daily attempts across all schools</span>
+                        <span>Last 7 days</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -116,42 +151,17 @@
                 <h6 class="text-lg font-bold">System Health</h6>
             </div>
             <div class="p-6">
-                <div class="mb-4">
-                    <div class="flex justify-between mb-1">
-                        <span class="text-sm font-medium">Server Load</span>
-                        <span class="text-sm text-green-600">24%</span>
+                @foreach($systemHealth as $metric)
+                    <div class="{{ $loop->last ? 'mb-0' : 'mb-4' }}">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium">{{ $metric['label'] }}</span>
+                            <span class="text-sm text-{{ $metric['color'] }}-600">{{ $metric['value'] }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-1.5">
+                            <div class="bg-{{ $metric['color'] }}-600 h-1.5 rounded-full" style="width: {{ $metric['percentage'] }}%"></div>
+                        </div>
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-1.5">
-                        <div class="bg-green-600 h-1.5 rounded-full" style="width: 24%"></div>
-                    </div>
-                </div>
-                <div class="mb-4">
-                    <div class="flex justify-between mb-1">
-                        <span class="text-sm font-medium">Database Connections</span>
-                        <span class="text-sm text-blue-600">45%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-1.5">
-                        <div class="bg-blue-600 h-1.5 rounded-full" style="width: 45%"></div>
-                    </div>
-                </div>
-                <div class="mb-4">
-                    <div class="flex justify-between mb-1">
-                        <span class="text-sm font-medium">Redis Queue</span>
-                        <span class="text-sm text-yellow-600">68%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-1.5">
-                        <div class="bg-yellow-600 h-1.5 rounded-full" style="width: 68%"></div>
-                    </div>
-                </div>
-                <div class="mb-0">
-                    <div class="flex justify-between mb-1">
-                        <span class="text-sm font-medium">Storage Usage</span>
-                        <span class="text-sm text-cyan-600">82%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-1.5">
-                        <div class="bg-cyan-600 h-1.5 rounded-full" style="width: 82%"></div>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </div>
     </div>

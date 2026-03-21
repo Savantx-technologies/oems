@@ -48,6 +48,7 @@ class ExamMonitorBlockController extends Controller
                 Admin::ROLE_SCHOOL_ADMIN,
                 Admin::ROLE_SUB_ADMIN,
                 Admin::ROLE_INVIGILATOR,
+                Admin::ROLE_STAFF,
             ])
             ->orderBy('name')
             ->get();

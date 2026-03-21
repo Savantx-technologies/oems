@@ -178,7 +178,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Default Exam Instructions</label>
-                    <textarea name="exam_rules[default_instructions]" rows="4" class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter default instructions...">{{ old('exam_rules.default_instructions', $rules['default_instructions'] ?? "1. Read all questions carefully.\n2. Do not switch tabs.") }}</textarea>
+                    <textarea name="exam_rules[default_instructions]" rows="4" class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter default instructions...">{{ old('exam_rules.default_instructions', $rules['default_instructions'] ?? " Read all questions carefully.\nDo not switch tabs.") }}</textarea>
                 </div>
             </div>
         </div>

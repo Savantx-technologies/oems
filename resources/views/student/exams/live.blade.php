@@ -14,7 +14,68 @@
         .palette-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
     </style>
 </head>
-<body class="bg-gray-50 h-screen flex flex-col overflow-hidden select-none" x-data="examApp()" x-init="init()">
+<body class="bg-gray-50 h-screen flex flex-col overflow-hidden select-none" @if(!($preExamMode ?? false)) x-data="examApp()" x-init="init()" @endif>
+    @if($preExamMode ?? false)
+    <div class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+        <div class="w-full max-w-4xl bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+            <div class="px-8 py-6 bg-slate-900 text-white">
+                <p class="text-xs uppercase tracking-[0.2em] text-slate-300">Exam Instructions</p>
+                <h1 class="mt-2 text-3xl font-semibold">{{ $exam->title }}</h1>
+                <p class="mt-2 text-sm text-slate-300">{{ $exam->subject }} | Class {{ $exam->class }}</p>
+            </div>
+
+            <div class="p-8 space-y-6">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                        @if(($instructionSource ?? 'none') === 'exam')
+                            Exam Specific Instructions
+                        @elseif(($instructionSource ?? 'none') === 'school')
+                            School Exam Default Instructions
+                        @elseif(($instructionSource ?? 'none') === 'global')
+                            Global Default Instructions
+                        @else
+                            General Instructions
+                        @endif
+                    </span>
+                    <span class="text-sm text-slate-500">Please read carefully before starting the exam.</span>
+                </div>
+
+                @if(!empty($instructionItems))
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+                    <ol class="space-y-3 text-sm leading-6 text-slate-700 list-decimal list-inside">
+                        @foreach($instructionItems as $instruction)
+                        <li>{{ $instruction }}</li>
+                        @endforeach
+                    </ol>
+                </div>
+                @else
+                <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+                    No exam-specific or school default instructions were found for this exam.
+                </div>
+                @endif
+
+                <div class="rounded-2xl border border-slate-200 p-5">
+                    <h2 class="text-base font-semibold text-slate-900">What happens next</h2>
+                    <p class="mt-2 text-sm text-slate-600">
+                        After you continue, the system will ask for camera, microphone, and screen-sharing permissions.
+                        Your exam attempt will begin only after that step.
+                    </p>
+                </div>
+
+                <div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+                    <a href="{{ route('student.exams.index') }}"
+                        class="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                        Back to Upcoming Exams
+                    </a>
+                    <a href="{{ route('student.exams.live', ['id' => $exam->id, 'begin' => 1]) }}"
+                        class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700">
+                        Continue to Start Exam
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    @else
     
     <!-- Permissions Setup Screen -->
     <div x-show="!isSetupComplete" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center p-4 text-center" x-cloak>
@@ -612,5 +673,6 @@
             }
         }
     </script>
+    @endif
 </body>
 </html>

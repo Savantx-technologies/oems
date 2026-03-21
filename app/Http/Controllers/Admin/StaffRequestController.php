@@ -159,7 +159,7 @@ class StaffRequestController extends Controller
             'aadhaar_gender'       => $data['step1']['aadhaar_gender'] ?? null,
             'professional_details' => $data['step2'],
             'role'                 => $data['step3']['role'],
-            'password'             => $data['step3']['password'], // Already hashed
+            'password'             => $data['step3']['password'], 
             'status'               => 'pending_verification',
             'login_method'         => $data['step3']['login_method'],
             'two_factor'           => $data['step3']['two_factor'],

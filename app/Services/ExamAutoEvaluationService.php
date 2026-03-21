@@ -6,6 +6,7 @@ use App\Models\Question;
 use App\Models\UserExamAnswer;
 use Illuminate\Support\Facades\DB;
 use App\Models\ExamAttempt;
+use Illuminate\Support\Carbon;
 
 class ExamAutoEvaluationService
 {
@@ -38,6 +39,9 @@ class ExamAutoEvaluationService
         $totalCorrect = 0;
         $totalScore = 0;
 
+        $rows = [];
+        $timestamp = Carbon::now();
+
         foreach ($questionOrder as $questionId) {
 
             $question = $questions[$questionId] ?? null;
@@ -67,7 +71,7 @@ class ExamAutoEvaluationService
             }
 
             // Save student answer
-            UserExamAnswer::create([
+            $rows[] = [
                 'school_id' => $attempt->school_id,
                 'attempt_id' => $attempt->id,
                 'user_id' => $attempt->user_id,
@@ -75,8 +79,15 @@ class ExamAutoEvaluationService
                 'question_id' => $questionId,
                 'selected_option' => $selectedOption,
                 'is_correct' => $isCorrect ? 1 : 0,
+                'admin_checked' => 0,
                 'marks_awarded' => $marksAwarded,
-            ]);
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ];
+        }
+
+        if (!empty($rows)) {
+            UserExamAnswer::insert($rows);
         }
 
         // Score cannot be negative

@@ -20,7 +20,7 @@ class ExamMonitorAccess
                 ->all();
         }
 
-        if ($admin->role === Admin::ROLE_INVIGILATOR) {
+        if (in_array($admin->role, [Admin::ROLE_INVIGILATOR, Admin::ROLE_STAFF], true)) {
             return [];
         }
 
@@ -67,7 +67,7 @@ class ExamMonitorAccess
             return static::assignedStudentIdsForBlockIds($assignedBlockIds);
         }
 
-        if ($admin->role === Admin::ROLE_INVIGILATOR) {
+        if (in_array($admin->role, [Admin::ROLE_INVIGILATOR, Admin::ROLE_STAFF], true)) {
             return [];
         }
 

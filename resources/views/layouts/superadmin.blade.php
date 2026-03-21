@@ -278,7 +278,7 @@
                 @endif
 
                 <!-- Infrastructure -->
-                @if($superAdminUser?->isMainSuperAdmin())
+                <!-- @if($superAdminUser?->isMainSuperAdmin())
                 <li x-data="{ open: false }">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
@@ -295,7 +295,7 @@
                         </ul>
                     </div>
                 </li>
-                @endif
+                @endif -->
 
                 <!-- AI & Advanced -->
                 @if($superAdminUser?->isMainSuperAdmin())

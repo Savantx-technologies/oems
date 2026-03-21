@@ -12,8 +12,9 @@ use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Services\ExamAutoEvaluationService;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Models\Admin;
-use App\Models\Notification;
+use App\Models\Setting;
+use App\Jobs\SendExamViolationNotifications;
+use App\Support\ExamPayloadCache;
 
 class ExamController extends Controller
 {
@@ -73,7 +74,7 @@ class ExamController extends Controller
         return view('student.exams.history', compact('exams'));
     }
 
-    public function live($id)
+    public function live(Request $request, $id)
     {
         $student = Auth::user();
         $now = now();
@@ -83,6 +84,21 @@ class ExamController extends Controller
             ->where('status', 'published')
             ->with(['schedule'])
             ->firstOrFail();
+
+        $school = School::find($student->school_id);
+        [$instructionItems, $instructionSource] = $this->resolveLiveExamInstructions($exam, $school);
+
+        if ($exam->exam_type !== 'mock' && !$request->boolean('begin')) {
+            return view('student.exams.live', [
+                'exam' => $exam,
+                'instructionItems' => $instructionItems,
+                'instructionSource' => $instructionSource,
+                'preExamMode' => true,
+                'questionsData' => [],
+                'remainingSeconds' => 0,
+                'sessionToken' => '',
+            ]);
+        }
 
         // 1. Strict Schedule Validation (Skip for Mock)
         if ($exam->exam_type !== 'mock') {
@@ -166,45 +182,109 @@ class ExamController extends Controller
             $finalQuestionIds = is_string($savedOrder) ? json_decode($savedOrder, true) : $savedOrder;
         }
 
-        $questions = \App\Models\Question::whereIn('id', is_array($finalQuestionIds) ? $finalQuestionIds : [])->get();
+        $cachedQuestions = collect(ExamPayloadCache::getOrWarm($exam))->keyBy('id');
 
-        // Sort questions to match the persisted order
-        $questions = $questions->sortBy(function ($q) use ($finalQuestionIds) {
-            return array_search($q->id, $finalQuestionIds);
-        })->values();
+        $questionsData = collect(is_array($finalQuestionIds) ? $finalQuestionIds : [])
+            ->map(fn ($questionId) => $cachedQuestions->get((int) $questionId))
+            ->filter()
+            ->map(function ($question) use ($exam) {
+                if ($exam->exam_type !== 'mock') {
+                    unset($question['correct_option']);
+                }
 
-        // Prepare data for JS frontend
-        $questionsData = $questions->map(function ($q) use ($exam) {
-            $options = [];
-            if ($q->option_a)
-                $options[] = ['id' => 'A', 'text' => $q->option_a];
-            if ($q->option_b)
-                $options[] = ['id' => 'B', 'text' => $q->option_b];
-            if ($q->option_c)
-                $options[] = ['id' => 'C', 'text' => $q->option_c];
-            if ($q->option_d)
-                $options[] = ['id' => 'D', 'text' => $q->option_d];
-
-            $data = [
-                'id' => $q->id,
-                'text' => $q->question_text,
-                'marks' => $q->marks,
-                'options' => $options
-            ];
-
-            // For mock exams, send correct answer for local validation
-            if ($exam->exam_type === 'mock') {
-                $data['correct_option'] = $q->correct_option;
-            }
-
-            return $data;
-        })->values();
+                return $question;
+            })
+            ->values();
 
         if ($exam->exam_type === 'mock') {
             return view('student.exams.live_mock', compact('exam', 'questionsData', 'remainingSeconds', 'sessionToken'));
         }
 
-        return view('student.exams.live', compact('exam', 'attempt', 'questionsData', 'remainingSeconds', 'sessionToken'));
+        return view('student.exams.live', [
+            'exam' => $exam,
+            'attempt' => $attempt,
+            'questionsData' => $questionsData,
+            'remainingSeconds' => $remainingSeconds,
+            'sessionToken' => $sessionToken,
+            'instructionItems' => $instructionItems,
+            'instructionSource' => $instructionSource,
+            'preExamMode' => false,
+        ]);
+    }
+
+    private function resolveLiveExamInstructions(Exam $exam, ?School $school): array
+    {
+        $examInstructions = $this->normalizeInstructionItems($exam->instructions);
+
+        if (!empty($examInstructions)) {
+            return [$examInstructions, 'exam'];
+        }
+
+        $schoolRules = $this->decodeJsonPayload($school?->exam_rules);
+        $schoolInstructions = $this->normalizeInstructionItems(
+            is_array($schoolRules) ? data_get($schoolRules, 'default_instructions') : $schoolRules
+        );
+
+        if (!empty($schoolInstructions)) {
+            return [$schoolInstructions, 'school'];
+        }
+
+        $globalRules = $this->decodeJsonPayload(
+            Setting::query()->where('key', 'default_exam_rules')->value('value')
+        );
+        $globalInstructions = $this->normalizeInstructionItems(
+            is_array($globalRules) ? data_get($globalRules, 'default_instructions') : $globalRules
+        );
+
+        if (!empty($globalInstructions)) {
+            return [$globalInstructions, 'global'];
+        }
+
+        return [[], 'none'];
+    }
+
+    private function decodeJsonPayload($value)
+    {
+        while (is_string($value)) {
+            $decoded = json_decode($value, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                break;
+            }
+
+            $value = $decoded;
+        }
+
+        return $value;
+    }
+
+    private function normalizeInstructionItems($instructions): array
+    {
+        if (empty($instructions)) {
+            return [];
+        }
+
+        $instructions = $this->decodeJsonPayload($instructions);
+
+        if (is_string($instructions)) {
+            $instructions = preg_split("/\r\n|\n|\r/", $instructions) ?: [];
+        }
+
+        if (!is_array($instructions)) {
+            return [];
+        }
+
+        return collect($instructions)
+            ->map(function ($item) {
+                if (is_array($item)) {
+                    $item = implode(' ', array_filter($item, fn ($value) => is_scalar($value) && trim((string) $value) !== ''));
+                }
+
+                return trim((string) $item);
+            })
+            ->filter()
+            ->values()
+            ->all();
     }
     public function submit(Request $request, $id)
     {
@@ -289,19 +369,12 @@ class ExamController extends Controller
             'updated_at' => now(),
         ]);
 
-        // Notify Admins about the violation
-        $admins = Admin::where('school_id', $student->school_id)->get();
-        foreach ($admins as $admin) {
-            Notification::create([
-                'notifiable_id' => $admin->id,
-                'notifiable_type' => get_class($admin),
-                'title' => 'Violation Alert',
-                'message' => "Student {$student->name} ({$student->admission_number}) recorded a violation in exam '{$exam->title}'. Type: " . ucfirst($request->input('type')),
-                'type' => 'violation',
-                'data' => ['exam_id' => $exam->id, 'attempt_id' => $attempt->id],
-                'is_read' => 0
-            ]);
-        }
+        SendExamViolationNotifications::dispatch(
+            $student->id,
+            $exam->id,
+            $attempt->id,
+            (string) $request->input('type', 'unknown')
+        );
 
         // Check total violations
         $count = DB::table('exam_violations')->where('attempt_id', $attempt->id)->count();

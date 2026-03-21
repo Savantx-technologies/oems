@@ -113,7 +113,7 @@
 
                 <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                     <h2 class="mb-5 text-lg font-semibold text-gray-900">Default Instructions</h2>
-                    <textarea name="default_instructions" rows="6" class="w-full rounded-xl border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="Add the instructions that should appear on new exams...">{{ old('default_instructions', $rules['default_instructions'] ?? "1. Read all questions carefully.\n2. Do not leave the exam window.\n3. Ensure your camera and internet connection remain stable.") }}</textarea>
+                    <textarea name="default_instructions" rows="6" class="w-full rounded-xl border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="Add the instructions that should appear on new exams...">{{ old('default_instructions', $rules['default_instructions'] ?? " Read all questions carefully.\n Do not leave the exam window.\n Ensure your camera and internet connection remain stable.") }}</textarea>
                     @error('default_instructions')
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror

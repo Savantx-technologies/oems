@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Admin;
 use App\Models\Exam;
 use App\Models\Question;
+use App\Support\ExamPayloadCache;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -28,7 +29,7 @@ class ExamController extends Controller
         $query = Exam::with('schedule')
             ->where('school_id', $admin->school_id);
 
-        if ($admin->role === Admin::ROLE_INVIGILATOR) {
+        if (in_array($admin->role, [Admin::ROLE_INVIGILATOR, Admin::ROLE_STAFF], true)) {
             $query->whereHas('monitorBlocks', function ($blockQuery) use ($admin) {
                 $blockQuery->where('assignee_type', Admin::class)
                     ->where('assignee_id', $admin->id);
@@ -180,11 +181,15 @@ class ExamController extends Controller
             'total_marks' => $questions->sum('marks'),
         ]);
 
+        ExamPayloadCache::forget($exam->id);
+
         if ($exam->exam_type === 'mock') {
 
             $exam->update([
                 'status' => 'published'
             ]);
+
+            ExamPayloadCache::warm($exam->fresh());
 
             return redirect()
                 ->route('admin.exams.index')
@@ -215,6 +220,8 @@ class ExamController extends Controller
             'status' => 'published'
         ]);
 
+        ExamPayloadCache::warm($exam->fresh());
+
         return back();
     }
 
@@ -225,6 +232,7 @@ class ExamController extends Controller
         $exam = Exam::where('school_id', $admin->school_id)->findOrFail($id);
 
         $exam->update(['status' => 'closed']);
+        ExamPayloadCache::forget($exam->id);
 
         return back();
     }
@@ -266,6 +274,7 @@ class ExamController extends Controller
                 Admin::ROLE_SCHOOL_ADMIN,
                 Admin::ROLE_SUB_ADMIN,
                 Admin::ROLE_INVIGILATOR,
+                Admin::ROLE_STAFF,
             ])
             ->orderBy('name')
             ->get();
@@ -334,6 +343,12 @@ class ExamController extends Controller
                 array_values(array_filter($request->instructions ?? []))
             ),
         ]);
+
+        if ($exam->status === 'published') {
+            ExamPayloadCache::warm($exam->fresh());
+        } else {
+            ExamPayloadCache::forget($exam->id);
+        }
 
         return redirect()
             ->route('admin.exams.show', $exam->id)

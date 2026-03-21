@@ -94,7 +94,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Exam Instructions</label>
                     <textarea name="default_instructions" rows="5"
                         class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="Enter default instructions that will appear on all new exams...">{{ $rules['default_instructions'] ?? "1. Read all questions carefully.\n2. Do not switch tabs.\n3. Ensure stable internet connection." }}</textarea>
+                        placeholder="Enter default instructions that will appear on all new exams...">{{ $rules['default_instructions'] ?? " Read all questions carefully.\n Do not switch tabs.\n Ensure stable internet connection." }}</textarea>
                     <p class="text-xs text-gray-500 mt-1">These instructions will be pre-filled when creating a new exam.</p>
                 </div>
             </div>

@@ -89,6 +89,9 @@
                                 <option value="sub_admin" {{ old('role')=='sub_admin' ? 'selected' : '' }}>
                                     Sub Admin
                                 </option>
+                                <option value="invigilator" {{ old('role')=='invigilator' ? 'selected' : '' }}>
+                                    Invigilator
+                                </option>
                                 <option value="staff" {{ old('role')=='staff' ? 'selected' : '' }}>
                                     Staff
                                 </option>
