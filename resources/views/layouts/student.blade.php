@@ -30,6 +30,26 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
     <script>
+        function sidebarDropdown(key, isActive = false) {
+            return {
+                open: false,
+                init() {
+                    const savedState = localStorage.getItem(key);
+                    this.open = savedState === null ? isActive : savedState === 'true';
+
+                    if (isActive) {
+                        this.open = true;
+                    }
+
+                    this.$watch('open', (value) => {
+                        localStorage.setItem(key, value ? 'true' : 'false');
+                    });
+                }
+            };
+        }
+    </script>
+
+    <script>
         document.addEventListener('keydown', function(e) {
             // Block F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U
             if (
@@ -110,7 +130,7 @@
 
                 <!-- Dashboard -->
                 <li
-                    x-data="{ open: {{ request()->routeIs('student.dashboard') || request()->routeIs('student.elearning') ? 'true' : 'false' }} }">
+                    x-data="sidebarDropdown('student-dashboard', {{ request()->routeIs('student.dashboard') || request()->routeIs('student.elearning') ? 'true' : 'false' }})">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('student.dashboard') || request()->routeIs('student.elearning') ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-speedometer2 mr-2"></i> Dashboard</div>
@@ -149,7 +169,7 @@
                 </li>
 
                 <!-- My Exams -->
-                <li x-data="{ open: {{ request()->routeIs('student.exams.*') ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('student-exams', {{ request()->routeIs('student.exams.*') ? 'true' : 'false' }})">
                     @php $isExamsActive = request()->routeIs('student.exams.*'); @endphp
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $isExamsActive ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
@@ -183,14 +203,14 @@
 
                 <!-- Results & Certificates -->
                 <li
-                    x-data="{ open: {{ request()->routeIs('student.results.*') || request()->routeIs('student.solutions.*') || request()->routeIs('student.certificates.*') ? 'true' : 'false' }} }">
+                    x-data="sidebarDropdown('student-results', {{ request()->routeIs('student.results.*') || request()->routeIs('student.solutions.*') || request()->routeIs('student.certificates.*') ? 'true' : 'false' }})">
                     @php
                     $isResultsActive = request()->routeIs('student.results.*') ||
                     request()->routeIs('student.solutions.*') || request()->routeIs('student.certificates.*');
                     @endphp
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $isResultsActive ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
-                        <div><i class="bi bi-trophy mr-2"></i> Results & Certificates</div>
+                        <div><i class="bi bi-trophy mr-2"></i> Results </div>
                         <i class="bi bi-chevron-down text-xs transition-transform"
                             :class="open ? 'rotate-180' : ''"></i>
                     </a>
@@ -202,7 +222,7 @@
                                     Results / Scorecard
                                 </a>
                             </li>
-                            <li>
+                            <!-- <li>
                                 <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('student.solutions.*') ? 'text-white bg-white/10' : '' }}"
                                     href="{{ Route::has('student.solutions.index') ? route('student.solutions.index') : '#' }}">
                                     Solutions <span class="text-xs text-yellow-300 ml-1">(if allowed)</span>
@@ -213,7 +233,7 @@
                                     href="{{ Route::has('student.certificates.index') ? route('student.certificates.index') : '#' }}">
                                     Certificates (PDF)
                                 </a>
-                            </li>
+                            </li> -->
                         </ul>
                     </div>
                 </li>
@@ -251,12 +271,12 @@
                 </li>
 
                 <!-- Settings -->
-                <li>
+                <!-- <li>
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('student.settings') ? 'nav-link-active' : '' }}"
                         href="{{ Route::has('student.settings') ? route('student.settings') : '#' }}">
                         <div><i class="bi bi-gear mr-2"></i> Settings</div>
                     </a>
-                </li>
+                </li> -->
 
             </ul>
         </div>

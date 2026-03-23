@@ -42,8 +42,8 @@ $totalObtained = 0;
             </p>
 
             <p class="text-sm text-gray-600">
-                Ph: {{ $student->phone_number }} |
-                Email: {{ $student->email }}
+                Ph: {{ $school->contact_number }} |
+                Email: {{ $school->email }}
             </p>
 
             <h2 class="mt-4 text-lg font-bold text-gray-900">

@@ -150,6 +150,15 @@
     $first = $allAttempts->first();
     $totalMax = 0;
     $totalObtained = 0;
+    $schoolLogoPath = !empty($school?->logo) ? public_path('storage/' . $school->logo) : null;
+    $studentPhotoPath = !empty($student?->photo) ? public_path('storage/' . $student->photo) : null;
+    $maxPdfImagePixels = 12000000;
+
+    $schoolLogoSize = ($schoolLogoPath && file_exists($schoolLogoPath)) ? @getimagesize($schoolLogoPath) : false;
+    $studentPhotoSize = ($studentPhotoPath && file_exists($studentPhotoPath)) ? @getimagesize($studentPhotoPath) : false;
+
+    $hasSchoolLogo = $schoolLogoSize && (($schoolLogoSize[0] * $schoolLogoSize[1]) <= $maxPdfImagePixels);
+    $hasStudentPhoto = $studentPhotoSize && (($studentPhotoSize[0] * $studentPhotoSize[1]) <= $maxPdfImagePixels);
     @endphp
 
     <div class="container">
@@ -158,28 +167,38 @@
         <table width="100%">
             <tr>
                 <td width="20%">
-                    <img src="{{ public_path('storage/'.$school->logo) }}" class="logo">
+                    @if($hasSchoolLogo)
+                    <img src="{{ $schoolLogoPath }}" class="logo">
+                    @else
+                    <div style="font-size:11px;color:#666;">School Logo</div>
+                    @endif
                 </td>
 
                 <td width="60%" class="header">
-                    <div class="school-name">{{ $school->name }}</div>
+                    <div class="school-name">{{ $school->name ?? config('app.name') }}</div>
                     <div class="sub-text">
-                        Affiliated To : CBSE Board / Affiliation No : {{ $school->code }}
+                        Affiliated To : CBSE Board / Affiliation No : {{ $school->code ?? 'N/A' }}
                     </div>
                     <div class="sub-text">
-                        Ph {{ $student->phone_number ?? '' }} , Email : {{ $student->email ?? '' }}
+                        Ph: {{ $school->contact_number ?? 'N/A' }} , Email: {{ $school->email ?? 'N/A' }}
                     </div>
                     <div class="sub-text">
                         Academic Report
                     </div>
                     <div class="class-title">
-                        Academic Session : {{ $first->exam->academic_session }} <br>
+                        Academic Session : {{ $first?->exam?->academic_session ?? 'N/A' }} <br>
                         Class : {{ $student->grade }}
                     </div>
                 </td>
 
                 <td width="20%" align="right">
-                    <img src="{{ public_path('storage/'.$student->photo) }}" class="student-photo">
+                    @if($hasStudentPhoto)
+                    <img src="{{ $studentPhotoPath }}" class="student-photo">
+                    @else
+                    <div style="width:120px;height:140px;border:1px solid #999;text-align:center;line-height:140px;font-size:11px;">
+                        No Photo
+                    </div>
+                    @endif
                 </td>
             </tr>
         </table>
@@ -196,7 +215,7 @@
             </tr>
             <tr>
                 <td><strong>Mother's Name :</strong> {{ $student->mother_name ?? '' }}</td>
-                <td><strong>Date of Birth :</strong> {{ \Carbon\Carbon::parse($student->dob)->format('d/m/Y') }}</td>
+                <td><strong>Date of Birth :</strong> {{ $student->dob ? \Carbon\Carbon::parse($student->dob)->format('d/m/Y') : 'N/A' }}</td>
             </tr>
             <tr>
                 <td colspan="2"><strong>Address :</strong> {{ $student->address }}</td>

@@ -19,6 +19,26 @@
     <!-- Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
+    <script>
+        function sidebarDropdown(key, isActive = false) {
+            return {
+                open: false,
+                init() {
+                    const savedState = localStorage.getItem(key);
+                    this.open = savedState === null ? isActive : savedState === 'true';
+
+                    if (isActive) {
+                        this.open = true;
+                    }
+
+                    this.$watch('open', (value) => {
+                        localStorage.setItem(key, value ? 'true' : 'false');
+                    });
+                }
+            };
+        }
+    </script>
+
     <style>
         .sidebar-scroll::-webkit-scrollbar {
             width: 5px;
@@ -104,8 +124,8 @@
                 <!-- Admissions -->
                 @if($canManageStudents)
                 <li
-                    x-data="{ open: {{ request()->routeIs('admin.students.create') || request()->routeIs('admin.students.bulk_create') || request()->routeIs('admin.students.batch.assign') ? 'true' : 'false' }} }">
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                    x-data="sidebarDropdown('admin-admissions', {{ request()->routeIs('admin.students.create') || request()->routeIs('admin.students.bulk_create') || request()->routeIs('admin.students.batch.assign') ? 'true' : 'false' }})">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.students.create') || request()->routeIs('admin.students.bulk_create') || request()->routeIs('admin.students.batch.assign') ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-person-plus mr-2"></i> Admissions</div>
                         <i class="bi bi-chevron-down text-xs transition-transform"
@@ -128,7 +148,7 @@
 
                 <!-- Users (School Only) -->
                 @if($showUsersSection && ($canManageStudents || $canManageStaffRequests))
-                <li x-data="{ open: {{ $usersOpen ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('admin-users', {{ $usersOpen ? 'true' : 'false' }})">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $usersOpen ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-people mr-2"></i> Users</div>
@@ -175,7 +195,7 @@
 
                 <!-- Question Bank -->
                 @if($canManageQuestionBank)
-                <li x-data="{ open: {{ $questionOpen ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('admin-question-bank', {{ $questionOpen ? 'true' : 'false' }})">
                     <a class="flex items-center justify-between px-5 py-3
                         {{ $questionOpen ? 'text-white bg-white/10 border-l-4 border-indigo-500' : 'text-gray-400 border-l-4 border-transparent' }}
                         hover:bg-white/5 hover:text-white transition-colors" href="#" @click.prevent="open = !open">
@@ -214,7 +234,7 @@
 
                 <!-- Exams -->
                 @if($canManageExams)
-                <li x-data="{ open: {{ $examOpen ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('admin-exams', {{ $examOpen ? 'true' : 'false' }})">
                     <a class="flex items-center justify-between px-5 py-3
                             {{ $examOpen ? 'text-white bg-white/10 border-l-4 border-indigo-500' : 'text-gray-400 border-l-4 border-transparent' }}
                             hover:bg-white/5 hover:text-white transition-colors" href="#"
@@ -256,8 +276,8 @@
 
                 <!-- Live Exams -->
                 @if($canMonitorExams)
-                <li x-data="{ open: false }">
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                <li x-data="sidebarDropdown('admin-live-exams', {{ (request()->routeIs('admin.live-exams.index') || request()->routeIs('admin.exams.monitor') || request()->routeIs('admin.exams.monitor.data')) ? 'true' : 'false' }})">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ (request()->routeIs('admin.live-exams.index') || request()->routeIs('admin.exams.monitor') || request()->routeIs('admin.exams.monitor.data')) ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-camera-video mr-2"></i> Live Exams</div>
                         <i class="bi bi-chevron-down text-xs transition-transform"
@@ -288,8 +308,8 @@
 
                 <!-- Practice / Demo Exams -->
                 @if($canViewPracticeDemo)
-                <li x-data="{ open: false }">
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                <li x-data="sidebarDropdown('admin-practice-demo', {{ (request()->routeIs('admin.exams.practice') || request()->routeIs('admin.exams.solution') || request()->routeIs('admin.exams.practice.solutions')) ? 'true' : 'false' }})">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ (request()->routeIs('admin.exams.practice') || request()->routeIs('admin.exams.solution') || request()->routeIs('admin.exams.practice.solutions')) ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-laptop mr-2"></i> Practice / Demo</div>
                         <i class="bi bi-chevron-down text-xs transition-transform"
@@ -318,8 +338,8 @@
                 @endif
                 <!-- Elearning -->
                 @if(isset($canElearning) && $canElearning)
-                <li x-data="{ open: false }">
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                <li x-data="sidebarDropdown('admin-elearning', {{ request()->routeIs('admin.elearning.*') ? 'true' : 'false' }})">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.elearning.*') ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-laptop mr-2"></i> Elearning</div>
                         <i class="bi bi-chevron-down text-xs transition-transform"
@@ -341,8 +361,8 @@
 
                 <!-- Evaluation & Results -->
                 @if($canViewEvaluation)
-                <li x-data="{ open: false }">
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                <li x-data="sidebarDropdown('admin-evaluation', {{ (request()->routeIs('admin.results.*') || request()->routeIs('admin.results.attempts') || request()->routeIs('admin.results.view')) ? 'true' : 'false' }})">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ (request()->routeIs('admin.results.*') || request()->routeIs('admin.results.attempts') || request()->routeIs('admin.results.view')) ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-check2-square mr-2"></i> Evaluation</div>
                         <i class="bi bi-chevron-down text-xs transition-transform"
@@ -363,10 +383,10 @@
                                     Manual Checking
                                 </a>
                             </li>
-                            <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
+                            <!-- <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="#">Scorecards</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="#">Certificates</a></li>
+                                    href="#">Certificates</a></li> -->
                         </ul>
                     </div>
                 </li>
@@ -374,7 +394,7 @@
 
                 <!-- Reports -->
                 @if($canViewReports)
-                <li x-data="{ open: {{ request()->routeIs('admin.reports.*') ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('admin-reports', {{ request()->routeIs('admin.reports.*') ? 'true' : 'false' }})">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.reports.*') ? 'text-white bg-white/10 border-l-4 border-indigo-500' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-bar-chart mr-2"></i> Reports</div>
@@ -397,7 +417,7 @@
                 <!-- School Settings -->
                 @if($canManageSettings)
                 <li
-                    x-data="{ open: {{ request()->routeIs('admin.settings.school') || request()->routeIs('admin.settings.exam_rules') || request()->routeIs('admin.settings.notifications') ? 'true' : 'false' }} }">
+                    x-data="sidebarDropdown('admin-settings', {{ request()->routeIs('admin.settings.school') || request()->routeIs('admin.settings.exam_rules') || request()->routeIs('admin.settings.notifications') ? 'true' : 'false' }})">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.settings.school') || request()->routeIs('admin.settings.exam_rules') || request()->routeIs('admin.settings.notifications') ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-gear mr-2"></i> Settings</div>
@@ -419,8 +439,8 @@
 
                 <!-- Logs -->
                 @if($canViewLogs)
-                <li x-data="{ open: false }">
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                <li x-data="sidebarDropdown('admin-logs', {{ request()->routeIs('admin.security.logs') ? 'true' : 'false' }})">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.security.logs') ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-journal-text mr-2"></i> Logs</div>
                         <i class="bi bi-chevron-down text-xs transition-transform"

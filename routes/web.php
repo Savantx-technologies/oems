@@ -608,9 +608,8 @@ Route::prefix('student')->name('student.')->group(function () {
         Route::post('logout', [StudentLoginController::class, 'logout'])->name('logout');
         Route::view('profile', 'student.profile')->name('profile');
         Route::put('profile/password', [StudentProfileController::class, 'updatePassword'])->name('password.update');
+        Route::get('marksheet/download/{attemptId}', [StudentExamController::class, 'downloadMarksheet'])->name('marksheet.download');
     });
-
-    Route::get('marksheet/download/{attemptId}', [StudentExamController::class, 'downloadMarksheet'])->name('marksheet.download');
 
     Route::get('elearning', [StudentElearningController::class, 'index'])->name('elearning');
     Route::get('elearning/class/{class}', [StudentElearningController::class, 'classLessons'])->name('elearning.class');

@@ -3,6 +3,10 @@
 @section('title','Create Exam')
 
 @section('content')
+@php
+    $selectedClass = old('class', $lastExam->class ?? '');
+    $selectedSubject = old('subject', $lastExam->subject ?? '');
+@endphp
 @if($lastExam)
 
 <div class="flex items-start gap-3 bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-sm text-indigo-800">
@@ -118,7 +122,7 @@
                         <option value="">Select Subject</option>
 
                         @foreach($subjects as $sub)
-                        <option value="{{ $sub }}" {{ old('subject')==$sub ? 'selected' : '' }}>
+                        <option value="{{ $sub }}" {{ $selectedSubject == $sub ? 'selected' : '' }}>
                             {{ $sub }}
                         </option>
                         @endforeach
@@ -280,6 +284,9 @@
 </div>
 
 <script>
+    const classSubjects = @json($classSubjects);
+    const initialSelectedSubject = @json($selectedSubject);
+
     function addInstruction() {
     const div = document.createElement('div');
     div.innerHTML = `
@@ -299,6 +306,33 @@ function showNewSubjectInput() {
     document.getElementById("subjectSelect").classList.add("hidden");
     document.getElementById("newSubjectInput").classList.remove("hidden");
 }
+
+function updateSubjectOptions(selectedSubject = "") {
+    const classSelect = document.getElementById("classSelect");
+    const subjectSelect = document.getElementById("subjectSelect");
+    const selectedClass = classSelect.value;
+    const subjects = classSubjects[selectedClass] || [];
+
+    subjectSelect.innerHTML = '<option value="">Select Subject</option>';
+
+    subjects.forEach((subject) => {
+        const option = document.createElement("option");
+        option.value = subject;
+        option.textContent = subject;
+
+        if (selectedSubject && selectedSubject === subject) {
+            option.selected = true;
+        }
+
+        subjectSelect.appendChild(option);
+    });
+}
+
+document.getElementById("classSelect").addEventListener("change", function() {
+    updateSubjectOptions();
+});
+
+updateSubjectOptions(initialSelectedSubject);
 
 </script>
 

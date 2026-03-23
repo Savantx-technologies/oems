@@ -21,6 +21,26 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <script>
+        function sidebarDropdown(key, isActive = false) {
+            return {
+                open: false,
+                init() {
+                    const savedState = localStorage.getItem(key);
+                    this.open = savedState === null ? isActive : savedState === 'true';
+
+                    if (isActive) {
+                        this.open = true;
+                    }
+
+                    this.$watch('open', (value) => {
+                        localStorage.setItem(key, value ? 'true' : 'false');
+                    });
+                }
+            };
+        }
+    </script>
+
 </head>
 
 <body class="bg-gray-50 h-full" x-data="{ sidebarOpen: window.innerWidth >= 1024 }">
@@ -60,7 +80,7 @@
 
                 <!-- School Management -->
                 @if($canManageSchools)
-                <li x-data="{ open: {{ request()->is('superadmin/schools*') ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('superadmin-schools', {{ request()->is('superadmin/schools*') ? 'true' : 'false' }})">
                     @php $isSchoolActive = request()->is('superadmin/schools*'); @endphp
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $isSchoolActive ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
@@ -91,7 +111,7 @@
 
                 <!-- Admin & Staff Control -->
                 @if($canManageAdmins)
-                <li x-data="{ open: {{ (request()->is('superadmin/admins*') || request()->is('superadmin/staff-requests*') || request()->is('superadmin/admin-requests*')) ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('superadmin-admins', {{ (request()->is('superadmin/admins*') || request()->is('superadmin/staff-requests*') || request()->is('superadmin/admin-requests*')) ? 'true' : 'false' }})">
                     @php $isAdminActive = request()->is('superadmin/admins*') ||
                     request()->is('superadmin/staff-requests*') || request()->is('superadmin/admin-requests*'); @endphp
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $isAdminActive ? 'nav-link-active' : '' }}"
@@ -118,7 +138,7 @@
 
                 <!-- Sub Super Admins -->
                 @if($canManageSubSuperAdmins)
-                <li x-data="{ open: {{ request()->is('superadmin/sub-superadmins*') ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('superadmin-sub-superadmins', {{ request()->is('superadmin/sub-superadmins*') ? 'true' : 'false' }})">
                     @php $isSubSuperAdminActive = request()->is('superadmin/sub-superadmins*'); @endphp
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $isSubSuperAdminActive ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
@@ -136,7 +156,7 @@
 
                 <!-- Roles & Permissions -->
                 @if($canManageRolePermissions)
-                <li x-data="{ open: {{ request()->routeIs('superadmin.roles-permissions.*') ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('superadmin-roles-permissions', {{ request()->routeIs('superadmin.roles-permissions.*') ? 'true' : 'false' }})">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('superadmin.roles-permissions.*') ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-shield-lock mr-2"></i> Roles & Permissions</div>
@@ -152,7 +172,7 @@
 
                 <!-- Student Control -->
                 @if($canManageStudents)
-                <li x-data="{ open: {{ request()->routeIs('superadmin.students.*') ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('superadmin-students', {{ request()->routeIs('superadmin.students.*') ? 'true' : 'false' }})">
                     @php $isStudentActive = request()->routeIs('superadmin.students.*'); @endphp
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $isStudentActive ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
@@ -175,7 +195,7 @@
 
                 <!-- Exam Control -->
                 @if($canManageExams)
-                <li x-data="{ open: {{ request()->routeIs('superadmin.exams.*') ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('superadmin-exams', {{ request()->routeIs('superadmin.exams.*') ? 'true' : 'false' }})">
                     @php $isExamActive = request()->routeIs('superadmin.exams.*'); @endphp
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $isExamActive ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
@@ -193,8 +213,8 @@
 
                 <!-- Live Monitoring -->
                 @if($canMonitorLive)
-                <li x-data="{ open: false }">
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                <li x-data="sidebarDropdown('superadmin-live-monitoring', {{ (request()->routeIs('superadmin.exams.monitor') || request()->routeIs('superadmin.exams.monitor.data') || request()->routeIs('superadmin.attempts.*') || request()->routeIs('superadmin.stream.*')) ? 'true' : 'false' }})">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ (request()->routeIs('superadmin.exams.monitor') || request()->routeIs('superadmin.exams.monitor.data') || request()->routeIs('superadmin.attempts.*') || request()->routeIs('superadmin.stream.*')) ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-camera-video mr-2"></i> Live Monitoring</div>
                         <i class="bi bi-chevron-down text-xs transition-transform" :class="open ? 'rotate-180' : ''"></i>
@@ -214,7 +234,7 @@
 
                 <!-- Reports & Analytics -->
                 @if($canViewReports)
-                <li x-data="{ open: {{ request()->routeIs('superadmin.reports.*') ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('superadmin-reports', {{ request()->routeIs('superadmin.reports.*') ? 'true' : 'false' }})">
                     @php $isReportsActive = request()->routeIs('superadmin.reports.*'); @endphp
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $isReportsActive ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
@@ -234,7 +254,7 @@
 
                 <!-- Logs & Security -->
                 @if($canViewLogs)
-                <li x-data="{ open: {{ request()->routeIs('superadmin.security.logs') ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('superadmin-logs', {{ request()->routeIs('superadmin.security.logs') ? 'true' : 'false' }})">
                     @php $isLogsActive = request()->routeIs('superadmin.security.logs'); @endphp
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ $isLogsActive ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
@@ -255,7 +275,7 @@
 
                 <!-- System Configuration -->
                 @if($canManageSettings)
-                <li x-data="{ open: {{ request()->routeIs('superadmin.settings.*') ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('superadmin-settings', {{ request()->routeIs('superadmin.settings.*') ? 'true' : 'false' }})">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('superadmin.settings.*') ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-gear mr-2"></i> System Config</div>
@@ -273,14 +293,14 @@
                                     href="{{ route('superadmin.settings.system') }}">General Settings</a>
                             </li>
                         </ul>
-                    </div>
+                    </div>W
                 </li>
                 @endif
 
                 <!-- Infrastructure -->
                 <!-- @if($superAdminUser?->isMainSuperAdmin())
-                <li x-data="{ open: false }">
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
+                <li x-data="sidebarDropdown('superadmin-ai-advanced', {{ request()->routeIs('superadmin.ai-advanced.*') ? 'true' : 'false' }})">
+                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('superadmin.ai-advanced.*') ? 'nav-link-active' : '' }}"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-server mr-2"></i> Infrastructure</div>
                         <i class="bi bi-chevron-down text-xs transition-transform" :class="open ? 'rotate-180' : ''"></i>
@@ -305,7 +325,7 @@
                         <div class="flex items-center gap-2">
                             <span><i class="bi bi-cpu mr-2"></i> AI & Advanced</span>
                             <span class="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300">Soon</span>
-                        </div>
+ S                       </div>
                         <i class="bi bi-chevron-down text-xs transition-transform" :class="open ? 'rotate-180' : ''"></i>
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
@@ -340,7 +360,7 @@
                 @endif
 
                 <!-- Profile & Access -->
-                <li x-data="{ open: {{ (request()->routeIs('superadmin.profile') || ($canViewLogs && request()->routeIs('superadmin.security.logs'))) ? 'true' : 'false' }} }">
+                <li x-data="sidebarDropdown('superadmin-profile-access', {{ (request()->routeIs('superadmin.profile') || ($canViewLogs && request()->routeIs('superadmin.security.logs'))) ? 'true' : 'false' }})">
                     <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent"
                         href="#" @click.prevent="open = !open">
                         <div><i class="bi bi-person-circle mr-2"></i> Profile & Access</div>
@@ -424,6 +444,5 @@
 </body>
 
 </html>
-
 
 

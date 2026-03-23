@@ -69,25 +69,42 @@ class ExamController extends Controller
     {
         $admin = auth('admin')->user();
 
-        $classes = Question::where('school_id', $admin->school_id)
-            ->select('class')
-            ->distinct()
+        $questionPairs = Question::where('school_id', $admin->school_id)
+            ->select('class', 'subject')
+            ->whereNotNull('class')
+            ->whereNotNull('subject')
             ->orderBy('class')
-            ->pluck('class');
-
-        $subjects = Question::where('school_id', $admin->school_id)
-            ->select('subject')
-            ->distinct()
             ->orderBy('subject')
-            ->pluck('subject');
+            ->get();
+
+        $classes = $questionPairs
+            ->pluck('class')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $classSubjects = $questionPairs
+            ->groupBy('class')
+            ->map(function ($rows) {
+                return $rows->pluck('subject')
+                    ->filter()
+                    ->unique()
+                    ->values();
+            });
 
         //  Fetch last exam (for auto-fill)
         $lastExam = Exam::where('school_id', $admin->school_id)
             ->latest()
             ->first();
 
+        $selectedClass = old('class', $lastExam->class ?? null);
+        $subjects = $selectedClass
+            ? ($classSubjects->get($selectedClass) ?? collect())
+            : collect();
+
         return view('admin.exams.create', compact(
             'classes',
+            'classSubjects',
             'subjects',
             'lastExam'
         ));

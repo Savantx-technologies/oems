@@ -64,8 +64,12 @@
                             </div>
 
                                 <div>
-                                    <div class="font-bold text-gray-800 text-lg truncate w-48"
-                                        x-text="student.student_name"></div>
+                                    <div class="font-bold text-gray-800 text-lg truncate w-48 flex items-center gap-2">
+                                        <span x-text="student.student_name"></span>
+                                        <i class="bi bi-mic-fill"
+                                        :class="audioActive ? 'text-green-600' : 'text-gray-400'"
+                                        title="Microphone"></i>
+                                    </div>
                                     <div class="text-sm text-gray-500" x-text="student.admission_number"></div>
                                     <div class="text-xs font-mono mt-1 text-gray-400">
                                         Attempt: <span x-text="student.attempt_id ?? 'Not started'"></span>
@@ -155,6 +159,14 @@
                                 class="col-span-1 py-2 border rounded text-sm font-medium">
                                 Stop
                             </button>
+                            <button 
+                            @click="listenToStudent()"
+                            :class="Alpine.store('monitor').selectedAudioStudent === studentId 
+                                ? 'bg-green-600 text-white border-green-600' 
+                                : 'bg-green-50 text-green-600 border-green-200'"
+                            class="col-span-1 py-2 border rounded text-sm font-medium hover:bg-green-100">
+                            <i class="bi bi-headphones"></i> Listen
+                            </button>
                         </div>
                     </div>
                 </template>
@@ -171,6 +183,7 @@
                 selectedAudioStudent: null,
 
                 init() {
+                    Alpine.store('monitor').selectedAudioStudent = null;
                     this.fetchData();
                     this.pollInterval = setInterval(() => this.fetchData(), 5000);
                 },
@@ -237,9 +250,7 @@
         }
 
         function studentCard(studentId) {
-        function studentCard(studentId) {
             return {
-                studentId: studentId,
                 studentId: studentId,
                 streaming: false,
                 loading: false,

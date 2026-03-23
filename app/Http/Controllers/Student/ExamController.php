@@ -565,9 +565,14 @@ class ExamController extends Controller
             ->where('user_id', $student->id)
             ->firstOrFail();
 
+        if ($firstAttempt->approval_status !== 'approved') {
+            return redirect()
+                ->route('student.result', $firstAttempt->id)
+                ->with('error', 'Marksheet is only available for approved results.');
+        }
+
         $exam = $firstAttempt->exam;
 
-        // Fetch all subjects of same exam
         $allAttempts = ExamAttempt::with('exam')
             ->where('user_id', $student->id)
             ->whereHas('exam', function ($q) use ($exam) {
@@ -577,6 +582,10 @@ class ExamController extends Controller
             })
             ->where('approval_status', 'approved')
             ->get();
+
+        if ($allAttempts->isEmpty()) {
+            $allAttempts = collect([$firstAttempt]);
+        }
 
         $school = School::find($student->school_id);
 
