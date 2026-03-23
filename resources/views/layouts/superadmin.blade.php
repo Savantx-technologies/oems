@@ -293,7 +293,7 @@
                                     href="{{ route('superadmin.settings.system') }}">General Settings</a>
                             </li>
                         </ul>
-                    </div>W
+                    </div>
                 </li>
                 @endif
 
