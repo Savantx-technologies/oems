@@ -54,18 +54,18 @@
         <div class="flex-1 overflow-y-auto sidebar-scroll py-2">
             <ul class="flex flex-col space-y-1">
                 @php
-                    $superAdminUser = auth('superadmin')->user();
-                    $canViewDashboard = $superAdminUser?->canAccessSection('dashboard') ?? false;
-                    $canManageSchools = $superAdminUser?->canAccessSection('schools') ?? false;
-                    $canManageAdmins = $superAdminUser?->canAccessSection('admins') ?? false;
-                    $canManageSubSuperAdmins = $superAdminUser?->canAccessSection('sub_superadmins') ?? false;
-                    $canManageRolePermissions = $superAdminUser?->canAccessSection('roles_permissions') ?? false;
-                    $canManageStudents = $superAdminUser?->canAccessSection('students') ?? false;
-                    $canManageExams = $superAdminUser?->canAccessSection('exams') ?? false;
-                    $canMonitorLive = $superAdminUser?->canAccessSection('live_monitoring') ?? false;
-                    $canViewReports = $superAdminUser?->canAccessSection('reports') ?? false;
-                    $canViewLogs = $superAdminUser?->canAccessSection('logs') ?? false;
-                    $canManageSettings = $superAdminUser?->canAccessSection('settings') ?? false;
+                $superAdminUser = auth('superadmin')->user();
+                $canViewDashboard = $superAdminUser?->canAccessSection('dashboard') ?? false;
+                $canManageSchools = $superAdminUser?->canAccessSection('schools') ?? false;
+                $canManageAdmins = $superAdminUser?->canAccessSection('admins') ?? false;
+                $canManageSubSuperAdmins = $superAdminUser?->canAccessSection('sub_superadmins') ?? false;
+                $canManageRolePermissions = $superAdminUser?->canAccessSection('roles_permissions') ?? false;
+                $canManageStudents = $superAdminUser?->canAccessSection('students') ?? false;
+                $canManageExams = $superAdminUser?->canAccessSection('exams') ?? false;
+                $canMonitorLive = $superAdminUser?->canAccessSection('live_monitoring') ?? false;
+                $canViewReports = $superAdminUser?->canAccessSection('reports') ?? false;
+                $canViewLogs = $superAdminUser?->canAccessSection('logs') ?? false;
+                $canManageSettings = $superAdminUser?->canAccessSection('settings') ?? false;
                 @endphp
 
                 <!-- Dashboard -->
@@ -289,7 +289,7 @@
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.settings.anti-cheat-settings') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.settings.anti-cheat-settings') }}">Anti-Cheat Settings</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.settings.notification-templates') ? 'text-white bg-white/10' : '' }}" href="{{ route('superadmin.settings.notification-templates') }}">Notification Templates</a></li>
                             <li>
-                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.settings.system') ? 'text-white bg-white/10' : '' }}" 
+                                <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('superadmin.settings.system') ? 'text-white bg-white/10' : '' }}"
                                     href="{{ route('superadmin.settings.system') }}">General Settings</a>
                             </li>
                         </ul>
@@ -325,7 +325,7 @@
                         <div class="flex items-center gap-2">
                             <span><i class="bi bi-cpu mr-2"></i> AI & Advanced</span>
                             <span class="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300">Soon</span>
- S                       </div>
+                        </div>
                         <i class="bi bi-chevron-down text-xs transition-transform" :class="open ? 'rotate-180' : ''"></i>
                     </a>
                     <div x-show="open" x-collapse class="bg-black/20">
@@ -336,7 +336,7 @@
                                     <span class="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300">Soon</span>
                                 </span>
                             </li>
-                             <li>
+                            <li>
                                 <span class="flex items-center justify-between px-5 py-2 pl-11 text-sm text-gray-500 cursor-not-allowed">
                                     <span>Face Recognition Rules</span>
                                     <span class="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300">Soon</span>
@@ -398,13 +398,13 @@
                     <span class="font-bold text-gray-800">{{ auth('superadmin')->user()?->name ?? 'Super Admin' }}</span>
                 </div>
                 @include('partials.notification-dropdown', [
-                    'notifications' => $notificationPreviewItems ?? collect(),
-                    'unreadCount' => $unreadNotificationsCount ?? 0,
-                    'unreadCountRoute' => route('superadmin.notifications.unreadCount'),
-                    'allNotificationsUrl' => route('superadmin.notifications.index'),
-                    'refreshInterval' => 15000,
-                    'soundPreference' => $notificationSoundPreference ?? ['tone' => 'chime', 'custom_sound_name' => null, 'custom_sound_url' => null],
-                    'soundPreferenceUpdateUrl' => route('superadmin.notifications.soundPreference.update'),
+                'notifications' => $notificationPreviewItems ?? collect(),
+                'unreadCount' => $unreadNotificationsCount ?? 0,
+                'unreadCountRoute' => route('superadmin.notifications.unreadCount'),
+                'allNotificationsUrl' => route('superadmin.notifications.index'),
+                'refreshInterval' => 15000,
+                'soundPreference' => $notificationSoundPreference ?? ['tone' => 'chime', 'custom_sound_name' => null, 'custom_sound_url' => null],
+                'soundPreferenceUpdateUrl' => route('superadmin.notifications.soundPreference.update'),
                 ])
                 <!-- Profile Dropdown -->
                 <div class="relative" x-data="{ open: false }">
@@ -444,5 +444,3 @@
 </body>
 
 </html>
-
-
