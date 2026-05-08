@@ -62,10 +62,8 @@ use App\Http\Controllers\SuperAdmin\SystemSettingsController;
 // =========================
 // System Utility Routes
 // =========================
-Route::get('/clear-cache', function () {
-    if (!app()->environment(['local', 'staging', 'production'])) {
-        abort(403, 'Unauthorized.');
-    }
+Route::middleware(['auth:superadmin', 'superadmin.section:settings', 'throttle:2,1'])->group(function () {
+Route::match(['get', 'post'], '/clear-cache', function () {
     Artisan::call('cache:clear');
     Artisan::call('config:clear');
     Artisan::call('route:clear');
@@ -96,9 +94,10 @@ Route::get('/redis-health', function () {
 })->name('redis.health');
 
 // for storage link
-Route::get('/storage-link', function () {
+Route::match(['get', 'post'], '/storage-link', function () {
     Artisan::call('storage:link');
     return 'storage:link executed successfully';
+});
 });
 
 Route::view('/', 'welcome')->name('welcome');
@@ -114,13 +113,13 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
     // -- Guest SuperAdmin (Authentication) --
     Route::middleware('guest:superadmin')->group(function () {
         Route::get('login', [SuperAdminLoginController::class, 'showLoginForm'])->name('login');
-        Route::post('login', [SuperAdminLoginController::class, 'login'])->name('login.submit');
+        Route::post('login', [SuperAdminLoginController::class, 'login'])->middleware('throttle:5,1')->name('login.submit');
         Route::get('login-otp', [SuperAdminLoginController::class, 'showOtpForm'])->name('otp.form');
-        Route::post('login-otp', [SuperAdminLoginController::class, 'sendOtp'])->name('otp.send');
+        Route::post('login-otp', [SuperAdminLoginController::class, 'sendOtp'])->middleware('throttle:3,1')->name('otp.send');
         Route::get('verify-otp', [SuperAdminLoginController::class, 'showVerifyOtpForm'])->name('otp.verify.form');
-        Route::post('verify-otp', [SuperAdminLoginController::class, 'verifyOtp'])->name('otp.verify');
-        Route::post('send-mobile-otp', [SuperAdminLoginController::class, 'sendMobileOtp']);
-        Route::post('verify-mobile-otp', [SuperAdminLoginController::class, 'verifyMobileOtp']);
+        Route::post('verify-otp', [SuperAdminLoginController::class, 'verifyOtp'])->middleware('throttle:5,1')->name('otp.verify');
+        Route::post('send-mobile-otp', [SuperAdminLoginController::class, 'sendMobileOtp'])->middleware('throttle:3,1');
+        Route::post('verify-mobile-otp', [SuperAdminLoginController::class, 'verifyMobileOtp'])->middleware('throttle:5,1');
     });
 
     // -- Authenticated SuperAdmin Area --
@@ -322,14 +321,15 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
 Route::prefix('admin')->name('admin.')->group(function () {
 
     // -- Authentication & Security Logs --
-    Route::get('login', [AdminLoginController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [AdminLoginController::class, 'login'])->name('login.submit');
-    Route::post('send-otp', [AdminLoginController::class, 'sendOtp'])->name('send.otp');
-    Route::get('verify-otp', [AdminLoginController::class, 'otpForm'])->name('otp.verify.form');
-
-    Route::post('verify-otp', [AdminLoginController::class, 'verifyOtp'])->name('verify.otp');
-    Route::post('send-mobile-otp', [AdminLoginController::class, 'sendMobileOtp'])->name('send.mobile.otp');
-    Route::post('verify-mobile-otp', [AdminLoginController::class, 'verifyMobileOtp'])->name('verify.mobile.otp');
+    Route::middleware('guest:admin')->group(function () {
+        Route::get('login', [AdminLoginController::class, 'showLoginForm'])->name('login');
+        Route::post('login', [AdminLoginController::class, 'login'])->middleware('throttle:5,1')->name('login.submit');
+        Route::post('send-otp', [AdminLoginController::class, 'sendOtp'])->middleware('throttle:3,1')->name('send.otp');
+        Route::get('verify-otp', [AdminLoginController::class, 'otpForm'])->name('otp.verify.form');
+        Route::post('verify-otp', [AdminLoginController::class, 'verifyOtp'])->middleware('throttle:5,1')->name('verify.otp');
+        Route::post('send-mobile-otp', [AdminLoginController::class, 'sendMobileOtp'])->middleware('throttle:3,1')->name('send.mobile.otp');
+        Route::post('verify-mobile-otp', [AdminLoginController::class, 'verifyMobileOtp'])->middleware('throttle:5,1')->name('verify.mobile.otp');
+    });
     Route::get('security-logs', [AdminSecurityLogController::class, 'index'])->name('security.logs');
     Route::get('security-logs/export', [AdminSecurityLogController::class, 'export'])->name('security.logs.export');
 
@@ -526,7 +526,7 @@ Route::prefix('student')->name('student.')->group(function () {
     // -- Guest (Login) --
     Route::middleware('guest')->group(function () {
         Route::get('login', [StudentLoginController::class, 'showLoginForm'])->name('login');
-        Route::post('login', [StudentLoginController::class, 'login'])->name('login.submit');
+        Route::post('login', [StudentLoginController::class, 'login'])->middleware('throttle:5,1')->name('login.submit');
     });
 
     // -- Authenticated Student Area --

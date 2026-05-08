@@ -3,10 +3,10 @@
 @section('title', 'Edit Student')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 py-8 px-2 md:px-8">
+<div class="min-h-screen bg-gray-50 px-2 py-4 sm:px-4 md:px-8 md:py-8">
     <div class="max-w-6xl mx-auto">
         <!-- Page Header with Actions -->
-        <div class="bg-white rounded shadow px-6 py-6 mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="mb-6 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white px-4 py-5 shadow-sm sm:px-6 md:mb-8 md:flex-row md:items-center md:justify-between">
             <div class="flex items-center gap-3">
                 <span class="inline-flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full ring-2 ring-blue-400">
                     <!-- Pencil Icon from Heroicons -->
@@ -21,7 +21,7 @@
                 </div>
             </div>
             <div>
-                <a href="{{ route('admin.students.index') }}" class="bg-gray-100 text-gray-800 px-4 py-2 rounded flex items-center justify-center gap-2 hover:bg-gray-200 font-semibold border border-gray-300 transition">
+                <a href="{{ route('admin.students.index') }}" class="flex items-center justify-center gap-2 rounded-2xl border border-gray-300 bg-gray-100 px-4 py-2.5 font-semibold text-gray-800 transition hover:bg-gray-200">
                     <!-- Left arrow icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -32,7 +32,7 @@
         </div>
 
         <!-- Main Form -->
-        <div class="bg-white rounded shadow p-8">
+        <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 lg:p-8">
             @if(session('success'))
             <div class="mb-6 flex items-center p-4 rounded bg-green-100 text-green-800 relative">
                 <span class="flex-1">{{ session('success') }}</span>
@@ -191,13 +191,13 @@
                     </div>
                 </section>
 
-                <div class="flex items-center justify-end gap-3 pt-5">
+                <div class="flex flex-col justify-end gap-3 pt-5 sm:flex-row">
                     <a href="{{ route('admin.students.index') }}"
-                        class="px-5 py-2 bg-gray-100 border border-gray-300 text-gray-700 rounded hover:bg-gray-200 font-medium transition">
+                        class="rounded-2xl border border-gray-300 bg-gray-100 px-5 py-2.5 font-medium text-gray-700 transition hover:bg-gray-200">
                         Cancel
                     </a>
                     <button type="submit"
-                        class="px-6 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 shadow transition-colors flex items-center gap-2">
+                        class="flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-2.5 font-semibold text-white shadow transition-colors hover:bg-blue-700">
                         <!-- Save Icon from Heroicons -->
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />

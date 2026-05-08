@@ -126,8 +126,8 @@
             oscillator.stop(startTime + note.duration + 0.02);
         });
     }
-}" class="max-w-7xl mx-auto">
-    <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] mb-8">
+}" class="mx-auto max-w-7xl">
+    <div class="mb-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div class="rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-900 to-blue-700 p-6 text-white shadow-xl">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -169,7 +169,7 @@
                 <i class="bi bi-upload mr-2"></i> Upload short audio
                 <input type="file" class="hidden" accept="audio/*" @change="uploadCustomTone($event)">
             </label>
-            <div class="mt-2 flex items-center justify-between text-[11px] text-gray-500" x-show="customSoundName" x-cloak>
+            <div class="mt-2 flex items-center justify-between gap-2 text-[11px] text-gray-500" x-show="customSoundName" x-cloak>
                 <span class="truncate pr-3" x-text="customSoundName"></span>
                 <button type="button" @click="removeCustomTone()" class="font-medium text-red-600 hover:text-red-700">Remove</button>
             </div>
@@ -203,9 +203,9 @@
                     $iconClass = 'bi-file-earmark-plus';
                 }
             @endphp
-            <div class="flex flex-col gap-5 border-b border-gray-100 px-6 py-6 transition-colors last:border-b-0 {{ $notification->is_read ? 'bg-gray-50/60' : 'bg-white hover:bg-indigo-50/30' }} lg:flex-row lg:items-start">
+            <div class="flex flex-col gap-5 border-b border-gray-100 px-4 py-5 transition-colors last:border-b-0 sm:px-6 sm:py-6 {{ $notification->is_read ? 'bg-gray-50/60' : 'bg-white hover:bg-indigo-50/30' }} lg:flex-row lg:items-start">
                 <div class="flex items-start gap-4 flex-1 min-w-0">
-                    <div class="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl shadow-sm {{ $iconWrapperClass }}">
+                    <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl shadow-sm sm:h-14 sm:w-14 {{ $iconWrapperClass }}">
                         <i class="bi {{ $iconClass }} text-2xl"></i>
                     </div>
                     <div class="min-w-0 flex-1">
@@ -236,20 +236,20 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="mt-5 flex flex-wrap items-center gap-2">
+                        <div class="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                             @if($isStudentExam || $isSuperAdminExam)
-                                <a href="{{ route($readRoute, $notification->id) }}" class="inline-flex items-center rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"><i class="bi bi-box-arrow-up-right mr-2"></i> View Exam</a>
+                                <a href="{{ route($readRoute, $notification->id) }}" class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"><i class="bi bi-box-arrow-up-right mr-2"></i> View Exam</a>
                             @elseif($isAdminViolation)
-                                <a href="{{ route($readRoute, $notification->id) }}" class="inline-flex items-center rounded-xl bg-red-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-red-700"><i class="bi bi-camera-video mr-2"></i> Monitor Exam</a>
+                                <a href="{{ route($readRoute, $notification->id) }}" class="inline-flex items-center justify-center rounded-xl bg-red-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-red-700"><i class="bi bi-camera-video mr-2"></i> Monitor Exam</a>
                             @elseif($isAdminExam)
-                                <a href="{{ route($readRoute, $notification->id) }}" class="inline-flex items-center rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"><i class="bi bi-eye mr-2"></i> View Exam</a>
+                                <a href="{{ route($readRoute, $notification->id) }}" class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"><i class="bi bi-eye mr-2"></i> View Exam</a>
                             @endif
                             @if($notification->is_read)
-                                <form action="{{ route($markSingleUnreadRoute, $notification->id) }}" method="POST" class="m-0">@csrf<button type="submit" class="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-100"><i class="bi bi-arrow-counterclockwise mr-2"></i> Mark as unread</button></form>
+                                <form action="{{ route($markSingleUnreadRoute, $notification->id) }}" method="POST" class="m-0">@csrf<button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-100 sm:w-auto"><i class="bi bi-arrow-counterclockwise mr-2"></i> Mark as unread</button></form>
                             @else
-                                <form action="{{ route($markSingleReadRoute, $notification->id) }}" method="POST" class="m-0">@csrf<button type="submit" class="inline-flex items-center rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"><i class="bi {{ $panel === 'admin' ? 'bi-check2' : 'bi-eye' }} mr-2"></i> Mark as read</button></form>
+                                <form action="{{ route($markSingleReadRoute, $notification->id) }}" method="POST" class="m-0">@csrf<button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:w-auto"><i class="bi {{ $panel === 'admin' ? 'bi-check2' : 'bi-eye' }} mr-2"></i> Mark as read</button></form>
                             @endif
-                            <form action="{{ route($deleteRoute, $notification->id) }}" method="POST" class="m-0" onsubmit="return confirm('Delete this notification?');">@csrf @method('DELETE')<button type="submit" class="inline-flex items-center rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"><i class="bi bi-trash3 mr-2"></i> Delete</button></form>
+                            <form action="{{ route($deleteRoute, $notification->id) }}" method="POST" class="m-0" onsubmit="return confirm('Delete this notification?');">@csrf @method('DELETE')<button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100 sm:w-auto"><i class="bi bi-trash3 mr-2"></i> Delete</button></form>
                         </div>
                     </div>
                 </div>
@@ -266,5 +266,4 @@
     </div>
     <div class="mt-8 flex justify-center">{{ $notifications->links($paginationView ?? 'pagination::tailwind') }}</div>
 </div>
-
 

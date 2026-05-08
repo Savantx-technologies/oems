@@ -25,6 +25,8 @@ use Illuminate\Support\Facades\DB;
 
 class LoginController extends Controller
 {
+    private const LOCAL_LOGIN_OTP = '123456';
+
     /**
      * Show admin login form
      */
@@ -47,7 +49,7 @@ class LoginController extends Controller
 
             $admin = Admin::where('email', $request->email)->first();
 
-            $otp = rand(100000, 999999);
+            $otp = $this->generateLoginOtp();
 
             DB::table('admin_otps')->where('admin_id', $admin->id)->delete();
 
@@ -131,12 +133,19 @@ class LoginController extends Controller
 
 
         if (!$admin) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Account not found.'
+                ], 404);
+            }
+
             return back()->withErrors([
                 'email' => 'Account not found.'
             ]);
         }
 
-        $otp = random_int(100000, 999999);
+        $otp = $this->generateLoginOtp();
 
         AdminOtp::where('admin_id', $admin->id)->delete();
 
@@ -155,8 +164,18 @@ class LoginController extends Controller
         );
 
         session([
-            'admin_otp_id' => $admin->id
+            'admin_otp_id' => $admin->id,
+            // Used by the OTP verify page for "Resend OTP" UX.
+            'admin_otp_email' => $admin->email
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => true,
+                'message' => 'OTP sent successfully',
+                'redirect' => route('admin.otp.verify.form'),
+            ]);
+        }
 
         return redirect()->route('admin.otp.verify.form');
     }
@@ -173,6 +192,13 @@ class LoginController extends Controller
         $adminId = session('admin_otp_id');
 
         if (!$adminId) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Session expired.'
+                ], 401);
+            }
+
             return redirect()->route('admin.login');
         }
 
@@ -181,22 +207,45 @@ class LoginController extends Controller
             ->first();
 
         if (!$record) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'OTP not found.'
+                ], 404);
+            }
+
             return back()->withErrors(['otp' => 'OTP not found.']);
         }
 
         if (now()->greaterThan($record->expires_at)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'OTP expired.'
+                ], 400);
+            }
+
             return back()->withErrors(['otp' => 'OTP expired.']);
         }
 
         if (!Hash::check($request->otp, $record->otp)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid OTP.'
+                ], 400);
+            }
+
             return back()->withErrors(['otp' => 'Invalid OTP.']);
         }
 
         $admin = Admin::findOrFail($adminId);
 
         Auth::guard('admin')->login($admin);
+        $request->session()->regenerate();
 
         session()->forget('admin_otp_id');
+        session()->forget('admin_otp_email');
 
         $record->delete();
 
@@ -207,7 +256,24 @@ class LoginController extends Controller
             'Admin logged in using OTP'
         );
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Login successful',
+                'redirect' => route('admin.dashboard'),
+            ]);
+        }
+
         return redirect()->route('admin.dashboard');
+    }
+
+    private function generateLoginOtp(): string
+    {
+        if (app()->isLocal()) {
+            return self::LOCAL_LOGIN_OTP;
+        }
+
+        return (string) random_int(100000, 999999);
     }
 
     /**
@@ -339,6 +405,9 @@ class LoginController extends Controller
             ], 400);
         }
 
+        // Session-based login for the admin guard so protected pages work.
+        Auth::guard('admin')->login($admin);
+
         $token = $admin->createToken('admin_token')->plainTextToken;
 
         $record->delete();
@@ -347,7 +416,8 @@ class LoginController extends Controller
             'status' => true,
             'message' => 'Login success',
             'token' => $token,
-            'admin' => $admin
+            'admin' => $admin,
+            'redirect' => route('admin.dashboard'),
         ]);
     }
 

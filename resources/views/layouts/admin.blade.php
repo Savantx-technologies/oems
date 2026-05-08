@@ -40,6 +40,14 @@
     </script>
 
     <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
         .sidebar-scroll::-webkit-scrollbar {
             width: 5px;
         }
@@ -58,36 +66,79 @@
             color: #fff !important;
             background: rgba(255, 255, 255, 0.05);
             border-left-color: #3b82f6 !important;
-            /* blue-500 */
+        }
+
+        .admin-glass {
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(14px);
+        }
+
+        .mobile-safe-scroll {
+            -webkit-overflow-scrolling: touch;
         }
     </style>
 </head>
 
-<body class="bg-gray-50 h-full" x-data="{ sidebarOpen: window.innerWidth >= 1024 }">
+<body class="bg-gray-50 h-full text-gray-900"
+    x-data="{
+        sidebarOpen: window.innerWidth >= 1024,
+        isDesktop: window.innerWidth >= 1024,
+        init() {
+            const syncLayout = () => {
+                this.isDesktop = window.innerWidth >= 1024;
+                if (this.isDesktop) {
+                    this.sidebarOpen = true;
+                }
+            };
+
+            syncLayout();
+            window.addEventListener('resize', syncLayout);
+        },
+        closeSidebarOnMobile() {
+            if (!this.isDesktop) {
+                this.sidebarOpen = false;
+            }
+        }
+    }" x-cloak>
+
+    <div x-show="sidebarOpen && !isDesktop" x-transition.opacity @click="sidebarOpen = false"
+        class="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-[2px] lg:hidden"></div>
 
     <!-- Sidebar -->
-    <div class="fixed top-0 left-0 h-screen w-64 bg-gray-900 text-white flex flex-col z-50 transition-transform duration-300"
+    <div class="fixed top-0 left-0 z-50 flex h-screen w-72 max-w-[88vw] flex-col bg-slate-950 text-white shadow-2xl transition-transform duration-300"
         :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
-        <div class="p-5 bg-white/5 border-b border-white/10 shrink-0">
-            <div class="flex items-center justify-start">
+        <div class="shrink-0 border-b border-white/10 bg-gradient-to-b from-white/8 to-transparent px-4 py-4 sm:px-5">
+            <div class="flex items-center justify-between gap-3 lg:justify-start">
+                <div class="flex min-w-0 items-center justify-start">
                 @if(auth()->user()?->school?->logo)
+                <div class="mr-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-[10px] font-semibold uppercase tracking-wide text-cyan-200 sm:hidden">
+                    {{ strtoupper(substr(auth()->user()?->school?->name ?? 'EP', 0, 2)) }}
+                </div>
                 <img src="{{ asset('storage/' . auth()->user()->school->logo) }}" alt="School Logo"
-                    class="max-h-[50px] max-w-[60px] min-w-[40px] mr-4 bg-white rounded-md object-contain border border-gray-200">
+                    class="mr-3 hidden h-11 w-11 shrink-0 rounded-xl border border-white/10 bg-white/90 object-contain p-1 shadow-sm sm:block">
+                @else
+                <div class="mr-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-[10px] font-semibold uppercase tracking-wide text-cyan-200 sm:h-11 sm:w-11 sm:text-xs">
+                    {{ strtoupper(substr(auth()->user()?->school?->name ?? 'EP', 0, 2)) }}
+                </div>
                 @endif
                 <div class="flex flex-col items-start min-w-0">
                     <span
-                        class="text-white font-bold text-lg mb-0.5 leading-tight break-all w-[150px] whitespace-nowrap overflow-hidden text-ellipsis"
+                        class="mb-0.5 max-w-[145px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold leading-tight text-white sm:max-w-[165px] sm:text-base"
                         title="{{ auth()->user()?->school?->name }}">
-                        {{ Str::limit(auth()->user()?->school?->name ?? 'ExamPlatform Pro', 22) }}
+                        {{ Str::limit(auth()->user()?->school?->name ?? 'ExamPlatform Pro', 18) }}
                     </span>
-                    <span
-                        class="text-sm text-yellow-400 font-medium tracking-wide opacity-100 shadow-black drop-shadow-sm">
+                    <span class="text-[11px] font-medium uppercase tracking-[0.22em] text-cyan-300/85 sm:text-xs">
                         School Admin Panel
                     </span>
                 </div>
+                </div>
+                <button type="button" @click="sidebarOpen = false"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white lg:hidden">
+                    <i class="bi bi-x-lg text-sm"></i>
+                </button>
             </div>
         </div>
-        <div class="flex-1 overflow-y-auto sidebar-scroll py-2">
+        <div class="mobile-safe-scroll flex-1 overflow-y-auto sidebar-scroll py-3">
             <ul class="flex flex-col space-y-1">
                 @php
                 $adminUser = auth('admin')->user();
@@ -114,8 +165,8 @@
                 <!-- Dashboard -->
                 @if($showDashboard)
                 <li>
-                    <a class="flex items-center justify-between px-5 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent {{ request()->routeIs('admin.dashboard') ? 'nav-link-active' : '' }}"
-                        href="{{ route('admin.dashboard') }}">
+                    <a class="flex items-center justify-between border-l-4 border-transparent px-5 py-3 text-gray-400 transition-colors hover:bg-white/5 hover:text-white {{ request()->routeIs('admin.dashboard') ? 'nav-link-active' : '' }}"
+                        href="{{ route('admin.dashboard') }}" @click="closeSidebarOnMobile()">
                         <div><i class="bi bi-speedometer2 mr-2"></i> Dashboard</div>
                     </a>
                 </li>
@@ -134,13 +185,13 @@
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.students.create') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ route('admin.students.create') }}">New
+                                    href="{{ route('admin.students.create') }}" @click="closeSidebarOnMobile()">New
                                     Admission</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.students.bulk_create') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ route('admin.students.bulk_create') }}">Bulk Upload</a></li>
+                                    href="{{ route('admin.students.bulk_create') }}" @click="closeSidebarOnMobile()">Bulk Upload</a></li>
 
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.students.batch.assign') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ route('admin.students.batch.assign') }}">Batch Assignment</a></li>
+                                    href="{{ route('admin.students.batch.assign') }}" @click="closeSidebarOnMobile()">Batch Assignment</a></li>
                         </ul>
                     </div>
                 </li>
@@ -164,15 +215,15 @@
                             </li>
                             <li>
                                 <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.staff.index') || request()->routeIs('admin.staff.edit') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ route('admin.staff.index') }}">Manage Staff</a>
+                                    href="{{ route('admin.staff.index') }}" @click="closeSidebarOnMobile()">Manage Staff</a>
                             </li>
                             <li>
                                 <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.staff.create.*') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ route('admin.staff.create.step1') }}">Add Staff</a>
+                                    href="{{ route('admin.staff.create.step1') }}" @click="closeSidebarOnMobile()">Add Staff</a>
                             </li>
                             <li>
                                 <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="{{ route('admin.requests.staff.create') }}">Request Reset /
+                                    href="{{ route('admin.requests.staff.create') }}" @click="closeSidebarOnMobile()">Request Reset /
                                     Block</a>
                             </li>
                             @endif
@@ -181,7 +232,7 @@
                                 <div class="px-5 py-2 text-gray-500 text-xs uppercase font-bold mt-2">Students</div>
                             </li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.students.index') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ route('admin.students.index') }}">View
+                                    href="{{ route('admin.students.index') }}" @click="closeSidebarOnMobile()">View
                                     Students</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
                                     href="#">Reset Attempt</a></li>
@@ -211,7 +262,7 @@
                         <ul class="flex flex-col py-1">
 
                             <li>
-                                <a href="{{ route('admin.questions.index') }}" class="block px-5 py-2 pl-11 text-sm
+                                <a href="{{ route('admin.questions.index') }}" @click="closeSidebarOnMobile()" class="block px-5 py-2 pl-11 text-sm
                                 {{ request()->routeIs('admin.questions.index')
                                     ? 'text-white bg-white/10'
                                     : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
@@ -220,7 +271,7 @@
                             </li>
 
                             <li>
-                                <a href="{{ route('admin.questions.create') }}" class="block px-5 py-2 pl-11 text-sm
+                                <a href="{{ route('admin.questions.create') }}" @click="closeSidebarOnMobile()" class="block px-5 py-2 pl-11 text-sm
                                   {{ request()->routeIs('admin.questions.create')
                                     ? 'text-white bg-white/10'
                                     : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
@@ -251,7 +302,7 @@
                         <ul class="flex flex-col py-1">
 
                             <li>
-                                <a href="{{ route('admin.exams.create') }}" class="block px-5 py-2 pl-11 text-sm
+                                <a href="{{ route('admin.exams.create') }}" @click="closeSidebarOnMobile()" class="block px-5 py-2 pl-11 text-sm
                                     {{ request()->routeIs('admin.exams.create')
                                         ? 'text-white bg-white/10'
                                         : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
@@ -260,7 +311,7 @@
                             </li>
 
                             <li>
-                                <a href="{{ route('admin.exams.index') }}" class="block px-5 py-2 pl-11 text-sm
+                                <a href="{{ route('admin.exams.index') }}" @click="closeSidebarOnMobile()" class="block px-5 py-2 pl-11 text-sm
                                 {{ request()->routeIs('admin.exams.index')
                                     ? 'text-white bg-white/10'
                                     : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
@@ -286,7 +337,7 @@
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
                             <li>
-                                <a href="{{ route('admin.live-exams.index', ['filter' => 'live']) }}" class="block px-5 py-2 pl-11 text-sm 
+                                <a href="{{ route('admin.live-exams.index', ['filter' => 'live']) }}" @click="closeSidebarOnMobile()" class="block px-5 py-2 pl-11 text-sm 
                                         {{ request()->routeIs('admin.exams.monitor') || request()->routeIs('admin.live-exams.index')
                                     ? 'text-white bg-white/10'
                                     : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
@@ -318,14 +369,14 @@
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
                             <li>
-                                <a href="{{ route('admin.exams.practice') }}"
+                                <a href="{{ route('admin.exams.practice') }}" @click="closeSidebarOnMobile()"
                                     class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10">
                                     Practice Exam
                                 </a>
                             </li>
 
                             <li>
-                                <a href="{{ route('admin.exams.practice.solutions') }}"
+                                <a href="{{ route('admin.exams.practice.solutions') }}" @click="closeSidebarOnMobile()"
                                     class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10">
                                     Solution View
                                 </a>
@@ -349,7 +400,7 @@
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
                             <li>
-                                <a href="{{ route('admin.elearning.create') }}"
+                                <a href="{{ route('admin.elearning.create') }}" @click="closeSidebarOnMobile()"
                                     class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10">
                                     Add Elearning
                                 </a>
@@ -372,14 +423,14 @@
                         <ul class="flex flex-col py-1">
                             <li>
                                 <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.results.*') ? 'bg-white/10 text-white' : '' }}"
-                                    href="{{ route('admin.results.pending') }}">
+                                    href="{{ route('admin.results.pending') }}" @click="closeSidebarOnMobile()">
                                     Auto Evaluation
                                 </a>
                             </li>
 
                             <li>
                                 <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10"
-                                    href="{{ route('admin.results.attempts') }}">
+                                    href="{{ route('admin.results.attempts') }}" @click="closeSidebarOnMobile()">
                                     Manual Checking
                                 </a>
                             </li>
@@ -404,11 +455,11 @@
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.reports.index') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ route('admin.reports.index') }}">Overview</a></li>
+                                    href="{{ route('admin.reports.index') }}" @click="closeSidebarOnMobile()">Overview</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.reports.exams') || request()->routeIs('admin.reports.exams.detail') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ route('admin.reports.exams') }}">Exam Reports</a></li>
+                                    href="{{ route('admin.reports.exams') }}" @click="closeSidebarOnMobile()">Exam Reports</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.reports.analytics') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ route('admin.reports.analytics') }}">Performance Analytics</a></li>
+                                    href="{{ route('admin.reports.analytics') }}" @click="closeSidebarOnMobile()">Performance Analytics</a></li>
                         </ul>
                     </div>
                 </li>
@@ -427,11 +478,11 @@
                     <div x-show="open" x-collapse class="bg-black/20">
                         <ul class="flex flex-col py-1">
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.settings.school') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ route('admin.settings.school') }}">School Profile</a></li>
+                                    href="{{ route('admin.settings.school') }}" @click="closeSidebarOnMobile()">School Profile</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.settings.exam_rules') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ route('admin.settings.exam_rules') }}">Exam Rules</a></li>
+                                    href="{{ route('admin.settings.exam_rules') }}" @click="closeSidebarOnMobile()">Exam Rules</a></li>
                             <li><a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.settings.notifications') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ route('admin.settings.notifications') }}">Notification Settings</a></li>
+                                    href="{{ route('admin.settings.notifications') }}" @click="closeSidebarOnMobile()">Notification Settings</a></li>
                         </ul>
                     </div>
                 </li>
@@ -452,7 +503,7 @@
                                     href="#">Activity Logs</a></li>
                             <li>
                                 <a class="block px-5 py-2 pl-11 text-sm text-gray-400 hover:text-white hover:bg-white/10 {{ request()->routeIs('admin.security.logs') ? 'text-white bg-white/10' : '' }}"
-                                    href="{{ route('admin.security.logs') }}">
+                                    href="{{ route('admin.security.logs') }}" @click="closeSidebarOnMobile()">
                                     Login History
                                 </a>
                             </li>
@@ -465,27 +516,28 @@
 
             </ul>
         </div>
-        </li>
-        </ul>
-    </div>
-    </div>
+        </div>
 
     <!-- Main Content -->
-    <div class="min-h-screen flex flex-col transition-all duration-300" :class="sidebarOpen ? 'ml-64' : 'ml-0'">
+    <div class="min-h-screen flex flex-col transition-all duration-300"
+        :class="sidebarOpen && isDesktop ? 'lg:ml-72' : 'lg:ml-0'">
         <!-- Topbar -->
-        <nav class="bg-white px-8 py-4 shadow-sm flex justify-between items-center">
-            <div class="flex items-center gap-4">
+        <nav class="admin-glass sticky top-0 z-30 flex items-center justify-between border-b border-white/60 px-4 py-3 shadow-sm sm:px-6 lg:px-8">
+            <div class="flex min-w-0 items-center gap-3 sm:gap-4">
                 <button @click="sidebarOpen = !sidebarOpen"
-                    class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                    class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-gray-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900 focus:outline-none">
                     <i class="bi bi-list text-2xl"></i>
                 </button>
-                <h5 class="mb-0 text-gray-600 font-medium text-lg">@yield('title')</h5>
+                <div class="min-w-0">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">Admin Panel</p>
+                    <h5 class="mb-0 truncate text-base font-semibold text-slate-800 sm:text-lg">@yield('title')</h5>
+                </div>
             </div>
-            <div class="flex items-center">
-                <div class="text-right mr-4">
-                    <small class="block text-gray-500 leading-tight">Welcome, {{ auth()->user()->name ?? 'Admin'
+            <div class="flex items-center gap-2 sm:gap-4">
+                <div class="hidden text-right sm:block">
+                    <small class="block leading-tight text-gray-500">Welcome, {{ auth()->user()->name ?? 'Admin'
                         }}</small>
-                    <span class="font-bold text-gray-800">{{ auth()->user()?->school?->name ?? 'School' }}</span>
+                    <span class="block max-w-[220px] truncate font-semibold text-gray-800">{{ auth()->user()?->school?->name ?? 'School' }}</span>
                 </div>
                 @include('partials.notification-dropdown', [
                 'notifications' => $notificationPreviewItems ?? collect(),
@@ -500,7 +552,7 @@
                 <!-- Profile Dropdown -->
                 <div class="relative" x-data="{ open: false }">
                     <button
-                        class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border shadow-sm focus:outline-none"
+                        class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm focus:outline-none"
                         @click="open = !open" @click.away="open = false">
                         <i class="bi bi-person-fill text-gray-500 text-xl"></i>
                     </button>
@@ -531,7 +583,7 @@
         </nav>
 
         <!-- Page Content -->
-        <div class="p-8 flex-1">
+        <div class="flex-1 p-4 sm:p-6 lg:p-8">
             @yield('content')
         </div>
     </div>

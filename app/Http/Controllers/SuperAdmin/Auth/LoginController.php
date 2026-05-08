@@ -16,6 +16,8 @@ use App\Support\SecurityLogger;
 
 class LoginController extends Controller
 {
+    private const LOCAL_LOGIN_OTP = '123456';
+
     public function showLoginForm()
     {
         return view('superadmin.auth.login');
@@ -39,7 +41,8 @@ class LoginController extends Controller
 
             $admin = SuperAdmin::where('email', $request->email)->first();
 
-            $otp = rand(100000, 999999);
+            // Generate OTP for verification step.
+            $otp = $this->generateLoginOtp();
 
             // delete old OTP
             SuperAdminOtp::where('super_admin_id', $admin->id)->delete();
@@ -55,7 +58,11 @@ class LoginController extends Controller
             Mail::to($admin->email)->send(new SuperAdminOtpMail($otp));
 
             // store session
-            session(['superadmin_otp_id' => $admin->id]);
+            session([
+                'superadmin_otp_id' => $admin->id,
+                // Used for "Resend OTP" UX in verify page.
+                'superadmin_otp_email' => $admin->email
+            ]);
 
             SecurityLogger::log(
                 'superadmin',
@@ -116,12 +123,19 @@ class LoginController extends Controller
             ->first();
 
         if (!$admin) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Account not found.'
+                ], 404);
+            }
+
             return back()->withErrors([
                 'email' => 'Account not found.'
             ]);
         }
 
-        $otp = random_int(100000, 999999);
+        $otp = $this->generateLoginOtp();
 
         SuperAdminOtp::where('super_admin_id', $admin->id)->delete();
 
@@ -140,8 +154,18 @@ class LoginController extends Controller
         );
 
         session([
-            'superadmin_otp_id' => $admin->id
+            'superadmin_otp_id' => $admin->id,
+            // Used by the OTP verify page for "Resend OTP".
+            'superadmin_otp_email' => $admin->email
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => true,
+                'message' => 'OTP sent successfully',
+                'redirect' => route('superadmin.otp.verify.form')
+            ]);
+        }
 
         return redirect()->route('superadmin.otp.verify.form');
     }
@@ -163,6 +187,13 @@ class LoginController extends Controller
 
         $adminId = session('superadmin_otp_id');
         if (!$adminId) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Session expired.'
+                ], 401);
+            }
+
             return redirect()->route('superadmin.otp.form');
         }
         $record = SuperAdminOtp::where('super_admin_id', $adminId)
@@ -170,20 +201,42 @@ class LoginController extends Controller
             ->first();
 
         if (!$record) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'OTP not found.'
+                ], 404);
+            }
+
             return back()->withErrors(['otp' => 'OTP not found.']);
         }
 
         if (Carbon::now()->greaterThan($record->expires_at)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'OTP expired.'
+                ], 400);
+            }
+
             return back()->withErrors(['otp' => 'OTP expired.']);
         }
 
-        if (!\Hash::check($request->otp, $record->otp)) {
+        if (!Hash::check($request->otp, $record->otp)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid OTP.'
+                ], 400);
+            }
+
             return back()->withErrors(['otp' => 'Invalid OTP.']);
         }
 
         $admin = SuperAdmin::findOrFail($adminId);
 
         auth()->guard('superadmin')->login($admin);
+        $request->session()->regenerate();
         SecurityLogger::log(
             'superadmin',
             $admin->id,
@@ -192,9 +245,29 @@ class LoginController extends Controller
         );
 
         session()->forget('superadmin_otp_id');
+        session()->forget('superadmin_otp_email');
         $record->delete();
 
-        return redirect()->to($this->redirectPathFor($admin));
+        $redirect = $this->redirectPathFor($admin);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Login successful',
+                'redirect' => $redirect
+            ]);
+        }
+
+        return redirect()->to($redirect);
+    }
+
+    private function generateLoginOtp(): string
+    {
+        if (app()->isLocal()) {
+            return self::LOCAL_LOGIN_OTP;
+        }
+
+        return (string) random_int(100000, 999999);
     }
 
     private function redirectPathFor(SuperAdmin $admin): string
@@ -277,12 +350,13 @@ class LoginController extends Controller
 
         if (!$admin) {
             return response()->json([
+                'status' => false,
                 'is_active' => false,
                 'message' => 'Mobile not found'
             ], 404);
         }
 
-        $otp = rand(100000, 999999);
+        $otp = random_int(100000, 999999);
 
         SuperAdminOtp::where('super_admin_id', $admin->id)->delete();
 
@@ -296,12 +370,14 @@ class LoginController extends Controller
 
         if (!$smsSent) {
             return response()->json([
+                'status' => false,
                 'is_active' => false,
                 'message' => 'Failed to send OTP'
             ], 500);
         }
 
         return response()->json([
+            'status' => true,
             'is_active' => true,
             'message' => 'OTP sent successfully'
         ]);
@@ -364,15 +440,17 @@ class LoginController extends Controller
 
         if (!$admin) {
             return response()->json([
+                'status' => false,
                 'is_active' => false,
                 'message' => 'Admin not found'
             ], 404);
         }
 
-        $record = SuperAdmin::where('super_admin_id', $admin->id)->latest()->first();
+        $record = SuperAdminOtp::where('super_admin_id', $admin->id)->latest()->first();
 
         if (!$record) {
             return response()->json([
+                'status' => false,
                 'is_active' => false,
                 'message' => 'OTP not found'
             ], 400);
@@ -380,27 +458,31 @@ class LoginController extends Controller
 
         if (now()->gt($record->expires_at)) {
             return response()->json([
+                'status' => false,
                 'is_active' => false,
                 'message' => 'OTP expired'
             ], 400);
         }
 
-        if (!\Hash::check($request->otp, $record->otp)) {
+        if (!Hash::check($request->otp, $record->otp)) {
             return response()->json([
+                'status' => false,
                 'is_active' => false,
                 'message' => 'Invalid OTP'
             ], 400);
         }
 
-        $token = $admin->createToken('admin_token')->plainTextToken;
+        // Session-based login for the superadmin guard so protected pages work.
+        auth()->guard('superadmin')->login($admin);
 
         $record->delete();
 
         return response()->json([
+            'status' => true,
             'is_active' => true,
             'message' => 'Login success',
-            'token' => $token,
-            'admin' => $admin
+            'admin' => $admin,
+            'redirect' => $this->redirectPathFor($admin)
         ]);
     }
 

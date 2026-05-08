@@ -3,17 +3,18 @@
 @section('title', 'My Profile')
 
 @section('content')
-<div class="max-w-5xl mx-auto" x-data="{ passwordModalOpen: {{ $errors->any() ? 'true' : 'false' }} }">
+<div class="mx-auto max-w-6xl" x-data="{ passwordModalOpen: {{ $errors->any() ? 'true' : 'false' }} }">
     <!-- Header -->
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-800">My Profile</h1>
-        <p class="text-gray-500">Manage your account information and settings.</p>
+    <div class="mb-8 overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-900 to-blue-700 px-5 py-6 text-white shadow-xl sm:px-6">
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-blue-100/80">Profile Center</p>
+        <h1 class="mt-2 text-2xl font-bold sm:text-3xl">My Profile</h1>
+        <p class="mt-2 max-w-2xl text-sm text-blue-100/85">Manage your account information, academic details, and password from a cleaner mobile-friendly profile page.</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Left Column: Identity Card -->
         <div class="lg:col-span-1">
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center relative overflow-hidden">
+            <div class="relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-6 text-center shadow-sm">
                 <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
                 
                 <div class="relative z-10 -mt-12 mb-4">
@@ -34,7 +35,7 @@
                     @endif
                 </p>
 
-                <div class="flex justify-center gap-2 mb-6">
+                <div class="mb-6 flex flex-wrap justify-center gap-2">
                     <span class="px-3 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
                         Student
                     </span>
@@ -65,7 +66,7 @@
         <!-- Right Column: Details -->
         <div class="lg:col-span-2 space-y-6">
             <!-- Academic Info -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <i class="bi bi-mortarboard text-indigo-600"></i>
                     Academic Information
@@ -83,7 +84,7 @@
             </div>
 
             <!-- Personal Info -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <i class="bi bi-person-vcard text-indigo-600"></i>
                     Personal Details
@@ -105,8 +106,8 @@
             </div>
 
             <!-- Security Info -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center justify-between">
+            <div class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
                             <i class="bi bi-shield-lock text-indigo-600"></i>
@@ -114,7 +115,7 @@
                         </h3>
                         <p class="text-sm text-gray-500 mt-1">Update your password to keep your account secure.</p>
                     </div>
-                    <button @click="passwordModalOpen = true" class="px-4 py-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg text-sm font-medium hover:bg-indigo-100 transition">
+                    <button @click="passwordModalOpen = true" class="inline-flex items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-600 transition hover:bg-indigo-100">
                         Change Password
                     </button>
                 </div>
@@ -183,9 +184,9 @@
                         </div>
                     </div>
 
-                    <div class="mt-6 flex justify-end gap-3">
-                        <button type="button" @click="passwordModalOpen = false" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Cancel</button>
-                        <button type="submit" class="rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Update Password</button>
+                    <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <button type="button" @click="passwordModalOpen = false" class="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Cancel</button>
+                        <button type="submit" class="rounded-xl border border-transparent bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Update Password</button>
                     </div>
                 </form>
             </div>

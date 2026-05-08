@@ -3,15 +3,18 @@
 @section('title', 'Exam History')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-2 sm:px-4">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-2">
-        <h1 class="text-2xl font-bold text-gray-800">Exam History</h1>
-        <a href="{{ route('student.exams.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+<div class="mx-auto max-w-7xl space-y-6">
+    <div class="flex flex-col gap-4 rounded-3xl bg-white/80 p-5 shadow-sm ring-1 ring-gray-100 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-indigo-500/80">Completed Schedule</p>
+            <h1 class="mt-2 text-2xl font-bold text-gray-800">Exam History</h1>
+        </div>
+        <a href="{{ route('student.exams.index') }}" class="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50">
             <i class="bi bi-arrow-left mr-2"></i> Back to Upcoming
         </a>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
         {{-- Responsive Table: Hidden on small, used on md+ --}}
         <div class="hidden md:block">
             <div class="overflow-x-auto">
@@ -97,14 +100,14 @@
         {{-- Mobile Cards: Visible on sm and below --}}
         <div class="md:hidden">
             @forelse($exams as $exam)
-            <div class="border-b border-gray-100 px-4 py-2 flex flex-col gap-2">
+            <div class="space-y-3 border-b border-gray-100 px-4 py-4">
                 <div class="flex items-center justify-between">
-                    <span class="text-base font-semibold text-gray-800">{{ $exam->title }}</span>
-                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 bg-gray-100 text-gray-500 text-xs font-medium rounded border border-gray-200">
+                    <span class="pr-3 text-base font-semibold text-gray-800">{{ $exam->title }}</span>
+                    <span class="ml-2 inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
                         Expired
                     </span>
                 </div>
-                <div class="flex flex-col gap-1 text-sm">
+                <div class="grid grid-cols-1 gap-3 rounded-2xl bg-gray-50 p-4 text-sm">
                     <div>
                         <span class="font-medium text-gray-600">Subject:</span>
                         <span class="text-gray-800">{{ $exam->subject }}</span>
@@ -157,7 +160,7 @@
         </div>
         
         @if($exams->hasPages())
-        <div class="px-2 sm:px-6 py-4 border-t border-gray-100">
+        <div class="border-t border-gray-100 px-3 py-4 sm:px-6">
             {{ $exams->links() }}
         </div>
         @endif

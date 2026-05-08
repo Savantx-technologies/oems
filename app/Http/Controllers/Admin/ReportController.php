@@ -37,10 +37,21 @@ class ReportController extends Controller
         $admin = auth('admin')->user();
         $exam = Exam::where('school_id', $admin->school_id)->findOrFail($id);
 
-        $attempts = ExamAttempt::where('exam_id', $id)
+        $attemptsQuery = ExamAttempt::where('exam_id', $id)
             ->with('user')
-            ->latest()
-            ->paginate(20);
+            ->latest();
+
+        $attempts = (clone $attemptsQuery)->paginate(20);
+
+        $rankedAttempts = ExamAttempt::where('exam_id', $id)
+            ->with('user')
+            ->whereNotNull('submitted_at')
+            ->orderByDesc('score')
+            ->orderBy('submitted_at')
+            ->orderBy('id')
+            ->get();
+
+        $rankingMeta = $this->buildRankingMeta($rankedAttempts, $exam->total_marks);
 
         $totalAttempts = ExamAttempt::where('exam_id', $id)->count();
         
@@ -48,7 +59,10 @@ class ReportController extends Controller
         $avgScore = ExamAttempt::where('exam_id', $id)->avg('score') ?? 0;
         $maxScore = ExamAttempt::where('exam_id', $id)->max('score') ?? 0;
         $minScore = ExamAttempt::where('exam_id', $id)->min('score') ?? 0;
-        $passed   = ExamAttempt::where('exam_id', $id)->where('score', '>=', $exam->pass_marks)->count();
+        $passMarks = is_numeric($exam->pass_marks) ? (float) $exam->pass_marks : null;
+        $passed = $passMarks !== null
+            ? ExamAttempt::where('exam_id', $id)->where('score', '>=', $passMarks)->count()
+            : 0;
 
         return view('admin.reports.exam_detail', compact(
             'exam',
@@ -57,7 +71,8 @@ class ReportController extends Controller
             'avgScore',
             'maxScore',
             'minScore',
-            'passed'
+            'passed',
+            'rankingMeta'
         ));
     }
 
@@ -116,6 +131,16 @@ class ReportController extends Controller
             ->latest()
             ->get();
 
+        $rankedAttempts = ExamAttempt::where('exam_id', $id)
+            ->with('user')
+            ->whereNotNull('submitted_at')
+            ->orderByDesc('score')
+            ->orderBy('submitted_at')
+            ->orderBy('id')
+            ->get();
+
+        $rankingMeta = $this->buildRankingMeta($rankedAttempts, $exam->total_marks);
+
         $fileName = 'exam_report_' . $exam->id . '_' . now()->format('Ymd') . '.csv';
 
         $headers = [
@@ -123,13 +148,16 @@ class ReportController extends Controller
             'Content-Disposition' => "attachment; filename=\"$fileName\"",
         ];
 
-        $callback = function () use ($attempts, $exam) {
+        $callback = function () use ($attempts, $exam, $rankingMeta) {
             $file = fopen('php://output', 'w');
 
             // Header row
             fputcsv($file, [
                 'Student Name',
                 'Admission Number',
+                'Level',
+                'Overall Position',
+                'Level Position',
                 'Status',
                 'Score',
                 'Total Marks',
@@ -140,9 +168,13 @@ class ReportController extends Controller
             // Data rows
             foreach ($attempts as $attempt) {
                 $percentage = $exam->total_marks > 0 ? (($attempt->score ?? 0) / $exam->total_marks) * 100 : 0;
+                $attemptRank = $rankingMeta['attemptRanks'][$attempt->id] ?? null;
                 fputcsv($file, [
                     $attempt->user->name ?? 'Unknown Student',
                     $attempt->user->admission_number ?? '-',
+                    $attemptRank['level'] ?? ($attempt->user->grade ?? 'Unassigned'),
+                    $attemptRank['overall_rank'] ?? '-',
+                    $attemptRank['level_rank'] ?? '-',
                     ucfirst(str_replace('_', ' ', $attempt->status)),
                     $attempt->score ?? 0,
                     $exam->total_marks,
@@ -155,6 +187,46 @@ class ReportController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    private function buildRankingMeta($rankedAttempts, $totalMarks): array
+    {
+        $attemptRanks = [];
+        $levelGroups = [];
+        $overallTopper = null;
+
+        foreach ($rankedAttempts->values() as $index => $attempt) {
+            $level = $attempt->user?->grade ?: 'Unassigned';
+            $levelGroups[$level] ??= collect();
+
+            $levelRank = $levelGroups[$level]->count() + 1;
+            $overallRank = $index + 1;
+            $percentage = $totalMarks > 0
+                ? round((($attempt->score ?? 0) / $totalMarks) * 100, 2)
+                : 0;
+
+            $rankPayload = [
+                'attempt' => $attempt,
+                'overall_rank' => $overallRank,
+                'level_rank' => $levelRank,
+                'level' => $level,
+                'percentage' => $percentage,
+            ];
+
+            $attemptRanks[$attempt->id] = $rankPayload;
+            $levelGroups[$level]->push($rankPayload);
+
+            if ($overallTopper === null) {
+                $overallTopper = $rankPayload;
+            }
+        }
+
+        return [
+            'attemptRanks' => $attemptRanks,
+            'levelGroups' => collect($levelGroups)->sortKeys(),
+            'overallTopper' => $overallTopper,
+            'rankedCount' => count($attemptRanks),
+        ];
     }
 
     public function examViolations($id)

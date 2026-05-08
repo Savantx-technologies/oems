@@ -432,9 +432,7 @@
                         <li><a href="#contact" class="hover:text-indigo-400 transition">Contact</a></li>
                         <li><a href="{{ route('student.login') }}" class="hover:text-indigo-400 transition">Student Login</a></li>
                         <li><a href="{{ route('admin.login') }}" class="hover:text-indigo-400 transition">Admin Login</a></li>
-                        <li>
-                            <a href="{{ url('e-leaning') }}" class="hover:text-indigo-400 transition">E-Learning</a>
-                        </li>
+                        
                     </ul>
                 </div>
 
@@ -445,18 +443,17 @@
                         <li class="flex items-start gap-3">
                             <i class="bi bi-geo-alt text-indigo-500 mt-0.5"></i>
                             <span>
-                                Sane Overseas Pvt Ltd<br>
-                                Plot No-1634, Second floor<br>
-                                Sector-82 JLPL
+                                Mohali, Sector 71<br>
+                                Pincode: 160071
                             </span>
                         </li>
                         <li class="flex items-center gap-3">
                             <i class="bi bi-telephone text-indigo-500"></i>
-                            <a href="tel:01722972891" class="hover:text-white transition">0172-2972891</a>
+                            <a href="tel:9056425289" class="hover:text-white transition">9056425289</a>
                         </li>
                         <li class="flex items-center gap-3">
                             <i class="bi bi-envelope text-indigo-500"></i>
-                            <a href="mailto:info@saneoverseas.in" class="hover:text-white transition">info@saneoverseas.in</a>
+                            <a href="mailto:contact@savantxtechnologies.com" class="hover:text-white transition">contact@savantxtechnologies.com</a>
                         </li>
                     </ul>
                 </div>
@@ -512,7 +509,7 @@
         function demoForm() {
             return {
                 formData: {
-                    name: '',
+                    name: '',   
                     email: '',
                     institution: '',
                     phone: '',

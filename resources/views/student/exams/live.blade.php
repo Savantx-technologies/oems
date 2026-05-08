@@ -142,23 +142,34 @@
         </div>
     </div>
 
-    <div x-show="isSetupComplete" class="flex flex-col h-full w-full" x-cloak>
+    <div x-show="isSetupComplete" class="flex h-full w-full flex-col" x-cloak>
     <!-- Top Bar -->
-    <header class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 shrink-0 z-20">
-        <div class="flex items-center gap-4">
-            <div class="font-bold text-lg text-gray-800">{{ $exam->title }}</div>
-            <span class="px-2 py-1 bg-gray-100 text-xs rounded text-gray-600">{{ $exam->subject }}</span>
+    <header class="shrink-0 border-b border-gray-200 bg-white px-4 py-3 z-20 sm:px-6">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div class="min-w-0 flex items-center gap-3">
+            <button @click="paletteOpen = true" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm lg:hidden">
+                <i class="bi bi-grid"></i>
+            </button>
+            <div class="min-w-0">
+                <div class="truncate font-bold text-base text-gray-800 sm:text-lg">{{ $exam->title }}</div>
+                <div class="mt-1 flex flex-wrap items-center gap-2">
+                    <span class="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">{{ $exam->subject }}</span>
+                    <span class="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 lg:hidden">
+                        Q <span x-text="currentIndex + 1"></span>/<span x-text="questions.length"></span>
+                    </span>
+                </div>
+            </div>
         </div>
 
-        <div class="flex items-center gap-6">
+        <div class="flex items-center justify-between gap-4 sm:justify-end sm:gap-6">
             <!-- Timer -->
-            <div class="flex items-center gap-2 text-xl font-mono font-bold" 
+            <div class="flex items-center gap-2 text-lg font-mono font-bold sm:text-xl" 
                  :class="remainingSeconds < 300 ? 'text-red-600 animate-pulse' : 'text-blue-600'">
                 <i class="bi bi-stopwatch"></i>
                 <span x-text="formatTime(remainingSeconds)"></span>
             </div>
             
-            <div class="h-8 w-px bg-gray-300"></div>
+            <div class="hidden h-8 w-px bg-gray-300 sm:block"></div>
 
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
@@ -167,18 +178,20 @@
                 <span class="text-sm font-medium text-gray-700 hidden md:block">{{ auth()->user()->name }}</span>
             </div>
         </div>
+        </div>
     </header>
 
     <!-- Main Content -->
     <div class="flex-1 flex overflow-hidden">
+        <div x-show="paletteOpen" @click="paletteOpen = false" class="fixed inset-0 z-30 bg-slate-950/45 backdrop-blur-sm lg:hidden" x-cloak></div>
         
         <!-- Question Area -->
         <main class="flex-1 flex flex-col h-full relative">
-            <div class="flex-1 overflow-y-auto p-6 md:p-10" id="question-container">
-                <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-8 min-h-[400px]">
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 lg:p-10" id="question-container">
+                <div class="mx-auto min-h-[400px] max-w-3xl rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:rounded-3xl sm:p-8">
                     
                     <!-- Question Header -->
-                    <div class="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
+                    <div class="mb-6 flex flex-col gap-3 border-b border-gray-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
                         <span class="text-sm font-semibold text-gray-500 uppercase tracking-wide">
                             Question <span x-text="currentIndex + 1"></span> of <span x-text="questions.length"></span>
                         </span>
@@ -188,16 +201,16 @@
                     </div>
 
                     <!-- Question Text -->
-                    <div class="text-lg text-gray-900 font-medium mb-8 leading-relaxed" x-text="currentQuestion.text"></div>
+                    <div class="mb-8 text-base font-medium leading-relaxed text-gray-900 sm:text-lg" x-text="currentQuestion.text"></div>
 
                     <!-- Options -->
                     <div class="space-y-3">
                         <template x-for="option in currentQuestion.options" :key="option.id">
-                            <label class="flex items-center p-4 border rounded-lg cursor-pointer transition-all hover:bg-gray-50"
+                            <label class="flex cursor-pointer items-start rounded-xl border p-4 transition-all hover:bg-gray-50 sm:items-center"
                                    :class="answers[currentQuestion.id] === option.id ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-gray-200'">
                                 <input type="radio" :name="'q_' + currentQuestion.id" :value="option.id" 
-                                       x-model="answers[currentQuestion.id]" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
-                                <span class="ml-3 text-gray-700" x-text="option.text"></span>
+                                       x-model="answers[currentQuestion.id]" class="mt-1 h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500 sm:mt-0">
+                                <span class="ml-3 text-sm text-gray-700 sm:text-base" x-text="option.text"></span>
                             </label>
                         </template>
                     </div>
@@ -206,49 +219,66 @@
             </div>
 
             <!-- Bottom Navigation -->
-            <div class="bg-white border-t border-gray-200 p-4 flex justify-between items-center shrink-0">
+            <div class="shrink-0 border-t border-gray-200 bg-white p-4">
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <button @click="prevQuestion" :disabled="currentIndex === 0"
-                        class="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base">
                     <i class="bi bi-arrow-left"></i> Previous
                 </button>
 
-                <div class="flex gap-3">
-                    <button @click="clearSelection" class="px-4 py-2 text-sm text-red-600 hover:text-red-800 font-medium">
+                <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center xl:flex-1">
+                    <button @click="clearSelection" class="rounded-xl px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-800">
                         Clear Selection
                     </button>
-                    <button @click="markForReview" class="px-4 py-2 text-sm text-yellow-600 hover:text-yellow-800 font-medium flex items-center gap-1">
+                    <button @click="markForReview" class="inline-flex items-center justify-center gap-1 rounded-xl px-4 py-2 text-sm font-medium text-yellow-600 hover:bg-yellow-50 hover:text-yellow-800">
                         <i class="bi" :class="isMarkedForReview(currentQuestion.id) ? 'bi-flag-fill' : 'bi-flag'"></i>
                         <span x-text="isMarkedForReview(currentQuestion.id) ? 'Unmark Review' : 'Mark for Review'"></span>
                     </button>
+                    <button @click="paletteOpen = true" class="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 lg:hidden">
+                        <i class="bi bi-grid"></i> Open Palette
+                    </button>
                 </div>
 
-                <button @click="nextQuestion" x-show="currentIndex < questions.length - 1"
-                        class="px-6 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 flex items-center gap-2">
-                    Next <i class="bi bi-arrow-right"></i>
-                </button>
-
-                <form id="autoSubmitForm" x-show="currentIndex === questions.length - 1" method="POST" action="{{ route('student.exams.submit', $exam->id) }}" x-cloak @submit.prevent="openSubmitConfirm">
-                    @csrf
-                    <input type="hidden" name="set_code" value="A">
-                    <input type="hidden" name="answers" :value="JSON.stringify(answers)">
-                    <input type="hidden" name="session_token" :value="sessionToken">
-                    <button type="submit"
-                            class="px-6 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 flex items-center gap-2">
-                        Submit Exam <i class="bi bi-check-lg"></i>
+                <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                    <button @click="nextQuestion" x-show="currentIndex < questions.length - 1"
+                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 sm:text-base">
+                        Next <i class="bi bi-arrow-right"></i>
                     </button>
-                </form>
+
+                    <form id="autoSubmitForm" x-show="currentIndex === questions.length - 1" method="POST" action="{{ route('student.exams.submit', $exam->id) }}" x-cloak @submit.prevent="openSubmitConfirm">
+                        @csrf
+                        <input type="hidden" name="set_code" value="A">
+                        <input type="hidden" name="answers" :value="JSON.stringify(answers)">
+                        <input type="hidden" name="session_token" :value="sessionToken">
+                        <button type="submit"
+                                class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-700 sm:text-base">
+                            Submit Exam <i class="bi bi-check-lg"></i>
+                        </button>
+                    </form>
+                </div>
+                </div>
             </div>
         </main>
 
         <!-- Sidebar (Question Palette) -->
-        <aside class="w-72 bg-white border-l border-gray-200 flex flex-col shrink-0 z-10">
-            <div class="p-4 border-b border-gray-100 font-semibold text-gray-700">Question Palette</div>
+        <aside class="fixed inset-y-0 right-0 z-40 flex w-80 max-w-[88vw] flex-col border-l border-gray-200 bg-white shadow-2xl transition-transform duration-300 lg:static lg:w-72 lg:max-w-none lg:translate-x-0 lg:shadow-none"
+               :class="paletteOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'">
+            <div class="flex items-center justify-between border-b border-gray-100 p-4">
+                <div>
+                    <div class="font-semibold text-gray-700">Question Palette</div>
+                    <div class="mt-1 text-xs text-gray-500"><span x-text="Object.keys(answers).length"></span> answered</div>
+                </div>
+                <button @click="paletteOpen = false" class="rounded-xl p-2 text-gray-500 hover:bg-gray-100 lg:hidden">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
             
             <div class="flex-1 overflow-y-auto p-4 palette-scroll">
                 <div class="grid grid-cols-4 gap-3">
                     <template x-for="(q, index) in questions" :key="q.id">
                         <button @click="currentIndex = index"
-                                class="w-10 h-10 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors border"
+                                class="relative flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-semibold transition-colors"
+                                @click="paletteOpen = false"
                                 :class="getPaletteClass(index, q.id)">
                             <span x-text="index + 1"></span>
                             <!-- Review Indicator -->
@@ -291,6 +321,7 @@
                 peerConnection: null,
                 showViolationWarning: false,
                 violationMessage: '',
+                paletteOpen: false,
 
                 peerConnections: {}, // { stream_id: pc }
                 get currentQuestion() {

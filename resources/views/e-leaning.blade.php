@@ -3744,11 +3744,11 @@
     </div> <!-- End page-layout -->
 
     <footer>
-        <span style="font-weight: 600;">Sane Overseas Private Limited</span><br>
-        Sane Overseas Pvt Ltd
-        Plot No-1634, Second floor
-        Sector-82 JLPL
-        Website: <a href="https://www.saneoverseas.in/" target="_blank">www.saneoverseas.in</a>
+        <span style="font-weight: 600;">SavantX Technologies</span><br>
+        Mohali, Sector 71
+        Pincode: 160071
+        Phone: <a href="tel:9056425289">9056425289</a>
+        Email: <a href="mailto:contact@savantxtechnologies.com">contact@savantxtechnologies.com</a>
     </footer>
 
     </div>

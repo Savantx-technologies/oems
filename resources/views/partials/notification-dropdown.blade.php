@@ -1,4 +1,4 @@
-<div class="mr-4 relative" x-data="{
+<div class="relative" x-data="{
     open: false,
     unreadCount: {{ $unreadCount ?? 0 }},
     previousCount: {{ $unreadCount ?? 0 }},
@@ -158,7 +158,8 @@
         <span x-show="unreadCount > 0" x-text="unreadCount" x-cloak class="absolute -top-1 -right-1 flex items-center justify-center min-w-[16px] h-4 px-1 bg-red-500 text-white rounded-full text-[10px]"></span>
     </button>
 
-    <div x-show="open" x-cloak x-transition class="absolute right-0 mt-3 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl z-50">
+    <div x-show="open" x-cloak x-transition
+        class="fixed inset-x-3 top-16 z-50 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl sm:absolute sm:right-0 sm:top-auto sm:inset-x-auto sm:mt-3 sm:w-80 sm:max-w-[calc(100vw-2rem)]">
         <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <div>
                 <p class="text-sm font-semibold text-gray-900">Notifications</p>
@@ -167,7 +168,7 @@
             <span x-show="unreadCount > 0" x-text="`${unreadCount} new`" x-cloak class="rounded-full bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-600"></span>
         </div>
 
-        <div class="max-h-80 overflow-y-auto">
+        <div class="max-h-[52vh] overflow-y-auto sm:max-h-80">
             @forelse(($notifications ?? collect()) as $notification)
                 <a href="{{ $notification['url'] }}" class="block border-b border-gray-100 px-4 py-3 transition hover:bg-gray-50 {{ $notification['is_read'] ? 'bg-white' : 'bg-blue-50/50' }}">
                     <div class="flex items-start gap-3">
@@ -196,7 +197,7 @@
                         <p class="text-xs font-semibold text-gray-900">Notification ringtone</p>
                         <p class="text-[11px] text-gray-500">Saved to your account</p>
                     </div>
-                    <button type="button" @click="playTone()" class="inline-flex items-center rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                    <button type="button" @click="playTone()" class="inline-flex shrink-0 items-center rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
                         <i class="bi bi-play-fill mr-1"></i> Test
                     </button>
                 </div>
@@ -224,5 +225,4 @@
         </div>
     </div>
 </div>
-
 
