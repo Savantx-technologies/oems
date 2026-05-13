@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout Repository
-      - name: Checkout Code
+      # Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       # Setup PHP
@@ -19,28 +19,20 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
-          extensions: mbstring, bcmath, ctype, fileinfo, json, openssl, pdo, tokenizer, xml
-          coverage: none
 
       # Install Composer Dependencies
-      - name: Install Composer Dependencies
+      - name: Install Composer
         run: composer install --no-dev --optimize-autoloader
 
-      # Set Laravel Permissions
-      - name: Set Directory Permissions
+      # Laravel Cache
+      - name: Laravel Optimization
         run: |
-          chmod -R 775 storage
-          chmod -R 775 bootstrap/cache
+          php artisan config:clear
+          php artisan route:clear
+          php artisan view:clear
 
-      # Create Laravel Cache
-      - name: Optimize Laravel
-        run: |
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache
-
-      # Deploy to Hostinger FTP
-      - name: Deploy via FTP
+      # Deploy Files
+      - name: FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -50,15 +42,14 @@ jobs:
           port: 21
           local-dir: ./
           server-dir: ./
+          dangerous-clean-slate: false
           exclude: |
             **/.git*
             **/.git*/**
             **/node_modules/**
-            **/vendor/bin/**
             **/tests/**
             **/.env
             **/storage/logs/**
             **/storage/framework/cache/**
             **/storage/framework/sessions/**
             **/storage/framework/views/**
-            **/bootstrap/cache/**
