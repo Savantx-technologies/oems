@@ -121,7 +121,7 @@
                 </a>
                 <a href="{{ route('admin.login') }}" class="cta-btn px-7 py-2.5 bg-white text-indigo-700 border border-indigo-200 font-bold rounded-lg hover:bg-indigo-50 transition flex items-center justify-center text-base shadow">
                     <i class="bi bi-shield-lock text-lg"></i>
-                    Admin Portal
+                    Admin Portal's
                 </a>
             </div>
         </div>

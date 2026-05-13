@@ -57,7 +57,7 @@
                 <div class="rounded-2xl border border-slate-200 p-5">
                     <h2 class="text-base font-semibold text-slate-900">What happens next</h2>
                     <p class="mt-2 text-sm text-slate-600">
-                        After you continue, the system will ask for camera, microphone, and screen-sharing permissions.
+                        After you continue, the system will ask for camera, microphone, and screen-sharing permissions where your browser supports screen sharing.
                         Your exam attempt will begin only after that step.
                     </p>
                 </div>
@@ -85,7 +85,7 @@
             </div>
             <h2 class="text-2xl font-bold text-gray-900 mb-3">Exam Security Check</h2>
             <p class="text-gray-600 mb-8">
-                To ensure exam integrity, we require access to your <strong>camera</strong>, <strong>microphone</strong>, and <strong>screen</strong>. 
+                To ensure exam integrity, we require access to your <strong>camera</strong>, <strong>microphone</strong>, and <strong>screen</strong> where supported.
                 Please grant permissions to continue.
             </p>
 
@@ -318,6 +318,7 @@
                 permissionError: null,
                 mediaStream: null,
                 screenStream: null,
+                isScreenSharingSupported: !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia),
                 peerConnection: null,
                 showViolationWarning: false,
                 violationMessage: '',
@@ -335,6 +336,10 @@
                 async requestPermissions() {
                     this.permissionError = null;
                     try {
+                        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                            throw new Error('Camera and microphone access is not supported in this browser.');
+                        }
+
                         // Request Camera & Microphone
                         this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: true,  audio: {
                         echoCancellation: true,
@@ -344,8 +349,12 @@
                         sampleRate: 48000
                     } });
                         
-                        // Request Screen
-                        this.screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                        // Request screen sharing only on browsers that support it.
+                        if (this.isScreenSharingSupported) {
+                            this.screenStream = await this.requestScreenShare();
+                        } else {
+                            console.warn('Screen sharing is not supported on this browser. Continuing with camera and microphone only.');
+                        }
                         
                         // If successful
                         this.isSetupComplete = true;
@@ -353,7 +362,7 @@
 
                     } catch (err) {
                         console.error("Permission error:", err);
-                        this.permissionError = "Access denied: " + err.message + ". Please allow access to proceed.";
+                        this.permissionError = this.getPermissionErrorMessage(err);
                         
                         // Cleanup if partial success
                         if(this.mediaStream) this.mediaStream.getTracks().forEach(t => t.stop());
@@ -361,6 +370,26 @@
                         this.mediaStream = null;
                         this.screenStream = null;
                     }
+                },
+
+                async requestScreenShare() {
+                    if (!this.isScreenSharingSupported) {
+                        return null;
+                    }
+
+                    return await navigator.mediaDevices.getDisplayMedia({ video: true });
+                },
+
+                getPermissionErrorMessage(err) {
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        return 'This browser does not support camera and microphone access. Please use an updated browser.';
+                    }
+
+                    if (err && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')) {
+                        return 'Access denied. Please allow camera and microphone permissions to proceed.';
+                    }
+
+                    return 'Access denied: ' + ((err && err.message) || 'Unable to access required devices') + '. Please allow access to proceed.';
                 },
 
                 startExam() {
@@ -538,8 +567,15 @@
                 dismissViolationWarning() {
                     // Check if screen share needs to be restored (if stopped once)
                     if (this.screenStopCount === 1 && this.screenStream && this.screenStream.getVideoTracks()[0].readyState === 'ended') {
-                        navigator.mediaDevices.getDisplayMedia({ video: true })
+                        this.requestScreenShare()
                             .then(stream => {
+                                if (!stream) {
+                                    this.screenStopCount = 0;
+                                    this.showViolationWarning = false;
+                                    setTimeout(() => { this.isHandlingViolation = false; }, 100);
+                                    return;
+                                }
+
                                 this.screenStream = stream;
                                 // Re-attach listener
                                 this.screenStream.getVideoTracks()[0].addEventListener('ended', () => {

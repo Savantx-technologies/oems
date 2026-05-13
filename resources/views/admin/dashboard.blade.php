@@ -20,11 +20,11 @@
                 <span class="mt-2 block max-w-2xl text-sm text-blue-100/90">Track students, live exams, evaluation load, and recent activity from one responsive control center.</span>
             </div>
             <div class="grid grid-cols-2 gap-3 sm:w-auto">
-                <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3">
+                <div class="rounded-2xl border border-cyan-300/30 bg-cyan-100/15 backdrop-blur px-4 py-3 shadow-cyan-700/10 shadow-lg">
                     <p class="text-xs text-cyan-100">Students</p>
                     <p class="mt-1 text-xl font-semibold">{{ $totalStudents }}</p>
                 </div>
-                <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3">
+                <div class="rounded-2xl border border-cyan-300/30 bg-cyan-100/15 backdrop-blur px-4 py-3 shadow-cyan-700/10 shadow-lg">
                     <p class="text-xs text-cyan-100">Live Now</p>
                     <p class="mt-1 text-xl font-semibold">{{ $liveExams }}</p>
                 </div>
