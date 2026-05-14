@@ -108,7 +108,7 @@
             </span>
             <h1 class="reveal text-3xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight gradient-text" style="transition-delay: 100ms;font-weight:800;">
                 Secure. Intelligent.<br />
-                <span class="gradient-text">Examination Platform</span>
+                <span class="gradient-text">Examination Platformmmmmm</span>
             </h1>
             <p class="reveal mt-3 max-w-xl mx-auto text-base text-gray-600 mb-9 font-normal" style="transition-delay: 200ms;">
                 Power your institution with a robust online exam system.<br class="hidden md:block" />
@@ -121,7 +121,7 @@
                 </a>
                 <a href="{{ route('admin.login') }}" class="cta-btn px-7 py-2.5 bg-white text-indigo-700 border border-indigo-200 font-bold rounded-lg hover:bg-indigo-50 transition flex items-center justify-center text-base shadow">
                     <i class="bi bi-shield-lock text-lg"></i>
-                    Admin Portal's
+                    Admin Portal
                 </a>
             </div>
         </div>
