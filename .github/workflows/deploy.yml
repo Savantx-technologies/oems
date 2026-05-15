@@ -10,28 +10,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout Code
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Setup PHP
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
 
-      # Install Composer Dependencies
-      - name: Install Composer
+      - name: Install Composer Dependencies
         run: composer install --no-dev --optimize-autoloader
 
-      # Laravel Cache
-      - name: Laravel Optimization
-        run: |
-          php artisan config:clear
-          php artisan route:clear
-          php artisan view:clear
-
-      # Deploy Files
       - name: FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -47,9 +36,6 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
-            **/tests/**
             **/.env
+            **/tests/**
             **/storage/logs/**
-            **/storage/framework/cache/**
-            **/storage/framework/sessions/**
-            **/storage/framework/views/**
